@@ -38,11 +38,12 @@ export default function EventCard({ event, showStats = false }: EventCardProps) 
           </CardContent>
         </a>
       </Link>
-      <Link href={`/events/${event.id}/responses`}>
-        <a className="block mt-2 px-4">View RSVPs</a>
-      </Link>
 
       {showStats && (
+        <>
+          <Link href={`/events/${event.id}/responses`}>
+            <a className="absolute bottom-4 right-4 text-sm text-primary hover:text-primary/80 font-medium">View RSVPs</a>
+          </Link>
         <div className="flex px-4 pb-4 mt-1 space-x-4">
           <button 
             className="text-xs text-primary flex items-center gap-1 hover:text-primary/80"
@@ -60,6 +61,7 @@ export default function EventCard({ event, showStats = false }: EventCardProps) 
             <span>SHARE</span>
           </button>
         </div>
+      </>
       )}
     </Card>
   );
