@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 
 // Create a new schema for client-side validation
 const formSchema = z.object({
+  imageUrl: z.string().optional(),
   title: z.string().min(3, "Title must be at least 3 characters"),
   date: z.string().min(1, "Date is required"),
   startTime: z.string().min(1, "Start time is required"),
@@ -94,6 +95,23 @@ export default function CreateEvent() {
             
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="imageUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-gray-300 uppercase text-xs tracking-wider">Event Image URL</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Enter image URL" 
+                          className="bg-gray-800 border-gray-700 focus:border-primary" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage className="text-primary" />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="title"

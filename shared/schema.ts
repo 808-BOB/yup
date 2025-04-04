@@ -17,6 +17,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
 
 export const events = pgTable("events", {
   id: serial("id").primaryKey(),
+  imageUrl: text("image_url"),
   title: text("title").notNull(),
   date: text("date").notNull(),
   startTime: text("start_time").notNull(),

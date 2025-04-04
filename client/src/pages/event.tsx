@@ -87,6 +87,11 @@ export default function EventPage() {
       
       <main className="flex-1 overflow-auto">
         <div className="flex flex-col h-full animate-fade-in">
+          {event.imageUrl && (
+            <div className="w-full h-48 mb-6 overflow-hidden rounded-sm">
+              <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover" />
+            </div>
+          )}
           <Card className="mb-6 animate-slide-up bg-gray-900 border border-gray-800">
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
