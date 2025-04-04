@@ -6,21 +6,21 @@ import Header from "@/components/header";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function EventResponses() {
-  const [, params] = useRoute("/events/:id/responses");
+  const [, params] = useRoute("/events/:slug/responses");
   
   const { data: event } = useQuery<Event>({
-    queryKey: [`/api/events/${params?.id}`],
-    enabled: !!params?.id
+    queryKey: [`/api/events/slug/${params?.slug}`],
+    enabled: !!params?.slug
   });
   
   const { data: responseCounts } = useQuery<{yupCount: number, nopeCount: number}>({
-    queryKey: [`/api/events/${params?.id}/responses/count`],
-    enabled: !!params?.id
+    queryKey: [`/api/events/${event?.id}/responses/count`],
+    enabled: !!event?.id
   });
   
   const { data: responses } = useQuery<Response[]>({
-    queryKey: [`/api/events/${params?.id}/responses`],
-    enabled: !!params?.id
+    queryKey: [`/api/events/${event?.id}/responses`],
+    enabled: !!event?.id
   });
 
   return (
