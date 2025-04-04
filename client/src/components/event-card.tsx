@@ -47,6 +47,11 @@ export default function EventCard({ event, showStats = false }: EventCardProps) 
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
+              navigator.clipboard.writeText(window.location.href);
+              toast({
+                title: "Link Copied!",
+                description: "Event link copied to clipboard"
+              });
             }}
           >
             <Share2 className="w-3.5 h-3.5" />
