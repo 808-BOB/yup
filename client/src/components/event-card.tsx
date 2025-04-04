@@ -66,7 +66,8 @@ export default function EventCard({ event, showStats = false }: EventCardProps) 
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                navigator.clipboard.writeText(window.location.href);
+                const eventUrl = `${window.location.origin}/events/${event.slug}`;
+                navigator.clipboard.writeText(eventUrl);
                 // Use the toast from the useToast hook
                 toast({
                   title: "Link Copied!",

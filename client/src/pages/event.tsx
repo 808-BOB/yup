@@ -175,7 +175,7 @@ export default function EventPage() {
           <div className="mt-auto pb-6">
             <Button
               onClick={() => {
-                const url = window.location.href;
+                const url = `${window.location.origin}/events/${event.slug}`;
                 navigator.clipboard.writeText(url);
                 toast({
                   title: "Link Copied!",
