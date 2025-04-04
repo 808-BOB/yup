@@ -223,8 +223,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = parseInt(req.params.userId);
       const response = await storage.getUserEventResponse(eventId, userId);
       
+      // Return null if not found (instead of 404) so the frontend can handle it
       if (!response) {
-        return res.status(404).json({ message: "Response not found" });
+        return res.json(null);
       }
       
       res.json(response);

@@ -35,7 +35,12 @@ export default function MyEvents() {
             ) : events && events.length > 0 ? (
               <div className="flex flex-col gap-4">
                 {events.map((event) => (
-                  <EventCard key={event.id} event={event} showStats={true} />
+                  <EventCard 
+                    key={event.id} 
+                    event={event} 
+                    showStats={true} 
+                    isOwner={true}
+                  />
                 ))}
               </div>
             ) : (

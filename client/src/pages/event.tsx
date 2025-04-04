@@ -113,7 +113,28 @@ export default function EventPage() {
           <Card className="mb-6 animate-slide-up bg-gray-900 border border-gray-800">
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
-                <h2 className="text-xl font-bold tracking-tight">{event.title}</h2>
+                <div className="flex flex-col space-y-1">
+                  <h2 className="text-xl font-bold tracking-tight">{event.title}</h2>
+                  
+                  {/* Add this to show "Your Event" badge for the owner */}
+                  {event.hostId === 1 && ( // In a real app, this would check against logged-in user ID
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="outline" className="text-xs bg-primary/10 border-primary/20 text-primary">
+                        Your Event
+                      </Badge>
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          window.location.href = `/events/${event.slug}/edit`;
+                        }}
+                        className="text-xs text-primary flex items-center gap-1 hover:text-primary/80"
+                      >
+                        Edit Event
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <span className="bg-gray-800 text-primary text-xs px-2 py-1 rounded-sm font-mono uppercase tracking-wide">
                   {event.status}
                 </span>

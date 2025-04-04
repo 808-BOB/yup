@@ -1,7 +1,8 @@
 import { Link } from "wouter";
-import { ChevronRight, Share2 } from "lucide-react";
+import { ChevronRight, Share2, Edit, Check, X } from "lucide-react";
 import { formatDate } from "@/lib/utils/date-formatter";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { type Event, type Response } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -9,24 +10,71 @@ import { useToast } from "@/hooks/use-toast";
 interface EventCardProps {
   event: Event;
   showStats?: boolean;
+  isOwner?: boolean;
+  userResponse?: "yup" | "nope" | null;
 }
 
-export default function EventCard({ event, showStats = false }: EventCardProps) {
+export default function EventCard({ 
+  event, 
+  showStats = false, 
+  isOwner = showStats, // If showing stats, assume the user is the owner
+  userResponse = null
+}: EventCardProps) {
   const formattedTime = `${event.startTime.slice(0, 5)}`;
   const { toast } = useToast();
+  const userId = 1; // In a real app, we'd get this from auth context
 
   const { data: responses } = useQuery<Response[]>({
     queryKey: [`/api/events/${event.id}/responses`],
     enabled: showStats
   });
 
+  // Query for user's response to this event if not provided
+  const { data: responseData } = useQuery<Response>({
+    queryKey: [`/api/events/${event.id}/users/${userId}/response`],
+    enabled: !showStats && userResponse === null // Only fetch if we're not the owner and don't have response
+  });
+
+  // Use the provided userResponse or the one fetched from the API
+  const actualUserResponse = userResponse || (responseData?.response as "yup" | "nope" | null);
+  
+  // Function to determine card border color based on response or ownership
+  const getBorderColor = () => {
+    if (isOwner) return "border-primary/30"; // Owner events have primary color border
+    if (actualUserResponse === "yup") return "border-green-700"; // "Yup" responses have green border
+    if (actualUserResponse === "nope") return "border-red-800"; // "Nope" responses have red border
+    return "border-gray-800"; // Default border
+  };
+
   return (
-    <Card className="w-full bg-gray-900 border border-gray-800 hover:border-gray-700 transition-colors relative z-10">
+    <Card className={`w-full bg-gray-900 ${getBorderColor()} hover:border-gray-700 transition-colors relative z-10`}>
       <div onClick={() => window.location.href = `/events/${event.slug}`} className="cursor-pointer">
         <CardContent className="p-4">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-start">
             <div>
-              <h3 className="font-bold tracking-tight">{event.title}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold tracking-tight">{event.title}</h3>
+                {isOwner && (
+                  <Badge variant="outline" className="text-xs bg-primary/10 border-primary/20 text-primary">
+                    Your Event
+                  </Badge>
+                )}
+                {!isOwner && actualUserResponse === "yup" && (
+                  <Badge variant="outline" className="text-xs bg-green-900/20 border-green-800 text-green-500">
+                    <Check className="mr-1 h-3 w-3" /> Going
+                  </Badge>
+                )}
+                {!isOwner && actualUserResponse === "nope" && (
+                  <Badge variant="outline" className="text-xs bg-red-900/20 border-red-800 text-red-500">
+                    <X className="mr-1 h-3 w-3" /> Not Going
+                  </Badge>
+                )}
+                {!isOwner && actualUserResponse === null && (
+                  <Badge variant="outline" className="text-xs bg-yellow-900/20 border-yellow-800 text-yellow-500">
+                    No Response
+                  </Badge>
+                )}
+              </div>
               <p className="text-sm text-gray-400 tracking-tight">
                 {formatDate(event.date)}, {formattedTime}
               </p>
@@ -54,30 +102,48 @@ export default function EventCard({ event, showStats = false }: EventCardProps) 
       )}
       {showStats && (
         <>
-          <div 
-            onClick={() => window.location.href = `/events/${event.slug}/responses`}
-            className="absolute bottom-4 right-4 text-sm text-primary hover:text-primary/80 font-medium cursor-pointer"
-          >
-            View RSVPs
-          </div>
-          <div className="flex px-4 pb-4 mt-1 space-x-4">
-            <button 
-              className="text-xs text-primary flex items-center gap-1 hover:text-primary/80"
+          <div className="flex justify-between px-4 pb-4 mt-1">
+            <div className="flex space-x-4">
+              <button 
+                className="text-xs text-primary flex items-center gap-1 hover:text-primary/80"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const eventUrl = `${window.location.origin}/events/${event.slug}`;
+                  navigator.clipboard.writeText(eventUrl);
+                  toast({
+                    title: "Link Copied!",
+                    description: "Event link copied to clipboard"
+                  });
+                }}
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>SHARE</span>
+              </button>
+              
+              <button 
+                className="text-xs text-primary flex items-center gap-1 hover:text-primary/80"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.location.href = `/events/${event.slug}/edit`;
+                }}
+              >
+                <Edit className="w-3.5 h-3.5" />
+                <span>EDIT</span>
+              </button>
+            </div>
+            
+            <div 
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                const eventUrl = `${window.location.origin}/events/${event.slug}`;
-                navigator.clipboard.writeText(eventUrl);
-                // Use the toast from the useToast hook
-                toast({
-                  title: "Link Copied!",
-                  description: "Event link copied to clipboard"
-                });
+                window.location.href = `/events/${event.slug}/responses`;
               }}
+              className="text-sm text-primary hover:text-primary/80 font-medium cursor-pointer"
             >
-              <Share2 className="w-3.5 h-3.5" />
-              <span>SHARE</span>
-            </button>
+              View RSVPs
+            </div>
           </div>
         </>
       )}

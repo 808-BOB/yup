@@ -32,7 +32,11 @@ export default function EventList() {
             ) : events && events.length > 0 ? (
               <div className="flex flex-col gap-4">
                 {events.map((event) => (
-                  <EventCard key={event.id} event={event} />
+                  <EventCard 
+                    key={event.id} 
+                    event={event} 
+                    isOwner={false} 
+                  />
                 ))}
               </div>
             ) : (
