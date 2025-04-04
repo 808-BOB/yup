@@ -41,6 +41,41 @@ export class MemStorage implements IStorage {
     this.userIdCounter = 1;
     this.eventIdCounter = 1;
     this.responseIdCounter = 1;
+
+    // Add sample events
+    this.events.set(1, {
+      id: 1,
+      imageUrl: "https://picsum.photos/800/400",
+      title: "Summer Coding Meetup",
+      date: "2024-07-15",
+      startTime: "14:00",
+      endTime: "17:00",
+      location: "Tech Hub",
+      address: "123 Coding Street",
+      description: "Join us for a summer of coding!",
+      hostId: 1,
+      status: "open",
+      createdAt: new Date(),
+      slug: "summer-coding-meetup-abc123"
+    });
+
+    this.events.set(2, {
+      id: 2,
+      imageUrl: "https://picsum.photos/800/400?2",
+      title: "Gaming Night",
+      date: "2024-06-20",
+      startTime: "19:00",
+      endTime: "23:00",
+      location: "Game Center",
+      address: "456 Gaming Avenue",
+      description: "Epic gaming session with friends",
+      hostId: 1,
+      status: "open",
+      createdAt: new Date(),
+      slug: "gaming-night-def456"
+    });
+
+    this.eventIdCounter = 3;
     
     // Add a demo user
     this.createUser({
