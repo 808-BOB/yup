@@ -161,9 +161,12 @@ export default function Signup() {
         <div className="text-center mt-6">
           <p className="text-gray-400 text-sm">
             Already have an account?{" "}
-            <Link href="/login">
-              <a className="text-primary hover:text-primary/80">Sign in</a>
-            </Link>
+            <span 
+              onClick={() => setLocation("/login")}
+              className="text-primary hover:text-primary/80 cursor-pointer"
+            >
+              Sign in
+            </span>
           </p>
         </div>
       </div>

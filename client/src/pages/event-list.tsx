@@ -1,4 +1,5 @@
 
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import Header from "@/components/header";
@@ -13,10 +14,23 @@ export default function EventList() {
   const { user, isLoading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
   
-  // Redirect to login if not authenticated
-  if (!authLoading && !user) {
-    setLocation("/login");
-    return null;
+  // Using useEffect for navigation to avoid React update during render warnings
+  useEffect(() => {
+    if (!authLoading && !user) {
+      setLocation("/login");
+    }
+  }, [authLoading, user, setLocation]);
+  
+  // Early return if still loading or no user
+  if (authLoading || !user) {
+    return (
+      <div className="w-full max-w-md mx-auto p-8 h-screen flex flex-col bg-gray-950">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
   }
   
   const { data: events = [], isLoading: eventsLoading, error } = useQuery<Event[]>({

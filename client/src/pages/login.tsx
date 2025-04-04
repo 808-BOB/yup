@@ -116,9 +116,12 @@ export default function Login() {
         <div className="text-center mt-6">
           <p className="text-gray-400 text-sm">
             Don't have an account?{" "}
-            <Link href="/signup">
-              <a className="text-primary hover:text-primary/80">Sign up</a>
-            </Link>
+            <span 
+              onClick={() => setLocation("/signup")}
+              className="text-primary hover:text-primary/80 cursor-pointer"
+            >
+              Sign up
+            </span>
           </p>
         </div>
       </div>
