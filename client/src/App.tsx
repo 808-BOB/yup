@@ -9,6 +9,7 @@ import Event from "@/pages/event";
 import CreateEvent from "@/pages/create-event";
 import MyEvents from "@/pages/my-events";
 import EventList from "@/pages/event-list";
+import EventResponses from "@/pages/event-responses";
 
 function Router() {
   return (
@@ -17,6 +18,7 @@ function Router() {
       <Route path="/events" component={EventList} />
       <Route path="/events/create" component={CreateEvent} />
       <Route path="/events/:slug" component={Event} />
+      <Route path="/events/:slug/responses" component={EventResponses} />
       <Route path="/my-events" component={MyEvents} />
       <Route component={NotFound} />
     </Switch>
