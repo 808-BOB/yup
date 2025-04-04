@@ -34,7 +34,7 @@
   }
 
   .btn-yup {
-    @apply bg-primary text-black font-bold uppercase tracking-wider hover:bg-primary/90 rounded-sm;
+    @apply bg-primary text-black font-bold uppercase tracking-wider hover:bg-primary/90 hover:text-white rounded-sm;
   }
 
   .btn-nope {
