@@ -18,7 +18,8 @@ export default function EventList() {
       <ViewSelector activeTab="invited" onTabChange={() => {}} />
       
       <main className="animate-fade-in">
-        {isLoading ? (
+        <Card className="bg-gray-900 border border-gray-800">
+          <CardContent className="p-6">
           <p className="text-center py-4 text-gray-400 tracking-tight">LOADING EVENTS...</p>
         ) : error ? (
           <p className="text-center py-4 text-primary">
@@ -36,6 +37,8 @@ export default function EventList() {
             <p className="text-gray-600 mt-2 text-sm">Check back later or create a new event</p>
           </div>
         )}
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
