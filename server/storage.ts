@@ -305,6 +305,12 @@ export class MemStorage implements IStorage {
   }
 
   async getUserEventResponse(eventId: number, userId: number | null): Promise<Response | undefined> {
+    // If userId is null (not logged in), we want to return undefined as there's no user to check
+    if (userId === null) {
+      return undefined;
+    }
+    
+    // Find a response where the eventId matches and the userId matches the provided userId
     return Array.from(this.responses.values()).find(
       (response) => response.eventId === eventId && response.userId === userId
     );
