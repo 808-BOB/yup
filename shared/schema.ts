@@ -29,6 +29,9 @@ export const events = pgTable("events", {
   status: text("status").notNull().default("open"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   slug: text("slug").notNull().unique(),
+  allowGuestRsvp: boolean("allow_guest_rsvp").notNull().default(true),
+  allowPlusOne: boolean("allow_plus_one").notNull().default(true),
+  maxGuestsPerRsvp: integer("max_guests_per_rsvp").notNull().default(3),
 });
 
 // Create the insert schema and refine it
@@ -47,14 +50,29 @@ export const insertEventSchema = createInsertSchema(events)
 export const responses = pgTable("responses", {
   id: serial("id").primaryKey(),
   eventId: integer("event_id").notNull(),
-  userId: integer("user_id").notNull(),
+  userId: integer("user_id"), // Optional for guest responses
   response: text("response").notNull(), // 'yup' or 'nope'
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  // Guest information
+  isGuest: boolean("is_guest").default(false),
+  guestName: text("guest_name"), // For guest responses
+  guestEmail: text("guest_email"), // For guest responses 
+  guestCount: integer("guest_count").default(0), // Number of additional guests (+1, +2, etc.)
 });
 
 export const insertResponseSchema = createInsertSchema(responses).omit({
   id: true,
   createdAt: true,
+});
+
+// Schema for guest responses
+export const guestResponseSchema = z.object({
+  eventId: z.number(),
+  response: z.enum(['yup', 'nope']),
+  isGuest: z.literal(true),
+  guestName: z.string().min(1, "Name is required"),
+  guestEmail: z.string().email("Valid email is required"),
+  guestCount: z.number().min(0).default(0),
 });
 
 export type User = typeof users.$inferSelect;

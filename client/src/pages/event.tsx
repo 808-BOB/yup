@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
-import { Calendar, MapPin, User } from "lucide-react";
+import { Calendar, MapPin, User, Users } from "lucide-react";
 import { formatDate } from "@/lib/utils/date-formatter";
 import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import ConfirmationMessage from "@/components/confirmation-message";
+import GuestRsvpModal from "@/components/guest-rsvp-modal";
 import { type Event } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,18 +18,34 @@ export default function EventPage() {
   const { toast } = useToast();
   const [userResponse, setUserResponse] = useState<"yup" | "nope" | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showGuestModal, setShowGuestModal] = useState(false);
+  const [pendingResponse, setPendingResponse] = useState<"yup" | "nope" | null>(null);
   
   const { data: event, isLoading, error } = useQuery<Event>({
     queryKey: [`/api/events/slug/${params?.slug}`],
     enabled: !!params?.slug
   });
   
+  const handleGuestSuccess = (response: "yup" | "nope") => {
+    setUserResponse(response);
+    setShowConfirmation(true);
+  };
+  
   const handleResponse = async (response: "yup" | "nope") => {
     if (!event) return;
     
     try {
-      // In a real app, we'd get the userId from auth context
-      const userId = 1;
+      // For guest users, show the guest RSVP modal
+      const isLoggedIn = false; // In a real app, this would be determined by auth
+      
+      if (!isLoggedIn && event.allowGuestRsvp) {
+        setPendingResponse(response);
+        setShowGuestModal(true);
+        return;
+      }
+      
+      // For logged in users, submit directly
+      const userId = 1; // In a real app, we'd get the userId from auth context
       
       await apiRequest("POST", "/api/responses", {
         eventId: event.id,
@@ -127,6 +145,22 @@ export default function EventPage() {
                   </div>
                 </div>
                 
+                {event.allowGuestRsvp && (
+                  <div className="flex items-start">
+                    <Users className="w-5 h-5 text-gray-500 mr-2 mt-0.5" />
+                    <div>
+                      <p className="font-medium tracking-tight">
+                        <Badge variant="outline" className="ml-1 text-xs font-normal">Guest RSVP enabled</Badge>
+                      </p>
+                      {event.allowPlusOne && (
+                        <p className="text-gray-500 tracking-tight">
+                          Bring up to {event.maxGuestsPerRsvp} {event.maxGuestsPerRsvp === 1 ? 'guest' : 'guests'}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
                 {event.description && (
                   <div className="border-t border-gray-800 pt-3 mt-4">
                     <p className="text-gray-400 tracking-tight">
@@ -172,6 +206,17 @@ export default function EventPage() {
           </div>
         </div>
       </main>
+      
+      {/* Guest RSVP Modal */}
+      {showGuestModal && pendingResponse && (
+        <GuestRsvpModal
+          isOpen={showGuestModal}
+          onClose={() => setShowGuestModal(false)}
+          event={event}
+          response={pendingResponse}
+          onSuccess={handleGuestSuccess}
+        />
+      )}
     </div>
   );
 }

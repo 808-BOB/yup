@@ -60,8 +60,17 @@ export default function EventResponses() {
                   {responses?.filter(r => r.response === 'yup').map((response) => (
                     <div key={response.id} className="flex items-center justify-between p-3 bg-gray-800/50 rounded-sm">
                       <div className="flex flex-col">
-                        <span className="text-sm text-gray-200">User {response.userId}</span>
-                        <span className="text-xs text-gray-400">user{response.userId}@example.com</span>
+                        {response.isGuest ? (
+                          <>
+                            <span className="text-sm text-gray-200">{response.guestName || ''} {(response.guestCount ?? 0) > 0 && <span className="text-xs text-primary">+{response.guestCount}</span>}</span>
+                            <span className="text-xs text-gray-400">{response.guestEmail || ''}</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-sm text-gray-200">User {response.userId}</span>
+                            <span className="text-xs text-gray-400">user{response.userId}@example.com</span>
+                          </>
+                        )}
                       </div>
                       <div className="text-xs text-primary font-medium uppercase">Yup</div>
                     </div>
@@ -75,8 +84,17 @@ export default function EventResponses() {
                   {responses?.filter(r => r.response === 'nope').map((response) => (
                     <div key={response.id} className="flex items-center justify-between p-3 bg-gray-800/50 rounded-sm">
                       <div className="flex flex-col">
-                        <span className="text-sm text-gray-200">User {response.userId}</span>
-                        <span className="text-xs text-gray-400">user{response.userId}@example.com</span>
+                        {response.isGuest ? (
+                          <>
+                            <span className="text-sm text-gray-200">{response.guestName || ''}</span>
+                            <span className="text-xs text-gray-400">{response.guestEmail || ''}</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-sm text-gray-200">User {response.userId}</span>
+                            <span className="text-xs text-gray-400">user{response.userId}@example.com</span>
+                          </>
+                        )}
                       </div>
                       <div className="text-xs text-gray-400 font-medium uppercase">Nope</div>
                     </div>

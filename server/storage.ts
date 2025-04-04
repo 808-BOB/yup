@@ -22,7 +22,7 @@ export interface IStorage {
   // Response operations
   createResponse(response: InsertResponse): Promise<Response>;
   getResponsesByEvent(eventId: number): Promise<Response[]>;
-  getUserEventResponse(eventId: number, userId: number): Promise<Response | undefined>;
+  getUserEventResponse(eventId: number, userId: number | null): Promise<Response | undefined>;
   getEventResponses(eventId: number): Promise<{yupCount: number, nopeCount: number}>;
 }
 
@@ -67,7 +67,10 @@ export class MemStorage implements IStorage {
       hostId: 1,
       status: "open",
       createdAt: new Date(),
-      slug: "summer-coding-meetup-abc123"
+      slug: "summer-coding-meetup-abc123",
+      allowGuestRsvp: true,
+      allowPlusOne: true,
+      maxGuestsPerRsvp: 3
     });
 
     this.events.set(2, {
@@ -83,7 +86,10 @@ export class MemStorage implements IStorage {
       hostId: 1,
       status: "open",
       createdAt: new Date(),
-      slug: "gaming-night-def456"
+      slug: "gaming-night-def456",
+      allowGuestRsvp: true,
+      allowPlusOne: true,
+      maxGuestsPerRsvp: 2
     });
 
     // Add a second user as event host
@@ -108,7 +114,10 @@ export class MemStorage implements IStorage {
       hostId: 2,
       status: "open",
       createdAt: new Date(),
-      slug: "tech-conference-2024"
+      slug: "tech-conference-2024",
+      allowGuestRsvp: true,
+      allowPlusOne: true,
+      maxGuestsPerRsvp: 5
     });
 
     this.events.set(4, {
@@ -124,7 +133,10 @@ export class MemStorage implements IStorage {
       hostId: 2,
       status: "open",
       createdAt: new Date(),
-      slug: "networking-mixer"
+      slug: "networking-mixer",
+      allowGuestRsvp: true,
+      allowPlusOne: true,
+      maxGuestsPerRsvp: 1
     });
 
     this.eventIdCounter = 5;
@@ -213,7 +225,11 @@ export class MemStorage implements IStorage {
       slug: insertEvent.slug,
       status: insertEvent.status || "open",
       address: insertEvent.address === undefined ? null : insertEvent.address,
-      description: insertEvent.description === undefined ? null : insertEvent.description
+      description: insertEvent.description === undefined ? null : insertEvent.description,
+      imageUrl: insertEvent.imageUrl || null,
+      allowGuestRsvp: insertEvent.allowGuestRsvp ?? true,
+      allowPlusOne: insertEvent.allowPlusOne ?? true,
+      maxGuestsPerRsvp: insertEvent.maxGuestsPerRsvp ?? 3
     };
 
     this.events.set(id, event);
@@ -252,17 +268,30 @@ export class MemStorage implements IStorage {
   async createResponse(insertResponse: InsertResponse): Promise<Response> {
     const id = this.responseIdCounter++;
     const createdAt = new Date();
-    const response: Response = { ...insertResponse, id, createdAt };
+    
+    // Set default values for new fields
+    const response: Response = { 
+      ...insertResponse, 
+      id, 
+      createdAt,
+      userId: insertResponse.userId || null,
+      isGuest: insertResponse.isGuest || false,
+      guestName: insertResponse.guestName || null,
+      guestEmail: insertResponse.guestEmail || null,
+      guestCount: insertResponse.guestCount || 0
+    };
 
-    // Check if user already responded to this event
-    const existingResponse = await this.getUserEventResponse(
-      insertResponse.eventId,
-      insertResponse.userId
-    );
+    // Check if user already responded to this event (only for logged in users)
+    if (response.userId && !response.isGuest) {
+      const existingResponse = await this.getUserEventResponse(
+        insertResponse.eventId,
+        response.userId
+      );
 
-    if (existingResponse) {
-      // Update existing response
-      this.responses.delete(existingResponse.id);
+      if (existingResponse) {
+        // Update existing response
+        this.responses.delete(existingResponse.id);
+      }
     }
 
     this.responses.set(id, response);
@@ -275,7 +304,7 @@ export class MemStorage implements IStorage {
     );
   }
 
-  async getUserEventResponse(eventId: number, userId: number): Promise<Response | undefined> {
+  async getUserEventResponse(eventId: number, userId: number | null): Promise<Response | undefined> {
     return Array.from(this.responses.values()).find(
       (response) => response.eventId === eventId && response.userId === userId
     );

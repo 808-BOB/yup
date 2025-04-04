@@ -4,7 +4,8 @@ import { storage } from "./storage";
 import { 
   insertEventSchema, 
   insertResponseSchema,
-  insertUserSchema 
+  insertUserSchema,
+  guestResponseSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -135,10 +136,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Event not found" });
       }
       
-      // Verify the user exists
-      const user = await storage.getUser(responseData.userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
+      // Verify the user exists if userId is provided
+      if (responseData.userId) {
+        const user = await storage.getUser(responseData.userId);
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
       }
       
       const newResponse = await storage.createResponse(responseData);
@@ -148,6 +151,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: fromZodError(error).message });
       }
       res.status(500).json({ message: "Failed to create response" });
+    }
+  });
+
+  // Guest response route - doesn't require a user account
+  app.post("/api/guest-responses", async (req: Request, res: Response) => {
+    try {
+      const guestData = guestResponseSchema.parse(req.body);
+      
+      // Verify the event exists
+      const event = await storage.getEvent(guestData.eventId);
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      
+      // Check if guest RSVPs are allowed for this event
+      if (!event.allowGuestRsvp) {
+        return res.status(403).json({ message: "Guest RSVPs are not allowed for this event" });
+      }
+      
+      // Check if the +1 count is within the allowed limit
+      if (guestData.guestCount > event.maxGuestsPerRsvp) {
+        return res.status(400).json({ 
+          message: `Sorry, you can only bring up to ${event.maxGuestsPerRsvp} additional guests` 
+        });
+      }
+      
+      // Create a response with isGuest flag
+      const responseData = {
+        eventId: guestData.eventId,
+        response: guestData.response,
+        isGuest: true,
+        guestName: guestData.guestName,
+        guestEmail: guestData.guestEmail,
+        guestCount: guestData.guestCount || 0
+      };
+      
+      const newResponse = await storage.createResponse(responseData);
+      res.status(201).json(newResponse);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
+      res.status(500).json({ message: "Failed to create guest response" });
     }
   });
 

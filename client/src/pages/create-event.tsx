@@ -4,12 +4,14 @@ import { Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, User } from "lucide-react";
+import { Plus, User, Users } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 // We're using our own schema definition instead of the imported one
 // import { insertEventSchema } from "@shared/schema";
@@ -27,6 +29,9 @@ const formSchema = z.object({
   status: z.string().default("open"),
   hostId: z.number(),
   slug: z.string().optional(), // Will be generated server-side
+  allowGuestRsvp: z.boolean().default(true),
+  allowPlusOne: z.boolean().default(true),
+  maxGuestsPerRsvp: z.number().min(0).max(10).default(3),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -48,7 +53,10 @@ export default function CreateEvent() {
       description: "", // Handle as empty string rather than null
       status: "open",
       // In a real app, this would come from auth context
-      hostId: 1
+      hostId: 1,
+      allowGuestRsvp: true,
+      allowPlusOne: true,
+      maxGuestsPerRsvp: 3
     }
   });
 
@@ -263,6 +271,92 @@ export default function CreateEvent() {
                   );
                 }}
               />
+              
+              <div className="mt-8 pt-4 border-t border-gray-800">
+                <div className="flex items-center gap-2 mb-4">
+                  <Users className="w-5 h-5 text-gray-500" />
+                  <h3 className="text-gray-300 text-sm font-medium">Guest RSVP Options</h3>
+                </div>
+                
+                <FormField
+                  control={form.control}
+                  name="allowGuestRsvp"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-800 p-4 mb-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">Allow Guest RSVP</FormLabel>
+                        <FormDescription className="text-xs text-gray-500">
+                          When enabled, non-registered users can respond to your event
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="data-[state=checked]:bg-primary"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                {form.watch("allowGuestRsvp") && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="allowPlusOne"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-800 p-4 mb-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Allow Plus-Ones</FormLabel>
+                            <FormDescription className="text-xs text-gray-500">
+                              When enabled, guests can bring additional attendees
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              className="data-[state=checked]:bg-primary"
+                              disabled={!form.watch("allowGuestRsvp")}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {form.watch("allowPlusOne") && (
+                      <FormField
+                        control={form.control}
+                        name="maxGuestsPerRsvp"
+                        render={({ field }) => (
+                          <FormItem className="rounded-lg border border-gray-800 p-4">
+                            <FormLabel>Maximum Additional Guests</FormLabel>
+                            <FormDescription className="text-xs text-gray-500 mb-4">
+                              Maximum number of additional guests per RSVP
+                            </FormDescription>
+                            <FormControl>
+                              <div className="flex flex-col space-y-2">
+                                <Slider
+                                  defaultValue={[field.value]}
+                                  max={10}
+                                  step={1}
+                                  onValueChange={(vals) => field.onChange(vals[0])}
+                                  disabled={!form.watch("allowGuestRsvp") || !form.watch("allowPlusOne")}
+                                  className="w-full"
+                                />
+                                <div className="text-center text-sm text-primary font-semibold">
+                                  {field.value} {field.value === 1 ? 'guest' : 'guests'}
+                                </div>
+                              </div>
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </>
+                )}
+              </div>
               
               <div className="pt-6 flex space-x-4">
                 <Button 
