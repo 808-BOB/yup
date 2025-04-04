@@ -15,13 +15,13 @@ export default function EventList() {
   });
   
   return (
-    <div className="max-w-md mx-auto px-4 py-6 min-h-screen bg-gray-950">
+    <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
       <Header />
       <ViewSelector activeTab="invited" onTabChange={() => {}} />
       
-      <main className="animate-fade-in">
-        <Card className="bg-gray-900 border border-gray-800">
-          <CardContent className="p-6">
+      <main className="flex-1 overflow-auto animate-fade-in">
+        <Card className="flex-1 bg-gray-900 border border-gray-800">
+          <CardContent className="p-6 h-full">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold tracking-tight uppercase">Invited Events</h2>
             </div>
