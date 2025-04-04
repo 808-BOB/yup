@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
+import MemoryStore from "memorystore";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
@@ -14,14 +15,21 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Set up persistent memory store
+const MemoryStoreSession = MemoryStore(session);
+
 // Session configuration
 app.use(session({
   secret: "yup-rsvp-secret-key",
   resave: false,
   saveUninitialized: false,
+  store: new MemoryStoreSession({
+    checkPeriod: 86400000 // Prune expired entries every 24h
+  }),
   cookie: { 
     secure: process.env.NODE_ENV === "production", 
-    maxAge: 1000 * 60 * 60 * 24 * 7 // 1 week
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+    httpOnly: true
   }
 }));
 
