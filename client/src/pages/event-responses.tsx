@@ -13,24 +13,34 @@ export default function EventResponses() {
     enabled: !!params?.slug
   });
   
-  const { data: responseCounts } = useQuery<{yupCount: number, nopeCount: number}>({
-    queryKey: [`/api/events/${event?.id}/responses/count`],
-    enabled: !!event?.id
-  });
-  
   const { data: responses } = useQuery<Response[]>({
     queryKey: [`/api/events/${event?.id}/responses`],
     enabled: !!event?.id
   });
 
+  const { data: responseCounts } = useQuery<{yupCount: number, nopeCount: number}>({
+    queryKey: [`/api/events/${event?.id}/responses/count`],
+    enabled: !!event?.id
+  });
+
+  if (!event) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-gray-400">Event not found</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
       <Header />
-      
       <main className="flex-1 overflow-auto animate-fade-in">
         <Card className="bg-gray-900 border border-gray-800">
           <CardContent className="p-6">
-            <h2 className="text-xl font-bold tracking-tight uppercase mb-6">{event?.title} RSVPs</h2>
+            <h2 className="text-xl font-bold tracking-tight uppercase mb-6">{event.title} RSVPs</h2>
             
             <div className="grid grid-cols-2 gap-4 mb-8">
               <div className="bg-gray-800 p-4 rounded-sm">
