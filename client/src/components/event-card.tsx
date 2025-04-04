@@ -41,7 +41,7 @@ export default function EventCard({ event, showStats = false }: EventCardProps) 
 
       {showStats && (
         <>
-          <Link href={`/events/${event.id}/responses`}>
+          <Link href={`/events/${event.slug}/responses`}>
             <a className="absolute bottom-4 right-4 text-sm text-primary hover:text-primary/80 font-medium">View RSVPs</a>
           </Link>
         <div className="flex px-4 pb-4 mt-1 space-x-4">
