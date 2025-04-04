@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
-import { Link } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, User, Users } from "lucide-react";
+import { Users, Loader2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAuth } from "@/contexts/AuthContext";
+import Header from "@/components/header";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,6 +41,13 @@ export default function CreateEvent() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user, isLoading: authLoading } = useAuth();
+  
+  // Redirect to login if not authenticated
+  if (!authLoading && !user) {
+    setLocation("/login");
+    return null;
+  }
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -52,8 +60,7 @@ export default function CreateEvent() {
       address: "", // Handle as empty string rather than null
       description: "", // Handle as empty string rather than null
       status: "open",
-      // In a real app, this would come from auth context
-      hostId: 1,
+      hostId: user?.id || 0,
       allowGuestRsvp: true,
       allowPlusOne: true,
       maxGuestsPerRsvp: 3
@@ -73,7 +80,9 @@ export default function CreateEvent() {
 
       // Invalidate the cache for events queries
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/users/1/events"] });
+      if (user) {
+        queryClient.invalidateQueries({ queryKey: [`/api/users/${user.id}/events`] });
+      }
 
       // Redirect to the user's events page
       setLocation("/my-events");
@@ -95,31 +104,7 @@ export default function CreateEvent() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-950">
       <div className="max-w-md mx-auto px-4 w-full">
-        {/* Header with Logo and Icons */}
-        <div className="flex justify-between items-center py-4">
-          <Link href="/">
-            <div className="text-2xl font-bold tracking-tight font-mono">
-              YUP<span className="text-primary font-bold">.RSVP</span>
-            </div>
-          </Link>
-          
-          <div className="flex gap-2">
-            <Button 
-              size="icon" 
-              className="bg-primary rounded-none w-10 h-10 flex items-center justify-center"
-            >
-              <Plus className="h-5 w-5" />
-            </Button>
-            
-            <Button 
-              size="icon" 
-              variant="outline" 
-              className="rounded-none bg-transparent border-gray-700 w-10 h-10"
-            >
-              <User className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
+        <Header />
       
         {/* Main Form Content */}
         <main className="animate-fade-in py-6">

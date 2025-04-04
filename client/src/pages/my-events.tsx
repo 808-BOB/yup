@@ -1,25 +1,39 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
-import { Plus } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import Header from "@/components/header";
 import ViewSelector from "@/components/view-selector";
 import EventCard from "@/components/event-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { type Event } from "@shared/schema";
+import { useAuth } from "@/contexts/AuthContext";
+import { Loader2 } from "lucide-react";
 
 export default function MyEvents() {
-  // In a real app, we'd get the userId from auth context
-  const userId = 1;
+  const { user, isLoading: authLoading } = useAuth();
+  const [, setLocation] = useLocation();
   
-  const { data: events, isLoading, error } = useQuery<Event[]>({
-    queryKey: [`/api/users/${userId}/events`]
+  // Redirect to login if not authenticated
+  if (!authLoading && !user) {
+    setLocation("/login");
+    return null;
+  }
+  
+  const { data: events = [], isLoading: eventsLoading, error } = useQuery<Event[]>({
+    queryKey: [`/api/users/${user?.id || 0}/events`],
+    enabled: !!user
   });
+
+  const isLoading = authLoading || eventsLoading;
   
   return (
     <div className="w-full max-w-md mx-auto p-8 h-screen flex flex-col bg-gray-950">
       <Header />
-      <ViewSelector activeTab="your-events" onTabChange={() => {}} />
+      <ViewSelector activeTab="your-events" onTabChange={(tab) => {
+        if (tab === "invited") {
+          setLocation("/event-list");
+        }
+      }} />
       
       <main className="flex-1 w-full overflow-auto animate-fade-in pb-32 z-0">
         <Card className="w-full bg-gray-900 border border-gray-800">
@@ -27,7 +41,9 @@ export default function MyEvents() {
             <h2 className="text-xl font-bold tracking-tight uppercase mb-6">Your Events</h2>
             
             {isLoading ? (
-              <p className="text-center py-4 text-gray-400 tracking-tight font-mono">LOADING EVENTS...</p>
+              <div className="flex justify-center items-center py-10">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
             ) : error ? (
               <p className="text-center py-4 text-primary tracking-tight">
                 ERROR LOADING EVENTS. PLEASE TRY AGAIN.
@@ -47,7 +63,7 @@ export default function MyEvents() {
               <div className="text-center py-8">
                 <p className="mb-4 text-gray-400 tracking-tight uppercase font-mono">NO EVENTS CREATED</p>
                 <Link href="/events/create">
-                  <Button className="btn-primary">CREATE YOUR FIRST EVENT</Button>
+                  <Button className="bg-primary hover:bg-primary/90">CREATE YOUR FIRST EVENT</Button>
                 </Link>
               </div>
             )}

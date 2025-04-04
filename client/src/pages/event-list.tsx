@@ -1,30 +1,51 @@
 
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import Header from "@/components/header";
 import ViewSelector from "@/components/view-selector";
 import EventCard from "@/components/event-card";
 import { Card, CardContent } from "@/components/ui/card";
 import { type Event } from "@shared/schema";
+import { useAuth } from "@/contexts/AuthContext";
+import { Loader2 } from "lucide-react";
 
 export default function EventList() {
-  // In a real app, we'd get the userId from auth context
-  const userId = 1;
+  const { user, isLoading: authLoading } = useAuth();
+  const [, setLocation] = useLocation();
   
-  const { data: events, isLoading, error } = useQuery<Event[]>({
-    queryKey: [`/api/users/${userId}/invites`]
+  // Redirect to login if not authenticated
+  if (!authLoading && !user) {
+    setLocation("/login");
+    return null;
+  }
+  
+  const { data: events = [], isLoading: eventsLoading, error } = useQuery<Event[]>({
+    queryKey: [`/api/users/${user?.id || 0}/invites`],
+    enabled: !!user
   });
+
+  const isLoading = authLoading || eventsLoading;
   
   return (
     <div className="w-full max-w-md mx-auto p-8 h-screen flex flex-col bg-gray-950">
       <Header />
-      <ViewSelector activeTab="invited" onTabChange={() => {}} />
+      <ViewSelector 
+        activeTab="invited" 
+        onTabChange={(tab) => {
+          if (tab === "your-events") {
+            setLocation("/my-events");
+          }
+        }} 
+      />
       
       <main className="flex-1 w-full overflow-auto animate-fade-in pb-32">
         <Card className="w-full bg-gray-900 border border-gray-800">
           <CardContent className="w-full p-6 flex flex-col gap-6">
             <h2 className="text-xl font-bold tracking-tight uppercase mb-6">Invited Events</h2>
             {isLoading ? (
-              <p className="text-center py-4 text-gray-400 tracking-tight font-mono">LOADING EVENTS...</p>
+              <div className="flex justify-center items-center py-10">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
             ) : error ? (
               <p className="text-center py-4 text-primary tracking-tight">
                 ERROR LOADING EVENTS. PLEASE TRY AGAIN.
