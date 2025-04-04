@@ -41,9 +41,9 @@ export default function MyEvents() {
                 ERROR LOADING EVENTS. PLEASE TRY AGAIN.
               </p>
             ) : events && events.length > 0 ? (
-              <div>
+              <div className="w-full -mx-6">
                 {events.map((event) => (
-                  <div key={event.id} className="border-t border-gray-800 py-4">
+                  <div key={event.id} className="border-t border-gray-800 px-6 py-4">
                     <EventCard event={event} showStats={true} />
                   </div>
                 ))}
