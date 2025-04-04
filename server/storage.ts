@@ -75,7 +75,48 @@ export class MemStorage implements IStorage {
       slug: "gaming-night-def456"
     });
 
-    this.eventIdCounter = 3;
+    // Add a second user as event host
+    this.users.set(2, {
+      id: 2,
+      username: "host",
+      password: "password",
+      displayName: "Event Host"
+    });
+
+    // Add some events hosted by user 2 that user 1 is invited to
+    this.events.set(3, {
+      id: 3,
+      imageUrl: "https://picsum.photos/800/400?3",
+      title: "Tech Conference 2024",
+      date: "2024-03-15",
+      startTime: "09:00",
+      endTime: "17:00",
+      location: "Convention Center",
+      address: "789 Tech Blvd",
+      description: "Annual tech conference featuring the latest innovations",
+      hostId: 2,
+      status: "open",
+      createdAt: new Date(),
+      slug: "tech-conference-2024"
+    });
+
+    this.events.set(4, {
+      id: 4,
+      imageUrl: "https://picsum.photos/800/400?4",
+      title: "Networking Mixer",
+      date: "2024-02-28",
+      startTime: "18:00",
+      endTime: "21:00",
+      location: "Startup Hub",
+      address: "101 Innovation Way",
+      description: "Connect with tech professionals over drinks and snacks",
+      hostId: 2,
+      status: "open",
+      createdAt: new Date(),
+      slug: "networking-mixer"
+    });
+
+    this.eventIdCounter = 5;
     
     // Add a demo user
     this.createUser({
