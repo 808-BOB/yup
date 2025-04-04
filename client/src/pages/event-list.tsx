@@ -13,16 +13,16 @@ export default function EventList() {
   });
   
   return (
-    <div className="max-w-md mx-auto px-4 py-6 min-h-screen">
+    <div className="max-w-md mx-auto px-4 py-6 min-h-screen bg-gray-950">
       <Header />
       <ViewSelector activeTab="invited" onTabChange={() => {}} />
       
       <main className="animate-fade-in">
         {isLoading ? (
-          <p className="text-center py-4">Loading events...</p>
+          <p className="text-center py-4 text-gray-400 tracking-tight">LOADING EVENTS...</p>
         ) : error ? (
-          <p className="text-center py-4 text-red-500">
-            Error loading events. Please try again.
+          <p className="text-center py-4 text-primary">
+            ERROR LOADING EVENTS. PLEASE TRY AGAIN.
           </p>
         ) : events && events.length > 0 ? (
           <div className="space-y-4">
@@ -32,7 +32,8 @@ export default function EventList() {
           </div>
         ) : (
           <div className="text-center py-8">
-            <p className="text-gray-500">No events found. Check back later!</p>
+            <p className="text-gray-500 font-mono uppercase tracking-wide">NO EVENTS FOUND</p>
+            <p className="text-gray-600 mt-2 text-sm">Check back later or create a new event</p>
           </div>
         )}
       </main>

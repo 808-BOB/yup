@@ -12,7 +12,7 @@ export default function Home() {
   }, [setLocation]);
   
   return (
-    <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col">
+    <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
       <Header />
       <ViewSelector 
         activeTab="invited" 

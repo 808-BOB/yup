@@ -2,12 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@300;400;500;600;700&display=swap');
+
 @layer base {
   * {
     @apply border-border;
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-mono antialiased bg-gray-950 text-gray-100;
+  }
+  
+  p {
+    @apply tracking-tight;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight font-bold;
+  }
+
+  .custom-heading {
+    @apply text-primary font-bold uppercase tracking-wider;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-black font-bold uppercase tracking-wider hover:bg-primary/90 rounded-sm;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-900 text-primary border border-primary hover:bg-gray-800 transition-colors rounded-sm uppercase tracking-wider;
+  }
+
+  .btn-yup {
+    @apply bg-primary text-black font-bold uppercase tracking-wider hover:bg-primary/90 rounded-sm;
+  }
+
+  .btn-nope {
+    @apply bg-gray-900 text-gray-400 font-bold uppercase tracking-wider hover:bg-gray-800 hover:text-gray-300 transition-colors rounded-sm;
+  }
+  
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slide-up {
+    from { transform: translateY(10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slide-up 0.3s ease-in-out;
   }
 }

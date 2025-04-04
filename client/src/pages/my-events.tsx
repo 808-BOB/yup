@@ -17,42 +17,42 @@ export default function MyEvents() {
   });
   
   return (
-    <div className="max-w-md mx-auto px-4 py-6 min-h-screen">
+    <div className="max-w-md mx-auto px-4 py-6 min-h-screen bg-gray-950">
       <Header />
       <ViewSelector activeTab="your-events" onTabChange={() => {}} />
       
       <main className="animate-fade-in">
-        <Card>
+        <Card className="bg-gray-900 border border-gray-800">
           <CardContent className="p-6">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold">Your Events</h2>
+              <h2 className="text-xl font-bold tracking-tight uppercase">Your Events</h2>
               <Link href="/events/create">
-                <Button className="bg-primary text-white py-2 px-4 rounded-lg text-sm font-medium flex items-center">
+                <Button className="btn-primary py-2 px-4 text-xs flex items-center">
                   <Plus className="w-4 h-4 mr-1" />
-                  New Event
+                  NEW EVENT
                 </Button>
               </Link>
             </div>
             
             {isLoading ? (
-              <p className="text-center py-4">Loading your events...</p>
+              <p className="text-center py-4 text-gray-400 tracking-tight font-mono">LOADING EVENTS...</p>
             ) : error ? (
-              <p className="text-center py-4 text-red-500">
-                Error loading events. Please try again.
+              <p className="text-center py-4 text-primary tracking-tight">
+                ERROR LOADING EVENTS. PLEASE TRY AGAIN.
               </p>
             ) : events && events.length > 0 ? (
               <div>
                 {events.map((event) => (
-                  <div key={event.id} className="border-t border-gray-200 dark:border-gray-700 py-4">
+                  <div key={event.id} className="border-t border-gray-800 py-4">
                     <EventCard event={event} showStats={true} />
                   </div>
                 ))}
               </div>
             ) : (
               <div className="text-center py-8">
-                <p className="mb-4 text-gray-500">You haven't created any events yet.</p>
+                <p className="mb-4 text-gray-400 tracking-tight uppercase font-mono">NO EVENTS CREATED</p>
                 <Link href="/events/create">
-                  <Button className="bg-primary text-white">Create Your First Event</Button>
+                  <Button className="btn-primary">CREATE YOUR FIRST EVENT</Button>
                 </Link>
               </div>
             )}
