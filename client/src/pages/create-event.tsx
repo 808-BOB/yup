@@ -35,7 +35,7 @@ export default function CreateEvent() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -51,22 +51,22 @@ export default function CreateEvent() {
       hostId: 1
     }
   });
-  
+
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
-    
+
     try {
       await apiRequest("POST", "/api/events", data);
-      
+
       toast({
         title: "Event Created",
         description: "Your event has been created successfully."
       });
-      
+
       // Invalidate the cache for events queries
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/1/events"] });
-      
+
       // Redirect to the user's events page
       setLocation("/my-events");
     } catch (error) {
@@ -79,20 +79,20 @@ export default function CreateEvent() {
       setIsSubmitting(false);
     }
   };
-  
+
   const handleCancel = () => {
     setLocation("/my-events");
   };
-  
+
   return (
     <div className="w-full max-w-md mx-auto p-8 h-screen flex flex-col bg-gray-950">
       <Header />
-      
-      <main className="animate-fade-in mb-8">
+
+      <main className="animate-fade-in mb-8 pb-8"> {/* Added pb-8 for bottom padding */}
         <Card className="bg-gray-900 border border-gray-800">
           <CardContent className="p-6">
             <h2 className="text-xl font-bold mb-6 uppercase tracking-tight">CREATE EVENT</h2>
-            
+
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
@@ -129,7 +129,7 @@ export default function CreateEvent() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="date"
@@ -147,7 +147,7 @@ export default function CreateEvent() {
                     </FormItem>
                   )}
                 />
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -166,7 +166,7 @@ export default function CreateEvent() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="endTime"
@@ -185,7 +185,7 @@ export default function CreateEvent() {
                     )}
                   />
                 </div>
-                
+
                 <FormField
                   control={form.control}
                   name="location"
@@ -203,14 +203,14 @@ export default function CreateEvent() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="address"
                   render={({ field }) => {
                     // Ensure field.value is a string
                     const value = field.value === null || field.value === undefined ? "" : field.value;
-                    
+
                     return (
                       <FormItem>
                         <FormLabel className="text-gray-300 uppercase text-xs tracking-wider">Address (Optional)</FormLabel>
@@ -230,14 +230,14 @@ export default function CreateEvent() {
                     );
                   }}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="description"
                   render={({ field }) => {
                     // Ensure field.value is a string
                     const value = field.value === null || field.value === undefined ? "" : field.value;
-                    
+
                     return (
                       <FormItem>
                         <FormLabel className="text-gray-300 uppercase text-xs tracking-wider">Description (Optional)</FormLabel>
@@ -258,7 +258,7 @@ export default function CreateEvent() {
                     );
                   }}
                 />
-                
+
                 <div className="pt-6 flex space-x-4">
                   <Button 
                     type="button"
