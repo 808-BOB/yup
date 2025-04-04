@@ -17,13 +17,13 @@ export default function MyEvents() {
   });
   
   return (
-    <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
+    <div className="w-full max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
       <Header />
       <ViewSelector activeTab="your-events" onTabChange={() => {}} />
       
-      <main className="flex-1 overflow-auto animate-fade-in">
-        <Card className="bg-gray-900 border border-gray-800">
-          <CardContent className="p-6">
+      <main className="flex-1 w-full overflow-auto animate-fade-in">
+        <Card className="w-full h-full bg-gray-900 border border-gray-800">
+          <CardContent className="w-full p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold tracking-tight uppercase">Your Events</h2>
               <Link href="/events/create">
