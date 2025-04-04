@@ -1,9 +1,9 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
-import { type Event, type Response } from "@shared/schema";
 import Header from "@/components/header";
 import { Card, CardContent } from "@/components/ui/card";
+import { type Event, type Response } from "@shared/schema";
 
 export default function EventResponses() {
   const [, params] = useRoute("/events/:slug/responses");
