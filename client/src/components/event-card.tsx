@@ -47,11 +47,11 @@ export default function EventCard({ event, showStats = false }: EventCardProps) 
         </a>
       </Link>
 
-      {showStats ? (
-                  <ChevronRight className="w-5 h-5 text-primary" />
-                ) : (
-                  <ChevronRight className="w-5 h-5 text-primary" />
-                )}
+      {!showStats && (
+        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+          <ChevronRight className="w-5 h-5 text-primary" />
+        </div>
+      )}
       {showStats && (
         <>
           <Link href={`/events/${event.slug}/responses`}>
