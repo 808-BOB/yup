@@ -88,7 +88,7 @@ export default function CreateEvent() {
     <div className="w-full max-w-md mx-auto p-8 h-screen flex flex-col bg-gray-950">
       <Header />
       
-      <main className="animate-fade-in">
+      <main className="animate-fade-in mb-8">
         <Card className="bg-gray-900 border border-gray-800">
           <CardContent className="p-6">
             <h2 className="text-xl font-bold mb-6 uppercase tracking-tight">CREATE EVENT</h2>
