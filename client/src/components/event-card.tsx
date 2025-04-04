@@ -2,7 +2,8 @@ import { Link } from "wouter";
 import { ChevronRight, Share2 } from "lucide-react";
 import { formatDate } from "@/lib/utils/date-formatter";
 import { Card, CardContent } from "@/components/ui/card";
-import { type Event } from "@shared/schema";
+import { useQuery } from "@tanstack/react-query";
+import { type Event, type Response } from "@shared/schema";
 
 interface EventCardProps {
   event: Event;
@@ -11,6 +12,11 @@ interface EventCardProps {
 
 export default function EventCard({ event, showStats = false }: EventCardProps) {
   const formattedTime = `${event.startTime.slice(0, 5)}`;
+  
+  const { data: responses } = useQuery<Response[]>({
+    queryKey: [`/api/events/${event.id}/responses`],
+    enabled: showStats
+  });
 
   return (
     <Card className="w-full bg-gray-900 border border-gray-800 hover:border-gray-700 transition-colors relative z-10">
@@ -25,12 +31,17 @@ export default function EventCard({ event, showStats = false }: EventCardProps) 
                 </p>
               </div>
 
-              {showStats ? (
+              {showStats && (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-primary font-medium">12 yup</span>
+                  <span className="text-sm text-primary font-medium">
+                    {responses?.filter(r => r.response === 'yup').length || 0} yup
+                  </span>
                   <span className="text-sm text-gray-600">|</span>
-                  <span className="text-sm text-gray-400 font-medium">3 nope</span>
+                  <span className="text-sm text-gray-400 font-medium">
+                    {responses?.filter(r => r.response === 'nope').length || 0} nope
+                  </span>
                 </div>
+              )}
               ) : (
                 <ChevronRight className="w-5 h-5 text-primary" />
               )}
