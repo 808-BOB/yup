@@ -44,10 +44,14 @@ export class MemStorage implements IStorage {
     this.responseIdCounter = 1;
 
     // Add sample responses
-    this.createResponse({ eventId: 5, userId: 1, response: 'yup' });
-    this.createResponse({ eventId: 5, userId: 2, response: 'yup' });
-    this.createResponse({ eventId: 5, userId: 3, response: 'nope' });
-    this.createResponse({ eventId: 5, userId: 4, response: 'yup' });
+    this.createResponse({ eventId: 1, userId: 1, response: 'yup' });
+    this.createResponse({ eventId: 1, userId: 2, response: 'yup' });
+    this.createResponse({ eventId: 1, userId: 3, response: 'nope' });
+    this.createResponse({ eventId: 1, userId: 4, response: 'yup' });
+    this.createResponse({ eventId: 2, userId: 1, response: 'nope' });
+    this.createResponse({ eventId: 2, userId: 2, response: 'yup' });
+    this.createResponse({ eventId: 3, userId: 2, response: 'nope' });
+    this.createResponse({ eventId: 3, userId: 3, response: 'yup' });
 
     // Add sample events
     this.events.set(1, {

@@ -10,15 +10,16 @@ export default function EventResponses() {
   
   const { data: event } = useQuery<Event>({
     queryKey: [`/api/events/slug/${params?.slug}`],
-    enabled: !!params?.slug
+    enabled: !!params?.slug,
+    retry: 1
   });
   
-  const { data: responses } = useQuery<Response[]>({
+  const { data: responses = [] } = useQuery<Response[]>({
     queryKey: [`/api/events/${event?.id}/responses`],
     enabled: !!event?.id
   });
 
-  const { data: responseCounts } = useQuery<{yupCount: number, nopeCount: number}>({
+  const { data: responseCounts = { yupCount: 0, nopeCount: 0 } } = useQuery<{yupCount: number, nopeCount: number}>({
     queryKey: [`/api/events/${event?.id}/responses/count`],
     enabled: !!event?.id
   });
