@@ -139,6 +139,19 @@ export default function EventPage() {
           </Card>
           
           <div className="mt-auto pb-6">
+            <Button
+              onClick={() => {
+                const url = window.location.href;
+                navigator.clipboard.writeText(url);
+                toast({
+                  title: "Link Copied!",
+                  description: "Share this link to invite people to your event",
+                });
+              }}
+              className="w-full mb-8 bg-gray-900 border border-gray-800 hover:border-gray-700"
+            >
+              Share Event Link
+            </Button>
             <p className="text-center mb-8 text-gray-400 uppercase tracking-wide font-mono">CAN YOU MAKE IT?</p>
             
             <div className="flex gap-8 justify-center">
