@@ -53,15 +53,36 @@ export default function EventResponses() {
               </div>
             </div>
 
-            <div className="space-y-4">
-              {responses?.map((response) => (
-                <div key={response.id} className="flex items-center justify-between p-4 bg-gray-800 rounded-sm">
-                  <div className="font-mono">User {response.userId}</div>
-                  <div className={response.response === 'yup' ? 'text-primary' : 'text-gray-400'}>
-                    {response.response.toUpperCase()}
-                  </div>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-primary uppercase tracking-wider mb-3">Going</h3>
+                <div className="space-y-2">
+                  {responses?.filter(r => r.response === 'yup').map((response) => (
+                    <div key={response.id} className="flex items-center justify-between p-3 bg-gray-800/50 rounded-sm">
+                      <div className="flex flex-col">
+                        <span className="text-sm text-gray-200">User {response.userId}</span>
+                        <span className="text-xs text-gray-400">user{response.userId}@example.com</span>
+                      </div>
+                      <div className="text-xs text-primary font-medium uppercase">Yup</div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Not Going</h3>
+                <div className="space-y-2">
+                  {responses?.filter(r => r.response === 'nope').map((response) => (
+                    <div key={response.id} className="flex items-center justify-between p-3 bg-gray-800/50 rounded-sm">
+                      <div className="flex flex-col">
+                        <span className="text-sm text-gray-200">User {response.userId}</span>
+                        <span className="text-xs text-gray-400">user{response.userId}@example.com</span>
+                      </div>
+                      <div className="text-xs text-gray-400 font-medium uppercase">Nope</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
