@@ -149,9 +149,9 @@ export default function EventPage() {
                   <div className="flex items-start">
                     <Users className="w-5 h-5 text-gray-500 mr-2 mt-0.5" />
                     <div>
-                      <p className="font-medium tracking-tight">
-                        <Badge variant="outline" className="ml-1 text-xs font-normal">Guest RSVP enabled</Badge>
-                      </p>
+                      <div className="font-medium tracking-tight flex items-center">
+                        <span>Guest RSVP</span> <Badge variant="outline" className="ml-1 text-xs font-normal">enabled</Badge>
+                      </div>
                       {event.allowPlusOne && (
                         <p className="text-gray-500 tracking-tight">
                           Bring up to {event.maxGuestsPerRsvp} {event.maxGuestsPerRsvp === 1 ? 'guest' : 'guests'}
