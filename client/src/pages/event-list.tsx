@@ -20,8 +20,8 @@ export default function EventList() {
       <ViewSelector activeTab="invited" onTabChange={() => {}} />
       
       <main className="flex-1 overflow-auto animate-fade-in">
-        <Card className="flex-1 bg-gray-900 border border-gray-800">
-          <CardContent className="p-6 h-full">
+        <Card className="h-full bg-gray-900 border border-gray-800">
+          <CardContent className="p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold tracking-tight uppercase">Invited Events</h2>
             </div>
