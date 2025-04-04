@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { 
@@ -10,8 +10,110 @@ import {
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { v4 as uuidv4 } from "uuid";
+import session from "express-session";
+
+// Simple middleware to check if user is authenticated
+const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.session || !req.session.userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  next();
+};
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Authentication routes
+  app.post("/api/auth/signup", async (req: Request, res: Response) => {
+    try {
+      const userData = insertUserSchema.parse(req.body);
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByUsername(userData.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+      
+      const newUser = await storage.createUser(userData);
+      
+      // Auto-login: store user ID in session
+      if (req.session) {
+        req.session.userId = newUser.id;
+      }
+      
+      res.status(201).json({ 
+        id: newUser.id, 
+        username: newUser.username, 
+        displayName: newUser.displayName 
+      });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
+      res.status(500).json({ message: "Failed to create account" });
+    }
+  });
+
+  app.post("/api/auth/login", async (req: Request, res: Response) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
+      
+      const user = await storage.getUserByUsername(username);
+      
+      if (!user || user.password !== password) {
+        return res.status(401).json({ message: "Invalid username or password" });
+      }
+      
+      // Store user ID in session
+      if (req.session) {
+        req.session.userId = user.id;
+      }
+      
+      res.json({ 
+        id: user.id, 
+        username: user.username, 
+        displayName: user.displayName 
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Login failed" });
+    }
+  });
+
+  app.post("/api/auth/logout", (req: Request, res: Response) => {
+    if (req.session) {
+      req.session.destroy((err) => {
+        if (err) {
+          return res.status(500).json({ message: "Failed to logout" });
+        }
+        res.json({ message: "Logged out successfully" });
+      });
+    } else {
+      res.json({ message: "No active session" });
+    }
+  });
+
+  app.get("/api/auth/me", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      // The middleware ensures req.session and userId exist
+      const userId = Number(req.session!.userId);
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ 
+        id: user.id, 
+        username: user.username, 
+        displayName: user.displayName 
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user data" });
+    }
+  });
+
   // User routes
   app.post("/api/users", async (req: Request, res: Response) => {
     try {

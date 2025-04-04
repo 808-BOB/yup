@@ -10,6 +10,9 @@ import CreateEvent from "@/pages/create-event";
 import MyEvents from "@/pages/my-events";
 import EventList from "@/pages/event-list";
 import EventResponses from "@/pages/event-responses";
+import Login from "@/pages/login";
+import Signup from "@/pages/signup";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 function Router() {
   return (
@@ -20,6 +23,8 @@ function Router() {
       <Route path="/events/:slug" component={Event} />
       <Route path="/events/:slug/responses" component={EventResponses} />
       <Route path="/my-events" component={MyEvents} />
+      <Route path="/login" component={Login} />
+      <Route path="/signup" component={Signup} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -28,13 +33,15 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen flex flex-col bg-gray-950">
-        <div className="flex-1">
-          <Router />
+      <AuthProvider>
+        <div className="min-h-screen flex flex-col bg-gray-950">
+          <div className="flex-1">
+            <Router />
+          </div>
+          <Footer />
+          <Toaster />
         </div>
-        <Footer />
-        <Toaster />
-      </div>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
