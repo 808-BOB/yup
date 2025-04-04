@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
 import Header from "@/components/header";
@@ -7,13 +6,13 @@ import { type Event, type Response } from "@shared/schema";
 
 export default function EventResponses() {
   const [, params] = useRoute("/events/:slug/responses");
-  
+
   const { data: event } = useQuery<Event>({
     queryKey: [`/api/events/slug/${params?.slug}`],
     enabled: !!params?.slug,
     retry: 1
   });
-  
+
   const { data: responses = [] } = useQuery<Response[]>({
     queryKey: [`/api/events/${event?.id}/responses`],
     enabled: !!event?.id
@@ -28,9 +27,9 @@ export default function EventResponses() {
     return (
       <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
         <Header />
-        <div className="flex-1 flex items-center justify-center">
+        <main className="flex-1 flex items-center justify-center">
           <p className="text-gray-400">Event not found</p>
-        </div>
+        </main>
       </div>
     );
   }
@@ -42,7 +41,7 @@ export default function EventResponses() {
         <Card className="bg-gray-900 border border-gray-800">
           <CardContent className="p-6">
             <h2 className="text-xl font-bold tracking-tight uppercase mb-6">{event.title} RSVPs</h2>
-            
+
             <div className="grid grid-cols-2 gap-4 mb-8">
               <div className="bg-gray-800 p-4 rounded-sm">
                 <div className="text-primary text-2xl font-bold mb-1">{responseCounts?.yupCount || 0}</div>
