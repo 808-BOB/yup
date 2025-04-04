@@ -85,7 +85,7 @@ export default function CreateEvent() {
   };
   
   return (
-    <div className="max-w-md mx-auto px-4 py-6 min-h-screen bg-gray-950">
+    <div className="w-full max-w-md mx-auto p-8 h-screen flex flex-col bg-gray-950">
       <Header />
       
       <main className="animate-fade-in">
