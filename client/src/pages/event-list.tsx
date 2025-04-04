@@ -26,15 +26,17 @@ export default function EventList() {
               <h2 className="text-xl font-bold tracking-tight uppercase">Invited Events</h2>
             </div>
             {isLoading ? (
-              <p className="text-center py-4 text-gray-400 tracking-tight">LOADING EVENTS...</p>
+              <p className="text-center py-4 text-gray-400 tracking-tight font-mono">LOADING EVENTS...</p>
             ) : error ? (
-              <p className="text-center py-4 text-primary">
+              <p className="text-center py-4 text-primary tracking-tight">
                 ERROR LOADING EVENTS. PLEASE TRY AGAIN.
               </p>
             ) : events && events.length > 0 ? (
-              <div className="space-y-4">
+              <div>
                 {events.map((event) => (
-                  <EventCard key={event.id} event={event} />
+                  <div key={event.id} className="border-t border-gray-800 py-4">
+                    <EventCard event={event} />
+                  </div>
                 ))}
               </div>
             ) : (
