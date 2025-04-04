@@ -14,7 +14,7 @@ export default function EventCard({ event, showStats = false }: EventCardProps) 
   const formattedTime = `${event.startTime.slice(0, 5)}`;
   
   return (
-    <Card className="w-full mb-6 bg-gray-900 border border-gray-800 hover:border-gray-700 transition-colors relative z-10">
+    <Card className="w-full bg-gray-900 border border-gray-800 hover:border-gray-700 transition-colors relative z-10">
       <Link href={`/events/${event.slug}`}>
         <a className="block">
           <CardContent className="p-4">
