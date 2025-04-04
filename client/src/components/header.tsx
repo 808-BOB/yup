@@ -23,7 +23,7 @@ export default function Header() {
           <Button 
             variant="default"
             size="icon" 
-            className="bg-primary text-black hover:bg-primary/90 hover:text-white rounded-sm"
+            className="bg-primary text-white hover:bg-primary/90 hover:text-white rounded-sm"
           >
             <Plus className="h-5 w-5" />
           </Button>

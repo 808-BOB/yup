@@ -24,15 +24,7 @@ export default function MyEvents() {
       <main className="flex-1 w-full overflow-auto animate-fade-in">
         <Card className="w-full bg-gray-900 border border-gray-800">
           <CardContent className="w-full p-6 flex flex-col gap-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold tracking-tight uppercase">Your Events</h2>
-              <Link href="/events/create">
-                <Button className="btn-primary py-2 px-4 text-xs flex items-center">
-                  <Plus className="w-4 h-4 mr-1" />
-                  NEW EVENT
-                </Button>
-              </Link>
-            </div>
+            <h2 className="text-xl font-bold tracking-tight uppercase mb-6">Your Events</h2>
             
             {isLoading ? (
               <p className="text-center py-4 text-gray-400 tracking-tight font-mono">LOADING EVENTS...</p>
