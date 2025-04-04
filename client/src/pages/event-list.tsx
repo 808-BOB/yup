@@ -32,9 +32,9 @@ export default function EventList() {
                 ERROR LOADING EVENTS. PLEASE TRY AGAIN.
               </p>
             ) : events && events.length > 0 ? (
-              <div className="w-full">
+              <div className="w-full space-y-4 pt-4">
                 {events.map((event) => (
-                  <div key={event.id} className="border-t border-gray-800 py-4">
+                  <div key={event.id} className="border-t border-gray-800 pt-4 first:border-t-0 first:pt-0">
                     <EventCard event={event} />
                   </div>
                 ))}
