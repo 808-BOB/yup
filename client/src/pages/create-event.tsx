@@ -286,8 +286,8 @@ export default function CreateEvent() {
         </main>
       </div>
       
-      {/* Footer - positioned at the bottom of the page */}
-      <div className="mt-auto pt-6 pb-10 text-center text-gray-500 text-xs">
+      {/* Footer - sticky only on desktop */}
+      <div className="mt-8 md:mt-auto pt-6 pb-10 text-center text-gray-500 text-xs">
         <p>© 2025 Yup.RSVP. All rights are relative.</p>
         <p className="mt-1">Imagined, designed, and developed by Former Colleagues™.</p>
       </div>
