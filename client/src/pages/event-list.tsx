@@ -22,6 +22,9 @@ export default function EventList() {
       <main className="animate-fade-in">
         <Card className="bg-gray-900 border border-gray-800">
           <CardContent className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold tracking-tight uppercase">Invited Events</h2>
+            </div>
             {isLoading ? (
               <p className="text-center py-4 text-gray-400 tracking-tight">LOADING EVENTS...</p>
             ) : error ? (
