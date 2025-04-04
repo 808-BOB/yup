@@ -41,11 +41,9 @@ export default function MyEvents() {
                 ERROR LOADING EVENTS. PLEASE TRY AGAIN.
               </p>
             ) : events && events.length > 0 ? (
-              <div className="w-full space-y-4 pt-4">
+              <div className="flex flex-col gap-4">
                 {events.map((event) => (
-                  <div key={event.id} className="border-t border-gray-800 pt-4 first:border-t-0 first:pt-0">
-                    <EventCard event={event} showStats={true} />
-                  </div>
+                  <EventCard key={event.id} event={event} showStats={true} />
                 ))}
               </div>
             ) : (
