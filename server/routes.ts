@@ -50,18 +50,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Event routes
   app.post("/api/events", async (req: Request, res: Response) => {
     try {
-      let eventData = insertEventSchema.parse(req.body);
-      
-      // Generate a URL-friendly slug
-      const baseSlug = eventData.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
-      
-      eventData = {
-        ...eventData,
-        slug: `${baseSlug}-${uuidv4().slice(0, 8)}`
-      };
+      const eventData = insertEventSchema.parse({
+        ...req.body,
+        slug: `${req.body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${uuidv4().slice(0, 8)}`
+      });
       
       const newEvent = await storage.createEvent(eventData);
       res.status(201).json(newEvent);
