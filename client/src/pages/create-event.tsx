@@ -85,10 +85,12 @@ export default function CreateEvent() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto p-8 h-screen flex flex-col bg-gray-950">
-      <Header />
+    <div className="w-full max-w-md mx-auto h-screen flex flex-col bg-gray-950">
+      <div className="sticky top-0 z-10 bg-gray-950 px-8 pt-8">
+        <Header />
+      </div>
 
-      <main className="animate-fade-in mb-8 pb-8"> {/* Added pb-8 for bottom padding */}
+      <main className="animate-fade-in px-8 pb-8"> {/* Added pb-8 for bottom padding */}
         <Card className="bg-gray-900 border border-gray-800">
           <CardContent className="p-6">
             <h2 className="text-xl font-bold mb-6 uppercase tracking-tight">CREATE EVENT</h2>
