@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const guestFormSchema = z.object({
   guestName: z.string().min(1, "Name is required"),
@@ -50,6 +51,33 @@ export default function GuestRsvpModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const [guestCount, setGuestCount] = useState(0);
+  const isMobile = useIsMobile();
+  const [modalHeight, setModalHeight] = useState('80vh');
+  
+  // Adjust modal height when keyboard appears on mobile
+  useEffect(() => {
+    if (!isMobile) return;
+    
+    const handleResize = () => {
+      // If visual viewport height is significantly less than window height,
+      // keyboard is probably shown
+      const windowHeight = window.innerHeight;
+      const visibleHeight = window.visualViewport?.height || windowHeight;
+      
+      if (visibleHeight < windowHeight * 0.8) {
+        // Keyboard is likely shown
+        setModalHeight('60vh');
+      } else {
+        setModalHeight('80vh');
+      }
+    };
+    
+    window.visualViewport?.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.visualViewport?.removeEventListener('resize', handleResize);
+    };
+  }, [isMobile]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(guestFormSchema),
@@ -86,9 +114,15 @@ export default function GuestRsvpModal({
   });
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onClose} modal={true}>
       <DialogContent 
-        className="sm:max-w-[425px] bg-gray-900 border-gray-800 text-white max-h-[90vh] overflow-y-auto fixed inset-x-0 bottom-0 sm:bottom-auto sm:inset-auto"
+        className={`sm:max-w-[425px] bg-gray-900 border-gray-800 text-white overflow-y-auto fixed w-[90%] max-w-md z-50 rounded-md shadow-lg p-6`}
+        style={{
+          maxHeight: modalHeight,
+          top: isMobile ? '40%' : '50%',
+          left: '50%',
+          transform: isMobile ? 'translate(-50%, -40%)' : 'translate(-50%, -50%)'
+        }}
         onInteractOutside={(e) => {
           // Prevent closing when interacting with keyboard
           if (e.target && (e.target as HTMLElement).tagName === 'INPUT') {
