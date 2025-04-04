@@ -39,11 +39,11 @@ export default function Header() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => window.location.href = "/my-events"}>
               <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
+              <span>My Events</span>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => alert("Logout functionality coming soon!")}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log Out</span>
             </DropdownMenuItem>
