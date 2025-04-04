@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Footer from "@/components/Footer"; // Assuming a Footer component exists
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export default function Header() {
   return (
@@ -41,6 +41,3 @@ export default function Header() {
     </header>
   );
 }
-
-// Added Footer component to the end of the file.  Assume this component is defined elsewhere
-<Footer/>
