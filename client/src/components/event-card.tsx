@@ -12,7 +12,7 @@ interface EventCardProps {
 
 export default function EventCard({ event, showStats = false }: EventCardProps) {
   const formattedTime = `${event.startTime.slice(0, 5)}`;
-  
+
   const { data: responses } = useQuery<Response[]>({
     queryKey: [`/api/events/${event.id}/responses`],
     enabled: showStats
@@ -42,14 +42,16 @@ export default function EventCard({ event, showStats = false }: EventCardProps) 
                   </span>
                 </div>
               )}
-              ) : (
-                <ChevronRight className="w-5 h-5 text-primary" />
-              )}
             </div>
           </CardContent>
         </a>
       </Link>
 
+      {showStats ? (
+                  <ChevronRight className="w-5 h-5 text-primary" />
+                ) : (
+                  <ChevronRight className="w-5 h-5 text-primary" />
+                )}
       {showStats && (
         <>
           <Link href={`/events/${event.slug}/responses`}>
