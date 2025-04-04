@@ -14,6 +14,12 @@ export default function EventList() {
   const { user, isLoading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
   
+  // Initialize query (will only fetch if enabled)
+  const { data: events = [], isLoading: eventsLoading, error } = useQuery<Event[]>({
+    queryKey: [`/api/users/${user?.id || 0}/invites`],
+    enabled: !!user
+  });
+  
   // Using useEffect for navigation to avoid React update during render warnings
   useEffect(() => {
     if (!authLoading && !user) {
@@ -32,11 +38,6 @@ export default function EventList() {
       </div>
     );
   }
-  
-  const { data: events = [], isLoading: eventsLoading, error } = useQuery<Event[]>({
-    queryKey: [`/api/users/${user?.id || 0}/invites`],
-    enabled: !!user
-  });
 
   const isLoading = authLoading || eventsLoading;
   

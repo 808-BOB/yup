@@ -14,6 +14,12 @@ export default function MyEvents() {
   const { user, isLoading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
   
+  // Initialize query (will only fetch if enabled)
+  const { data: events = [], isLoading: eventsLoading, error } = useQuery<Event[]>({
+    queryKey: [`/api/users/${user?.id || 0}/events`],
+    enabled: !!user
+  });
+  
   // Using useEffect for navigation to avoid React update during render warnings
   useEffect(() => {
     if (!authLoading && !user) {
@@ -32,11 +38,6 @@ export default function MyEvents() {
       </div>
     );
   }
-  
-  const { data: events = [], isLoading: eventsLoading, error } = useQuery<Event[]>({
-    queryKey: [`/api/users/${user?.id || 0}/events`],
-    enabled: !!user
-  });
 
   const isLoading = authLoading || eventsLoading;
   
@@ -76,9 +77,12 @@ export default function MyEvents() {
             ) : (
               <div className="text-center py-8">
                 <p className="mb-4 text-gray-400 tracking-tight uppercase font-mono">NO EVENTS CREATED</p>
-                <Link href="/events/create">
-                  <Button className="bg-primary hover:bg-primary/90">CREATE YOUR FIRST EVENT</Button>
-                </Link>
+                <Button 
+                  className="bg-primary hover:bg-primary/90"
+                  onClick={() => setLocation("/events/create")}
+                >
+                  CREATE YOUR FIRST EVENT
+                </Button>
               </div>
             )}
           </CardContent>
