@@ -1,11 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import Header from "@/components/header";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import { type Event, type Response } from "@shared/schema";
 
 export default function EventResponses() {
   const [, params] = useRoute("/events/:slug/responses");
+  const [, setLocation] = useLocation();
 
   const { data: event } = useQuery<Event>({
     queryKey: [`/api/events/slug/${params?.slug}`],
@@ -38,6 +41,26 @@ export default function EventResponses() {
     <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
       <Header />
       <main className="flex-1 overflow-auto animate-fade-in">
+        <div className="flex mb-4 gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700" 
+            onClick={() => setLocation('/events')}
+          >
+            <ArrowLeft className="w-4 h-4" /> All Events
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700" 
+            onClick={() => setLocation(`/events/${event.slug}`)}
+          >
+            <ArrowLeft className="w-4 h-4" /> Back to Event
+          </Button>
+        </div>
+        
         <Card className="bg-gray-900 border border-gray-800">
           <CardContent className="p-6">
             <h2 className="text-xl font-bold tracking-tight uppercase mb-6">{event.title} RSVPs</h2>

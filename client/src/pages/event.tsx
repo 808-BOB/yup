@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useRoute } from "wouter";
-import { Calendar, MapPin, User, Users } from "lucide-react";
+import { useRoute, Link, useLocation } from "wouter";
+import { Calendar, MapPin, User, Users, ArrowLeft, Eye } from "lucide-react";
 import { formatDate } from "@/lib/utils/date-formatter";
 import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/header";
@@ -99,12 +99,34 @@ export default function EventPage() {
   
   const formattedTime = `${event.startTime.slice(0, 5)} - ${event.endTime.slice(0, 5)}`;
   
+  const [, setLocation] = useLocation();
+  
   return (
     <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
       <Header />
       
       <main className="flex-1 overflow-auto">
         <div className="flex flex-col h-full animate-fade-in">
+          <div className="flex gap-4 mb-4">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700" 
+              onClick={() => setLocation('/events')}
+            >
+              <ArrowLeft className="w-4 h-4" /> Back to Events
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700 ml-auto" 
+              onClick={() => setLocation(`/events/${event.slug}/responses`)}
+            >
+              <Eye className="w-4 h-4" /> View Responses
+            </Button>
+          </div>
+          
           {event.imageUrl && (
             <div className="w-full h-48 mb-6 overflow-hidden rounded-sm">
               <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover" />
