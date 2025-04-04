@@ -1,4 +1,3 @@
-
 import { Link } from "wouter";
 import { ChevronRight, Share2 } from "lucide-react";
 import { formatDate } from "@/lib/utils/date-formatter";
@@ -12,7 +11,7 @@ interface EventCardProps {
 
 export default function EventCard({ event, showStats = false }: EventCardProps) {
   const formattedTime = `${event.startTime.slice(0, 5)}`;
-  
+
   return (
     <Card className="w-full bg-gray-900 border border-gray-800 hover:border-gray-700 transition-colors relative z-10">
       <Link href={`/events/${event.slug}`}>
@@ -25,7 +24,7 @@ export default function EventCard({ event, showStats = false }: EventCardProps) 
                   {formatDate(event.date)}, {formattedTime}
                 </p>
               </div>
-              
+
               {showStats ? (
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-primary font-medium">12 yup</span>
@@ -39,7 +38,10 @@ export default function EventCard({ event, showStats = false }: EventCardProps) 
           </CardContent>
         </a>
       </Link>
-      
+      <Link href={`/events/${event.id}/responses`}>
+        <a className="block mt-2 px-4">View RSVPs</a>
+      </Link>
+
       {showStats && (
         <div className="flex px-4 pb-4 mt-1 space-x-4">
           <button 
@@ -62,3 +64,27 @@ export default function EventCard({ event, showStats = false }: EventCardProps) 
     </Card>
   );
 }
+
+
+// Placeholder for RSVP page
+function EventResponses({ eventId }: { eventId: string }) {
+  // Sample RSVP data - replace with actual data fetching logic
+  const responses = [
+    { name: "Alice", rsvp: "Yup" },
+    { name: "Bob", rsvp: "Nope" },
+    { name: "Charlie", rsvp: "Yup" },
+  ];
+
+  return (
+    <div>
+      <h1>RSVPs for Event {eventId}</h1>
+      <ul>
+        {responses.map((response) => (
+          <li key={response.name}>{response.name}: {response.rsvp}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export { EventResponses };
