@@ -21,9 +21,9 @@ export default function Header() {
       <div className="flex items-center space-x-4">
         <Link href="/events/create">
           <Button 
-            variant="ghost" 
+            variant="default"
             size="icon" 
-            className="text-primary hover:text-primary/80 hover:bg-gray-800 transition border border-gray-800 rounded-sm"
+            className="bg-primary text-black hover:bg-primary/90 hover:text-white rounded-sm"
           >
             <Plus className="h-5 w-5" />
           </Button>
