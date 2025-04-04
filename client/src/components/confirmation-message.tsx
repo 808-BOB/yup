@@ -13,30 +13,30 @@ export default function ConfirmationMessage({ response, event }: ConfirmationMes
     <div className="text-center p-8 animate-fade-in">
       {response === "yup" ? (
         <div id="yup-confirmation">
-          <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+          <div className="w-24 h-24 rounded-full bg-gray-900 border border-primary flex items-center justify-center mx-auto mb-6">
             <Check className="w-12 h-12 text-primary" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">You're in!</h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-8">
+          <h2 className="text-2xl font-bold mb-2 tracking-tight">YOU'RE IN</h2>
+          <p className="text-gray-400 mb-8 tracking-tight">
             We've confirmed your attendance to {event.title}
           </p>
           <Link href="/events">
-            <Button className="bg-primary text-white py-3 px-8 rounded-lg font-medium hover:bg-primary/90 transition">
+            <Button className="btn-yup py-3 px-8 rounded-sm font-bold uppercase tracking-wider hover:bg-primary/90 transition">
               Back to Events
             </Button>
           </Link>
         </div>
       ) : (
         <div id="nope-confirmation">
-          <div className="w-24 h-24 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-6">
-            <X className="w-12 h-12 text-red-500" />
+          <div className="w-24 h-24 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center mx-auto mb-6">
+            <X className="w-12 h-12 text-gray-400" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">Maybe next time!</h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-8">
+          <h2 className="text-2xl font-bold mb-2 tracking-tight">MAYBE NEXT TIME</h2>
+          <p className="text-gray-400 mb-8 tracking-tight">
             We've noted that you won't be attending {event.title}
           </p>
           <Link href="/events">
-            <Button className="bg-red-500 text-white py-3 px-8 rounded-lg font-medium hover:bg-red-500/90 transition">
+            <Button className="btn-nope py-3 px-8 rounded-sm font-bold uppercase tracking-wider">
               Back to Events
             </Button>
           </Link>

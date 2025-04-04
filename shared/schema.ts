@@ -30,10 +30,18 @@ export const events = pgTable("events", {
   slug: text("slug").notNull().unique(),
 });
 
-export const insertEventSchema = createInsertSchema(events).omit({
-  id: true,
-  createdAt: true,
-});
+// Create the insert schema and refine it
+export const insertEventSchema = createInsertSchema(events)
+  .omit({
+    id: true,
+    createdAt: true,
+  })
+  .transform((data) => ({
+    ...data,
+    // Handle potentially null or undefined values with defaults
+    address: data.address || "",
+    description: data.description || "",
+  }));
 
 export const responses = pgTable("responses", {
   id: serial("id").primaryKey(),

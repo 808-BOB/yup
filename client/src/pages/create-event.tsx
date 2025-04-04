@@ -11,15 +11,21 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { insertEventSchema } from "@shared/schema";
+// We're using our own schema definition instead of the imported one
+// import { insertEventSchema } from "@shared/schema";
 
-// Extend the schema to add client-side validation
-const formSchema = insertEventSchema.extend({
+// Create a new schema for client-side validation
+const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   date: z.string().min(1, "Date is required"),
   startTime: z.string().min(1, "Start time is required"),
   endTime: z.string().min(1, "End time is required"),
   location: z.string().min(1, "Location is required"),
+  address: z.string().optional().default(""),
+  description: z.string().optional().default(""),
+  status: z.string().default("open"),
+  hostId: z.number(),
+  slug: z.string().optional(), // Will be generated server-side
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -37,8 +43,8 @@ export default function CreateEvent() {
       startTime: "",
       endTime: "",
       location: "",
-      address: "",
-      description: "",
+      address: "", // Handle as empty string rather than null
+      description: "", // Handle as empty string rather than null
       status: "open",
       // In a real app, this would come from auth context
       hostId: 1
@@ -78,13 +84,13 @@ export default function CreateEvent() {
   };
   
   return (
-    <div className="max-w-md mx-auto px-4 py-6 min-h-screen">
+    <div className="max-w-md mx-auto px-4 py-6 min-h-screen bg-gray-950">
       <Header />
       
       <main className="animate-fade-in">
-        <Card>
+        <Card className="bg-gray-900 border border-gray-800">
           <CardContent className="p-6">
-            <h2 className="text-xl font-bold mb-6">Create a New Event</h2>
+            <h2 className="text-xl font-bold mb-6 uppercase tracking-tight">CREATE EVENT</h2>
             
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -93,11 +99,15 @@ export default function CreateEvent() {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Event Title</FormLabel>
+                      <FormLabel className="text-gray-300 uppercase text-xs tracking-wider">Event Title</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter event title" {...field} />
+                        <Input 
+                          placeholder="Enter event title" 
+                          className="bg-gray-800 border-gray-700 focus:border-primary" 
+                          {...field} 
+                        />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-primary" />
                     </FormItem>
                   )}
                 />
@@ -107,11 +117,15 @@ export default function CreateEvent() {
                   name="date"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Date</FormLabel>
+                      <FormLabel className="text-gray-300 uppercase text-xs tracking-wider">Date</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input 
+                          type="date" 
+                          className="bg-gray-800 border-gray-700 focus:border-primary text-gray-200" 
+                          {...field} 
+                        />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-primary" />
                     </FormItem>
                   )}
                 />
@@ -122,11 +136,15 @@ export default function CreateEvent() {
                     name="startTime"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Start Time</FormLabel>
+                        <FormLabel className="text-gray-300 uppercase text-xs tracking-wider">Start Time</FormLabel>
                         <FormControl>
-                          <Input type="time" {...field} />
+                          <Input 
+                            type="time" 
+                            className="bg-gray-800 border-gray-700 focus:border-primary text-gray-200" 
+                            {...field} 
+                          />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-primary" />
                       </FormItem>
                     )}
                   />
@@ -136,11 +154,15 @@ export default function CreateEvent() {
                     name="endTime"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>End Time</FormLabel>
+                        <FormLabel className="text-gray-300 uppercase text-xs tracking-wider">End Time</FormLabel>
                         <FormControl>
-                          <Input type="time" {...field} />
+                          <Input 
+                            type="time" 
+                            className="bg-gray-800 border-gray-700 focus:border-primary text-gray-200" 
+                            {...field} 
+                          />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-primary" />
                       </FormItem>
                     )}
                   />
@@ -151,11 +173,15 @@ export default function CreateEvent() {
                   name="location"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Location</FormLabel>
+                      <FormLabel className="text-gray-300 uppercase text-xs tracking-wider">Location</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter location" {...field} />
+                        <Input 
+                          placeholder="Enter location" 
+                          className="bg-gray-800 border-gray-700 focus:border-primary" 
+                          {...field} 
+                        />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-primary" />
                     </FormItem>
                   )}
                 />
@@ -163,50 +189,73 @@ export default function CreateEvent() {
                 <FormField
                   control={form.control}
                   name="address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Address (Optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter address" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    // Ensure field.value is a string
+                    const value = field.value === null || field.value === undefined ? "" : field.value;
+                    
+                    return (
+                      <FormItem>
+                        <FormLabel className="text-gray-300 uppercase text-xs tracking-wider">Address (Optional)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Enter address" 
+                            className="bg-gray-800 border-gray-700 focus:border-primary" 
+                            value={value}
+                            onChange={field.onChange}
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            ref={field.ref}
+                          />
+                        </FormControl>
+                        <FormMessage className="text-primary" />
+                      </FormItem>
+                    );
+                  }}
                 />
                 
                 <FormField
                   control={form.control}
                   name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description (Optional)</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Tell people about your event" 
-                          rows={3}
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    // Ensure field.value is a string
+                    const value = field.value === null || field.value === undefined ? "" : field.value;
+                    
+                    return (
+                      <FormItem>
+                        <FormLabel className="text-gray-300 uppercase text-xs tracking-wider">Description (Optional)</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Tell people about your event" 
+                            rows={3}
+                            className="bg-gray-800 border-gray-700 focus:border-primary resize-none"
+                            value={value}
+                            onChange={field.onChange}
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            ref={field.ref}
+                          />
+                        </FormControl>
+                        <FormMessage className="text-primary" />
+                      </FormItem>
+                    );
+                  }}
                 />
                 
-                <div className="pt-4 flex space-x-3">
+                <div className="pt-6 flex space-x-4">
                   <Button 
                     type="button"
                     variant="outline"
-                    className="flex-1" 
+                    className="flex-1 border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-gray-100 uppercase tracking-wider rounded-sm" 
                     onClick={handleCancel}
                   >
                     Cancel
                   </Button>
                   <Button 
                     type="submit"
-                    className="flex-1 bg-primary text-white" 
+                    className="flex-1 btn-primary" 
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Creating..." : "Create Event"}
+                    {isSubmitting ? "CREATING..." : "CREATE EVENT"}
                   </Button>
                 </div>
               </form>
