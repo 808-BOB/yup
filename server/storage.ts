@@ -10,7 +10,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  
+
   // Event operations
   createEvent(event: InsertEvent): Promise<Event>;
   getEvent(id: number): Promise<Event | undefined>;
@@ -18,7 +18,7 @@ export interface IStorage {
   getUserEvents(userId: number): Promise<Event[]>;
   getEventsUserInvitedTo(userId: number): Promise<Event[]>;
   getAllEvents(): Promise<Event[]>;
-  
+
   // Response operations
   createResponse(response: InsertResponse): Promise<Response>;
   getResponsesByEvent(eventId: number): Promise<Response[]>;
@@ -38,9 +38,16 @@ export class MemStorage implements IStorage {
     this.users = new Map();
     this.events = new Map();
     this.responses = new Map();
+
     this.userIdCounter = 1;
     this.eventIdCounter = 1;
     this.responseIdCounter = 1;
+
+    // Add sample responses
+    this.createResponse({ eventId: 5, userId: 1, response: 'yup' });
+    this.createResponse({ eventId: 5, userId: 2, response: 'yup' });
+    this.createResponse({ eventId: 5, userId: 3, response: 'nope' });
+    this.createResponse({ eventId: 5, userId: 4, response: 'yup' });
 
     // Add sample events
     this.events.set(1, {
@@ -117,14 +124,14 @@ export class MemStorage implements IStorage {
     });
 
     this.eventIdCounter = 5;
-    
+
     // Add a demo user
     this.createUser({
       username: "demo",
       password: "password",
       displayName: "Demo User"
     });
-    
+
     // Add some demo events
     this.createEvent({
       title: "Summer BBQ Party",
@@ -138,7 +145,7 @@ export class MemStorage implements IStorage {
       status: "open",
       slug: "summer-bbq-" + uuidv4().slice(0, 8)
     });
-    
+
     this.createEvent({
       title: "Team Building Workshop",
       date: "2023-08-18",
@@ -151,7 +158,7 @@ export class MemStorage implements IStorage {
       status: "open",
       slug: "team-building-" + uuidv4().slice(0, 8)
     });
-    
+
     this.createEvent({
       title: "Monthly Book Club",
       date: "2023-08-25",
@@ -188,7 +195,7 @@ export class MemStorage implements IStorage {
   async createEvent(insertEvent: InsertEvent): Promise<Event> {
     const id = this.eventIdCounter++;
     const createdAt = new Date();
-    
+
     // Create event with proper defaults for nullable fields
     const event: Event = {
       id,
@@ -204,7 +211,7 @@ export class MemStorage implements IStorage {
       address: insertEvent.address === undefined ? null : insertEvent.address,
       description: insertEvent.description === undefined ? null : insertEvent.description
     };
-    
+
     this.events.set(id, event);
     return event;
   }
@@ -232,7 +239,7 @@ export class MemStorage implements IStorage {
       (event) => event.hostId !== userId
     );
   }
-  
+
   async getAllEvents(): Promise<Event[]> {
     return Array.from(this.events.values());
   }
@@ -242,18 +249,18 @@ export class MemStorage implements IStorage {
     const id = this.responseIdCounter++;
     const createdAt = new Date();
     const response: Response = { ...insertResponse, id, createdAt };
-    
+
     // Check if user already responded to this event
     const existingResponse = await this.getUserEventResponse(
       insertResponse.eventId,
       insertResponse.userId
     );
-    
+
     if (existingResponse) {
       // Update existing response
       this.responses.delete(existingResponse.id);
     }
-    
+
     this.responses.set(id, response);
     return response;
   }
@@ -269,12 +276,12 @@ export class MemStorage implements IStorage {
       (response) => response.eventId === eventId && response.userId === userId
     );
   }
-  
+
   async getEventResponses(eventId: number): Promise<{yupCount: number, nopeCount: number}> {
     const responses = await this.getResponsesByEvent(eventId);
     const yupCount = responses.filter(r => r.response === 'yup').length;
     const nopeCount = responses.filter(r => r.response === 'nope').length;
-    
+
     return { yupCount, nopeCount };
   }
 }
