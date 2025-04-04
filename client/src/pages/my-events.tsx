@@ -21,7 +21,7 @@ export default function MyEvents() {
       <Header />
       <ViewSelector activeTab="your-events" onTabChange={() => {}} />
       
-      <main className="flex-1 w-full overflow-auto animate-fade-in">
+      <main className="flex-1 w-full overflow-auto animate-fade-in pb-32">
         <Card className="w-full bg-gray-900 border border-gray-800">
           <CardContent className="w-full p-6 flex flex-col gap-6">
             <h2 className="text-xl font-bold tracking-tight uppercase mb-6">Your Events</h2>
