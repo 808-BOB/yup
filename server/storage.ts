@@ -15,6 +15,7 @@ export interface IStorage {
 
   // Event operations
   createEvent(event: InsertEvent): Promise<Event>;
+  updateEvent(id: number, eventUpdate: Partial<InsertEvent>): Promise<Event | undefined>;
   getEvent(id: number): Promise<Event | undefined>;
   getEventBySlug(slug: string): Promise<Event | undefined>;
   getUserEvents(userId: number): Promise<Event[]>;
@@ -341,6 +342,37 @@ export class MemStorage implements IStorage {
     return event;
   }
 
+  async updateEvent(id: number, eventUpdate: Partial<InsertEvent>): Promise<Event | undefined> {
+    // Get the existing event
+    const existingEvent = this.events.get(id);
+    
+    if (!existingEvent) {
+      return undefined;
+    }
+    
+    // Create an updated event by merging the existing event with the updates
+    const updatedEvent: Event = {
+      ...existingEvent,
+      ...eventUpdate,
+      // Keep the original id and createdAt
+      id: existingEvent.id,
+      createdAt: existingEvent.createdAt,
+      // Handle nullable fields (don't override with undefined)
+      address: eventUpdate.address === undefined ? existingEvent.address : eventUpdate.address,
+      description: eventUpdate.description === undefined ? existingEvent.description : eventUpdate.description,
+      imageUrl: eventUpdate.imageUrl === undefined ? existingEvent.imageUrl : eventUpdate.imageUrl,
+      allowGuestRsvp: eventUpdate.allowGuestRsvp ?? existingEvent.allowGuestRsvp,
+      allowPlusOne: eventUpdate.allowPlusOne ?? existingEvent.allowPlusOne,
+      maxGuestsPerRsvp: eventUpdate.maxGuestsPerRsvp ?? existingEvent.maxGuestsPerRsvp
+    };
+    
+    // Update the event in the map
+    this.events.set(id, updatedEvent);
+    this.saveToFile(); // Save after updating an event
+    
+    return updatedEvent;
+  }
+  
   async getEvent(id: number): Promise<Event | undefined> {
     return this.events.get(id);
   }

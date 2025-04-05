@@ -191,6 +191,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch event" });
     }
   });
+  
+  app.put("/api/events/:id", async (req: Request, res: Response) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const existingEvent = await storage.getEvent(eventId);
+      
+      if (!existingEvent) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      
+      // Check if the user is the owner of the event
+      const userId = req.session?.userId;
+      if (!userId || existingEvent.hostId !== userId) {
+        return res.status(403).json({ message: "You don't have permission to update this event" });
+      }
+      
+      // Validate the event update data - using the base event data for simplicity
+      const eventUpdateData = req.body;
+      
+      // Update the event
+      const updatedEvent = await storage.updateEvent(eventId, eventUpdateData);
+      
+      res.json(updatedEvent);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ message: fromZodError(error).message });
+      }
+      res.status(500).json({ message: "Failed to update event" });
+    }
+  });
 
   app.get("/api/events/slug/:slug", async (req: Request, res: Response) => {
     try {
