@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLocation, Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Users, Loader2 } from "lucide-react";
+import { Users, Loader2, Image, Upload, Link as LinkIcon } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/header";
@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // We're using our own schema definition instead of the imported one
 // import { insertEventSchema } from "@shared/schema";
 
@@ -41,6 +42,9 @@ export default function CreateEvent() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { user, isLoading: authLoading } = useAuth();
   
   // Redirect to login if not authenticated
@@ -52,6 +56,7 @@ export default function CreateEvent() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      imageUrl: "",
       title: "",
       date: "",
       startTime: "",
@@ -66,6 +71,33 @@ export default function CreateEvent() {
       maxGuestsPerRsvp: 3
     }
   });
+
+  // Handle file selection
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setSelectedFile(file);
+    
+    // Create a preview URL for the selected image
+    const fileReader = new FileReader();
+    fileReader.onload = () => {
+      setPreviewUrl(fileReader.result as string);
+      // We're just using the base64 data URL for now
+      form.setValue("imageUrl", fileReader.result as string);
+    };
+    fileReader.readAsDataURL(file);
+  };
+  
+  // Clear the selected file
+  const clearSelectedFile = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    form.setValue("imageUrl", "");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
@@ -110,6 +142,112 @@ export default function CreateEvent() {
         <main className="animate-fade-in py-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              <FormField
+                control={form.control}
+                name="imageUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">Event Image (Optional)</FormLabel>
+                    <Tabs defaultValue="url" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2 bg-gray-800">
+                        <TabsTrigger value="url" className="data-[state=active]:bg-gray-700">
+                          <div className="flex items-center gap-2">
+                            <LinkIcon className="h-4 w-4" />
+                            <span>URL</span>
+                          </div>
+                        </TabsTrigger>
+                        <TabsTrigger value="upload" className="data-[state=active]:bg-gray-700">
+                          <div className="flex items-center gap-2">
+                            <Upload className="h-4 w-4" />
+                            <span>Upload</span>
+                          </div>
+                        </TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="url" className="mt-2">
+                        <FormControl>
+                          <Input 
+                            placeholder="Enter image URL"
+                            className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12" 
+                            value={field.value || ""}
+                            onChange={(e) => {
+                              field.onChange(e.target.value);
+                              setPreviewUrl(null);
+                              setSelectedFile(null);
+                            }}
+                          />
+                        </FormControl>
+                        {field.value && !previewUrl && (
+                          <div className="mt-2 h-32 w-full bg-gray-800 flex items-center justify-center">
+                            <img 
+                              src={field.value} 
+                              alt="Preview" 
+                              className="max-h-full max-w-full object-contain"
+                              onError={() => {
+                                toast({
+                                  title: "Error",
+                                  description: "Invalid image URL",
+                                  variant: "destructive"
+                                });
+                              }}
+                            />
+                          </div>
+                        )}
+                        <FormDescription className="text-xs text-gray-500 mt-1">
+                          Add an image URL for your event
+                        </FormDescription>
+                      </TabsContent>
+                      
+                      <TabsContent value="upload" className="mt-2">
+                        <div className="border border-dashed border-gray-700 rounded-sm p-4 text-center">
+                          {previewUrl ? (
+                            <div className="relative">
+                              <img 
+                                src={previewUrl} 
+                                alt="Selected file" 
+                                className="max-h-32 mx-auto object-contain"
+                              />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                                onClick={clearSelectedFile}
+                              >
+                                ✕
+                              </Button>
+                            </div>
+                          ) : (
+                            <>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                ref={fileInputRef}
+                                onChange={handleFileSelect}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800"
+                                onClick={() => fileInputRef.current?.click()}
+                              >
+                                <Upload className="h-4 w-4 mr-2" />
+                                Choose Image
+                              </Button>
+                              <p className="text-xs text-gray-500 mt-2">
+                                JPG, PNG, or GIF. Max 2MB.
+                              </p>
+                            </>
+                          )}
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                    <FormMessage className="text-primary" />
+                  </FormItem>
+                )}
+              />
+              
               <FormField
                 control={form.control}
                 name="title"

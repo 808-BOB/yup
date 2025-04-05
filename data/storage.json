@@ -145,6 +145,24 @@
       "allowGuestRsvp": true,
       "allowPlusOne": true,
       "maxGuestsPerRsvp": 3
+    },
+    {
+      "id": 8,
+      "createdAt": "2025-04-05T21:19:37.061Z",
+      "title": "Cocktails with Friends of Former Colleagues ",
+      "date": "2025-04-17",
+      "startTime": "19:00",
+      "endTime": "22:00",
+      "location": "Subourbon",
+      "hostId": 3,
+      "slug": "cocktails-with-friends-of-former-colleagues--bdb95e23",
+      "status": "open",
+      "address": "120 W Wesley, Wheaton, IL 60187",
+      "description": "Join us for a casual hang of cocktails and bites.",
+      "imageUrl": null,
+      "allowGuestRsvp": true,
+      "allowPlusOne": true,
+      "maxGuestsPerRsvp": 3
     }
   ],
   "responses": [
