@@ -20,8 +20,9 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/events" component={EventList} />
       <Route path="/events/create" component={CreateEvent} />
-      <Route path="/events/:slug" component={Event} />
+      <Route path="/events/:slug/edit" component={CreateEvent} /> {/* Reuse CreateEvent component for editing */}
       <Route path="/events/:slug/responses" component={EventResponses} />
+      <Route path="/events/:slug" component={Event} />
       <Route path="/my-events" component={MyEvents} />
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />

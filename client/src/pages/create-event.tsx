@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { useLocation, Link } from "wouter";
+import { useState, useRef, useEffect } from "react";
+import { useLocation, Link, useRoute } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -15,6 +15,8 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQuery } from "@tanstack/react-query";
+import { type Event } from "@shared/schema";
 // We're using our own schema definition instead of the imported one
 // import { insertEventSchema } from "@shared/schema";
 
@@ -46,6 +48,12 @@ export default function CreateEvent() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user, isLoading: authLoading } = useAuth();
+  const [pageTitle, setPageTitle] = useState<string>("Create Event");
+  const [submitButtonText, setSubmitButtonText] = useState<string>("Create Event");
+  
+  // Check if we're in edit mode by looking at the URL
+  const [, params] = useRoute("/events/:slug/edit");
+  const isEditMode = params && params.slug;
   
   // Redirect to login if not authenticated
   if (!authLoading && !user) {
@@ -71,6 +79,50 @@ export default function CreateEvent() {
       maxGuestsPerRsvp: 3
     }
   });
+
+  // Fetch event data if in edit mode
+  const { data: eventData, isLoading: isEventLoading } = useQuery<Event>({
+    queryKey: [`/api/events/slug/${params?.slug}`],
+    enabled: !!isEditMode,
+  });
+
+  // When editing, set form values from event data
+  useEffect(() => {
+    if (isEditMode && eventData) {
+      // Update page title
+      setPageTitle("Edit Event");
+      setSubmitButtonText("Save Changes");
+      
+      // Check if this user is allowed to edit this event
+      if (eventData.hostId !== user?.id) {
+        toast({
+          title: "Permission Denied",
+          description: "You can only edit events that you've created.",
+          variant: "destructive"
+        });
+        setLocation("/my-events");
+        return;
+      }
+      
+      // Update form with event data
+      form.reset({
+        ...eventData,
+        // Ensure nullable fields are handled properly
+        address: eventData.address || "",
+        description: eventData.description || "",
+        imageUrl: eventData.imageUrl || "",
+        hostId: eventData.hostId
+      });
+      
+      // If the event has an image URL, show it
+      if (eventData.imageUrl) {
+        // Only set preview URL if it's not a data URL (uploaded file)
+        if (!eventData.imageUrl.startsWith('data:')) {
+          setPreviewUrl(null);
+        }
+      }
+    }
+  }, [isEditMode, eventData, form, user, setLocation, toast]);
 
   // Handle file selection
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,17 +155,32 @@ export default function CreateEvent() {
     setIsSubmitting(true);
 
     try {
-      await apiRequest("POST", "/api/events", data);
-
-      toast({
-        title: "Event Created",
-        description: "Your event has been created successfully."
-      });
+      if (isEditMode && eventData) {
+        // Update existing event
+        await apiRequest("PUT", `/api/events/${eventData.id}`, data);
+        
+        toast({
+          title: "Event Updated",
+          description: "Your event has been updated successfully."
+        });
+      } else {
+        // Create new event
+        await apiRequest("POST", "/api/events", data);
+        
+        toast({
+          title: "Event Created",
+          description: "Your event has been created successfully."
+        });
+      }
 
       // Invalidate the cache for events queries
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
       if (user) {
         queryClient.invalidateQueries({ queryKey: [`/api/users/${user.id}/events`] });
+      }
+      // Also invalidate the specific event if we're editing
+      if (isEditMode && params?.slug) {
+        queryClient.invalidateQueries({ queryKey: [`/api/events/slug/${params.slug}`] });
       }
 
       // Redirect to the user's events page
@@ -121,7 +188,7 @@ export default function CreateEvent() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to create event. Please try again.",
+        description: isEditMode ? "Failed to update event. Please try again." : "Failed to create event. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -140,6 +207,7 @@ export default function CreateEvent() {
       
         {/* Main Form Content */}
         <main className="animate-fade-in py-6">
+          <h1 className="text-2xl font-bold mb-6">{pageTitle}</h1>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               <FormField
@@ -495,7 +563,9 @@ export default function CreateEvent() {
                   className="flex-1 bg-primary hover:bg-primary/90 rounded-none h-12 uppercase tracking-wider" 
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Creating..." : "Create Event"}
+                  {isSubmitting ? 
+                    (isEditMode ? "Updating..." : "Creating...") : 
+                    submitButtonText}
                 </Button>
               </div>
             </form>
