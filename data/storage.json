@@ -11,6 +11,12 @@
       "password": "password",
       "displayName": "Demo User",
       "id": 1
+    },
+    {
+      "username": "bob",
+      "password": "events",
+      "displayName": "Bob D",
+      "id": 3
     }
   ],
   "events": [
