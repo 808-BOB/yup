@@ -1,4 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
+import fs from "fs";
+import path from "path";
 import { 
   users, type User, type InsertUser, 
   events, type Event, type InsertEvent,
@@ -33,8 +35,109 @@ export class MemStorage implements IStorage {
   private userIdCounter: number;
   private eventIdCounter: number;
   private responseIdCounter: number;
+  private dataFilePath = path.join(process.cwd(), 'data', 'storage.json');
 
   constructor() {
+    // Initialize with empty maps
+    this.users = new Map();
+    this.events = new Map();
+    this.responses = new Map();
+    this.userIdCounter = 1;
+    this.eventIdCounter = 1;
+    this.responseIdCounter = 1;
+
+    // Try to load data from file
+    this.loadFromFile();
+
+    // If no data was loaded (new installation), create sample data
+    if (this.users.size === 0) {
+      this.initializeSampleData();
+    }
+  }
+
+  private loadFromFile(): void {
+    try {
+      // Ensure the data directory exists
+      const dataDir = path.dirname(this.dataFilePath);
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+
+      // Check if the data file exists
+      if (!fs.existsSync(this.dataFilePath)) {
+        console.log('No storage file found. Creating new data.');
+        return;
+      }
+
+      // Read and parse data
+      const rawData = fs.readFileSync(this.dataFilePath, 'utf8');
+      const data = JSON.parse(rawData);
+
+      // Load users
+      if (data.users && Array.isArray(data.users)) {
+        this.users = new Map(data.users.map((user: User) => [user.id, user]));
+      }
+
+      // Load events
+      if (data.events && Array.isArray(data.events)) {
+        this.events = new Map(data.events.map((event: Event) => {
+          // Convert string dates back to Date objects
+          if (typeof event.createdAt === 'string') {
+            event.createdAt = new Date(event.createdAt);
+          }
+          return [event.id, event];
+        }));
+      }
+
+      // Load responses
+      if (data.responses && Array.isArray(data.responses)) {
+        this.responses = new Map(data.responses.map((response: Response) => {
+          // Convert string dates back to Date objects
+          if (typeof response.createdAt === 'string') {
+            response.createdAt = new Date(response.createdAt);
+          }
+          return [response.id, response];
+        }));
+      }
+
+      // Set counters to the max ID + 1
+      this.userIdCounter = Math.max(0, ...Array.from(this.users.keys())) + 1;
+      this.eventIdCounter = Math.max(0, ...Array.from(this.events.keys())) + 1;
+      this.responseIdCounter = Math.max(0, ...Array.from(this.responses.keys())) + 1;
+
+      console.log(`Loaded data: ${this.users.size} users, ${this.events.size} events, ${this.responses.size} responses`);
+    } catch (error) {
+      console.error('Error loading data from file:', error);
+      // Initialize with empty state
+      this.users = new Map();
+      this.events = new Map();
+      this.responses = new Map();
+      this.userIdCounter = 1;
+      this.eventIdCounter = 1;
+      this.responseIdCounter = 1;
+    }
+  }
+
+  private saveToFile(): void {
+    try {
+      const data = {
+        users: Array.from(this.users.values()),
+        events: Array.from(this.events.values()),
+        responses: Array.from(this.responses.values())
+      };
+
+      const dataDir = path.dirname(this.dataFilePath);
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+
+      fs.writeFileSync(this.dataFilePath, JSON.stringify(data, null, 2), 'utf8');
+    } catch (error) {
+      console.error('Error saving data to file:', error);
+    }
+  }
+
+  private initializeSampleData(): void {
     this.users = new Map();
     this.events = new Map();
     this.responses = new Map();
@@ -204,6 +307,7 @@ export class MemStorage implements IStorage {
     const id = this.userIdCounter++;
     const user: User = { ...insertUser, id };
     this.users.set(id, user);
+    this.saveToFile(); // Save after creating a user
     return user;
   }
 
@@ -233,6 +337,7 @@ export class MemStorage implements IStorage {
     };
 
     this.events.set(id, event);
+    this.saveToFile(); // Save after creating an event
     return event;
   }
 
@@ -295,6 +400,7 @@ export class MemStorage implements IStorage {
     }
 
     this.responses.set(id, response);
+    this.saveToFile(); // Save after creating or updating a response
     return response;
   }
 

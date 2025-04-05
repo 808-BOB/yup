@@ -3,6 +3,7 @@ import session from "express-session";
 import MemoryStore from "memorystore";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import fs from "fs";
 
 // Extending Express Request type to include session
 declare module "express-session" {
@@ -17,19 +18,28 @@ app.use(express.urlencoded({ extended: false }));
 
 // Set up persistent memory store
 const MemoryStoreSession = MemoryStore(session);
+const sessionStorePath = './data/sessions';
+
+// Ensure the sessions directory exists
+if (!fs.existsSync(sessionStorePath)) {
+  fs.mkdirSync(sessionStorePath, { recursive: true });
+}
 
 // Session configuration
 app.use(session({
   secret: "yup-rsvp-secret-key",
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: true, // Changed to true to ensure new sessions are saved
   store: new MemoryStoreSession({
-    checkPeriod: 86400000 // Prune expired entries every 24h
+    checkPeriod: 86400000, // Prune expired entries every 24h
+    stale: false, // Avoid "stale" session checks as we're persisting sessions
+    ttl: 604800000 // 7 days in milliseconds
   }),
   cookie: { 
     secure: process.env.NODE_ENV === "production", 
     maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-    httpOnly: true
+    httpOnly: true,
+    sameSite: 'lax'
   }
 }));
 
