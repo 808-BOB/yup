@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useRoute, Link, useLocation } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { Calendar, MapPin, User, Users, ArrowLeft, Eye } from "lucide-react";
 import { formatDate } from "@/lib/utils/date-formatter";
 import { apiRequest } from "@/lib/queryClient";
@@ -10,22 +10,43 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ConfirmationMessage from "@/components/confirmation-message";
 import GuestRsvpModal from "@/components/guest-rsvp-modal";
-import { type Event } from "@shared/schema";
+import { type Event, type Response } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function EventPage() {
+  // Hooks that must always be called
   const [, params] = useRoute("/events/:slug");
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
+  
+  // State management
   const [userResponse, setUserResponse] = useState<"yup" | "nope" | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [pendingResponse, setPendingResponse] = useState<"yup" | "nope" | null>(null);
   
+  // Event data query
   const { data: event, isLoading, error } = useQuery<Event>({
     queryKey: [`/api/events/slug/${params?.slug}`],
     enabled: !!params?.slug
   });
   
+  // User's response query - only run if user is logged in and event data is loaded
+  const { data: existingResponse } = useQuery<Response>({
+    queryKey: [`/api/events/${event?.id}/users/${user?.id}/response`],
+    enabled: !!event && !!user
+  });
+  
+  // Update state when existing response is loaded
+  useEffect(() => {
+    if (existingResponse) {
+      setUserResponse(existingResponse.response as "yup" | "nope");
+    }
+  }, [existingResponse]);
+  
+  // Event handlers
   const handleGuestSuccess = (response: "yup" | "nope") => {
     setUserResponse(response);
     setShowConfirmation(true);
@@ -35,21 +56,28 @@ export default function EventPage() {
     if (!event) return;
     
     try {
-      // For guest users, show the guest RSVP modal
-      const isLoggedIn = false; // In a real app, this would be determined by auth
+      const isLoggedIn = !!user;
       
+      // For guest users, show the guest RSVP modal if guest RSVP is allowed
       if (!isLoggedIn && event.allowGuestRsvp) {
         setPendingResponse(response);
         setShowGuestModal(true);
         return;
       }
       
-      // For logged in users, submit directly
-      const userId = 1; // In a real app, we'd get the userId from auth context
+      // For logged in users, submit response directly
+      if (!user) {
+        toast({
+          title: "Login Required",
+          description: "Please log in to respond to this event",
+          variant: "destructive"
+        });
+        return;
+      }
       
       await apiRequest("POST", "/api/responses", {
         eventId: event.id,
-        userId,
+        userId: user.id,
         response
       });
       
@@ -64,6 +92,7 @@ export default function EventPage() {
     }
   };
   
+  // Loading state
   if (isLoading) {
     return (
       <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
@@ -75,6 +104,7 @@ export default function EventPage() {
     );
   }
   
+  // Error state
   if (error || !event) {
     return (
       <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
@@ -86,6 +116,7 @@ export default function EventPage() {
     );
   }
   
+  // Confirmation state
   if (showConfirmation && userResponse) {
     return (
       <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
@@ -99,8 +130,7 @@ export default function EventPage() {
   
   const formattedTime = `${event.startTime.slice(0, 5)} - ${event.endTime.slice(0, 5)}`;
   
-  const [, setLocation] = useLocation();
-  
+  // Main UI
   return (
     <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
       <Header />
@@ -138,8 +168,8 @@ export default function EventPage() {
                 <div className="flex flex-col space-y-1">
                   <h2 className="text-xl font-bold tracking-tight">{event.title}</h2>
                   
-                  {/* Add this to show "Your Event" badge for the owner */}
-                  {event.hostId === 1 && ( // In a real app, this would check against logged-in user ID
+                  {/* Show "Your Event" badge for the owner */}
+                  {user && event.hostId === user.id && (
                     <div className="flex items-center space-x-2">
                       <Badge variant="outline" className="text-xs bg-primary/10 border-primary/20 text-primary">
                         Your Event
@@ -148,7 +178,7 @@ export default function EventPage() {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          window.location.href = `/events/${event.slug}/edit`;
+                          setLocation(`/events/${event.slug}/edit`);
                         }}
                         className="text-xs text-primary flex items-center gap-1 hover:text-primary/80"
                       >
