@@ -37,7 +37,7 @@ export default function Header() {
   };
 
   return (
-    <header className="flex justify-between items-center mb-6 py-4 border-b border-gray-800">
+    <header className="flex justify-between items-center mb-6 py-4 border-b border-gray-800 sticky top-0 z-50 bg-gray-950">
       <div className="flex items-center">
         <img
           src={YupLogo}

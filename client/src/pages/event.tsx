@@ -325,7 +325,7 @@ export default function EventPage() {
 
           <div className="mt-auto pb-6">
             <p className="text-center mb-8 text-gray-400 uppercase tracking-wide font-mono">
-              CAN YOU MAKE IT?
+              ARE YOU IN?
             </p>
 
             <div className="flex gap-8 justify-center mb-8">
