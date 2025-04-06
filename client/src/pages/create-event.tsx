@@ -114,11 +114,17 @@ export default function CreateEvent() {
         hostId: eventData.hostId
       });
       
+      // If there's an image URL and it's a valid URL (not data:), display it
+      if (eventData.imageUrl && !eventData.imageUrl.startsWith('data:')) {
+        // Set the field value for the URL tab
+        form.setValue("imageUrl", eventData.imageUrl);
+      }
+      
       // If the event has an image URL, show it
       if (eventData.imageUrl) {
-        // Only set preview URL if it's not a data URL (uploaded file)
-        if (!eventData.imageUrl.startsWith('data:')) {
-          setPreviewUrl(null);
+        // Set the preview URL if it's a data URL (uploaded file)
+        if (eventData.imageUrl.startsWith('data:')) {
+          setPreviewUrl(eventData.imageUrl);
         }
       }
     }
