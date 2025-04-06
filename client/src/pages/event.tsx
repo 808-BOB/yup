@@ -226,23 +226,46 @@ export default function EventPage() {
 
                   {/* Show "Your Event" badge for the owner */}
                   {user && event.hostId === user.id && (
-                    <div className="flex items-center justify-between w-full">
-                      <Badge
-                        variant="outline"
-                        className="text-xs bg-primary/10 border-primary/20 text-primary"
-                      >
-                        Your Event
-                      </Badge>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setLocation(`/events/${event.slug}/edit`);
-                        }}
-                        className="text-xs text-primary flex items-center gap-1 hover:text-primary/80"
-                      >
-                        Edit Event
-                      </button>
+                    <div className="flex flex-col space-y-1 w-full">
+                      <div className="flex justify-between items-center w-full">
+                        <Badge
+                          variant="outline"
+                          className="text-xs bg-primary/10 border-primary/20 text-primary"
+                        >
+                          Your Event
+                        </Badge>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setLocation(`/events/${event.slug}/edit`);
+                          }}
+                          className="text-xs text-primary flex items-center gap-1 hover:text-primary/80"
+                        >
+                          Edit Event
+                        </button>
+                      </div>
+                      <div className="flex justify-end">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setLocation(`/events/${event.slug}/responses`);
+                          }}
+                          className="text-xs text-primary flex items-center gap-1 hover:text-primary/80"
+                        >
+                          View Responses
+                        </button>
+                      </div>
+                      {/* Display RSVP visibility settings to host */}
+                      <div className="mt-1 text-xs text-gray-500 text-right">
+                        {!event.showRsvpsToInvitees && (
+                          <div>RSVPs hidden from guests</div>
+                        )}
+                        {event.showRsvpsAfterThreshold && (
+                          <div>Visible after {event.rsvpVisibilityThreshold} YUPs</div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -295,12 +318,12 @@ export default function EventPage() {
                     <div>
                       <div className="font-medium tracking-tight flex items-center">
                         <span>Guest RSVP</span>{" "}
-                        <Badge
-                          variant="outline"
-                          className="ml-1 text-xs font-normal"
-                        >
-                          enabled
-                        </Badge>
+                        <span className="ml-1 text-green-500 flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                          </svg>
+                        </span>
                       </div>
                       {event.allowPlusOne && (
                         <p className="text-gray-500 tracking-tight">

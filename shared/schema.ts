@@ -39,6 +39,9 @@ export const events = pgTable("events", {
   allowGuestRsvp: boolean("allow_guest_rsvp").notNull().default(true),
   allowPlusOne: boolean("allow_plus_one").notNull().default(true),
   maxGuestsPerRsvp: integer("max_guests_per_rsvp").notNull().default(3),
+  showRsvpsToInvitees: boolean("show_rsvps_to_invitees").notNull().default(true),
+  showRsvpsAfterThreshold: boolean("show_rsvps_after_threshold").notNull().default(false),
+  rsvpVisibilityThreshold: integer("rsvp_visibility_threshold").notNull().default(5),
 });
 
 // Create the insert schema and refine it
