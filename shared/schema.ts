@@ -33,6 +33,7 @@ export const events = pgTable("events", {
   address: text("address"),
   description: text("description"),
   hostId: integer("host_id").notNull(),
+  hostDisplayText: text("host_display_text"),
   status: text("status").notNull().default("open"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   slug: text("slug").notNull().unique(),
