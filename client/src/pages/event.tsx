@@ -131,12 +131,12 @@ export default function EventPage() {
   const formattedTime = `${event.startTime.slice(0, 5)} - ${event.endTime.slice(0, 5)}`;
   
   // Enhanced debug for imageUrl
-  console.log("Event image URL:", event.imageUrl);
+  console.log("Event image URL:", event.imageUrl ? "exists" : "missing");
   if (event.imageUrl?.startsWith('data:')) {
     console.log("Image is base64 data, first 40 chars:", event.imageUrl.substring(0, 40));
+    // Print the length of the base64 string for debugging
+    console.log("Image base64 data length:", event.imageUrl.length);
   }
-  // Log the event object directly to inspect all properties
-  console.log("Full event object:", JSON.stringify(event, null, 2));
 
   // Main UI
   return (
@@ -171,27 +171,14 @@ export default function EventPage() {
             )}
           </div>
           
-          {/* Match the working image display from event-card.tsx */}
+          {/* Using direct img src with fallback text */}
           {event.imageUrl && (
-            <div className="w-full h-48 mb-6 overflow-hidden rounded-sm bg-gray-800">
-              {event.imageUrl.startsWith('data:') ? (
-                // For base64 images, use background-image approach
-                <div 
-                  className="w-full h-full bg-no-repeat bg-center bg-cover"
-                  style={{ backgroundImage: `url(${event.imageUrl})` }}
-                ></div>
-              ) : (
-                // For regular URLs, use img tag
-                <img 
-                  src={event.imageUrl}
-                  alt={event.title} 
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    console.error("Image failed to load:", e);
-                    e.currentTarget.style.display = "none";
-                  }}
-                />
-              )}
+            <div className="relative w-full h-48 mb-6 rounded-sm bg-gray-800">
+              <img 
+                src={event.imageUrl}
+                alt={event.title || "Event image"}
+                className="absolute top-0 left-0 w-full h-full object-cover"
+              />
             </div>
           )}
           <Card className="mb-6 animate-slide-up bg-gray-900 border border-gray-800">
