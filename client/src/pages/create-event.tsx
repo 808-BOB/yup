@@ -242,6 +242,9 @@ export default function CreateEvent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-950">
+  <head>
+    <title>{isEditMode ? "Edit Event" : "Create Event"} | Yup.RSVP</title>
+  </head>
       <div className="max-w-md mx-auto px-4 w-full">
         <Header />
       
