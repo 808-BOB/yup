@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import InviteModal from "@/components/invite-modal";
 import { useRoute, useLocation } from "wouter";
 import { Calendar, MapPin, User, Users, ArrowLeft, Eye, Edit } from "lucide-react";
-import { formatDate } from "@/lib/utils/date-formatter";
+import { formatDate, formatTime } from "@/lib/utils/date-formatter";
 import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -145,7 +145,7 @@ export default function EventPage() {
     );
   }
 
-  const formattedTime = `${event.startTime.slice(0, 5)} - ${event.endTime.slice(0, 5)}`;
+  const formattedTime = `${formatTime(event.startTime)} - ${formatTime(event.endTime)}`;
 
   // Enhanced debug for imageUrl
   console.log("Event image URL:", event.imageUrl ? "exists" : "missing");
@@ -169,7 +169,7 @@ export default function EventPage() {
       )}
       <main className="flex-1 overflow-auto mb-6">
         <div className="flex flex-col animate-fade-in">
-          <div className="flex mb-4">
+          <div className="flex justify-between mb-4">
             {/* Only show Back to Events button if user is logged in */}
             {user && (
               <Button
@@ -179,6 +179,18 @@ export default function EventPage() {
                 onClick={() => setLocation("/my-events")}
               >
                 <ArrowLeft className="w-4 h-4" /> Back to Events
+              </Button>
+            )}
+            
+            {/* View Responses button top right */}
+            {user && user.id === event.hostId && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
+                onClick={() => setLocation(`/events/${event.slug}/responses`)}
+              >
+                <Eye className="w-4 h-4" /> View Responses
               </Button>
             )}
           </div>
@@ -321,26 +333,7 @@ export default function EventPage() {
                   </div>
                 )}
                 
-                {/* View Responses button - moved below Guest RSVP option */}
-                {user && user.id === event.hostId && (
-                  <div className="border-t border-gray-800 pt-3 mt-4 w-full">
-                    <div className="flex justify-end w-full">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setLocation(`/events/${event.slug}/responses`);
-                        }}
-                        className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>View Responses</span>
-                      </Button>
-                    </div>
-                  </div>
-                )}
+
 
                 {event.description && (
                   <div className="border-t border-gray-800 pt-3 mt-4">
