@@ -630,12 +630,6 @@ export default function CreateEvent() {
           </Form>
         </main>
       </div>
-      
-      {/* Footer - sticky only on desktop */}
-      <div className="mt-8 md:mt-auto pt-6 pb-10 text-center text-gray-500 text-xs">
-        <p>© 2025 Yup.RSVP. All rights are relative.</p>
-        <p className="mt-1">Imagined, designed, and developed by Former Colleagues™.</p>
-      </div>
     </div>
   );
 }
