@@ -398,6 +398,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Invitation endpoints
+  app.post("/api/events/:eventId/invitations", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const eventId = parseInt(req.params.eventId);
+      const { userIds } = req.body;
+      
+      // Verify the event exists and user is the host
+      const event = await storage.getEvent(eventId);
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      
+      if (event.hostId !== req.session!.userId) {
+        return res.status(403).json({ message: "Only the event host can send invitations" });
+      }
+      
+      // Create invitations
+      for (const userId of userIds) {
+        await storage.createInvitation(eventId, userId);
+      }
+      
+      res.status(201).json({ message: "Invitations sent successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to send invitations" });
+    }
+  });
+
+  app.get("/api/events/:eventId/invitations", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const eventId = parseInt(req.params.eventId);
+      const invitedUsers = await storage.getEventInvitations(eventId);
+      res.json(invitedUsers);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch invitations" });
+    }
+  });
+
   app.get("/api/events/:eventId/responses/count", async (req: Request, res: Response) => {
     try {
       const eventId = parseInt(req.params.eventId);

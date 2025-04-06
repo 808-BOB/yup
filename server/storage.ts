@@ -8,6 +8,11 @@ import {
 } from "@shared/schema";
 
 export interface IStorage {
+  // Invitation operations
+  createInvitation(eventId: number, userId: number): Promise<void>;
+  getEventInvitations(eventId: number): Promise<number[]>;
+  getEventsUserInvitedTo(userId: number): Promise<Event[]>;
+  
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -409,12 +414,33 @@ export class MemStorage implements IStorage {
     );
   }
 
+  private invitations: Map<number, {id: number, eventId: number, userId: number, status: string}>;
+  private invitationIdCounter: number;
+
+  async createInvitation(eventId: number, userId: number): Promise<void> {
+    const id = this.invitationIdCounter++;
+    this.invitations.set(id, {
+      id,
+      eventId,
+      userId,
+      status: 'pending'
+    });
+    this.saveToFile();
+  }
+
+  async getEventInvitations(eventId: number): Promise<number[]> {
+    return Array.from(this.invitations.values())
+      .filter(inv => inv.eventId === eventId)
+      .map(inv => inv.userId);
+  }
+
   async getEventsUserInvitedTo(userId: number): Promise<Event[]> {
-    // In a real app, we'd have an invitation system
-    // For this demo, we'll just return all events not created by the user
-    return Array.from(this.events.values()).filter(
-      (event) => event.hostId !== userId
-    );
+    const userInvitations = Array.from(this.invitations.values())
+      .filter(inv => inv.userId === userId)
+      .map(inv => inv.eventId);
+    
+    return Array.from(this.events.values())
+      .filter(event => userInvitations.includes(event.id));
   }
 
   async getAllEvents(): Promise<Event[]> {

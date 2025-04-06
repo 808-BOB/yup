@@ -47,6 +47,14 @@ export const insertEventSchema = createInsertSchema(events)
     description: data.description || "",
   }));
 
+export const invitations = pgTable("invitations", {
+  id: serial("id").primaryKey(),
+  eventId: integer("event_id").notNull(),
+  userId: integer("user_id").notNull(),
+  status: text("status").notNull().default("pending"), // pending, accepted, declined
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const responses = pgTable("responses", {
   id: serial("id").primaryKey(),
   eventId: integer("event_id").notNull(),
