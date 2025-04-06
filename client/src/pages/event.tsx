@@ -226,11 +226,19 @@ export default function EventPage() {
                 </div>
                 
                 {/* Edit button in top right */}
-                {user && user.id === event.hostId && (
+                {user?.id === event.hostId && (
                   <button
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
+                      if (!user) {
+                        toast({
+                          title: "Login Required",
+                          description: "Please log in to edit this event",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
                       setLocation(`/events/${event.slug}/edit`);
                     }}
                     className="text-xs text-primary flex items-center gap-1 hover:text-primary/80"
