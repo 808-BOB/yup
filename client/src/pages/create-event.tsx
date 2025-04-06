@@ -40,6 +40,7 @@ const formSchema = z.object({
   description: z.string().optional().default(""),
   status: z.string().default("open"),
   hostId: z.number(),
+  hostDisplayText: z.string().optional(),
   slug: z.string().optional(), // Will be generated server-side
   allowGuestRsvp: z.boolean().default(true),
   allowPlusOne: z.boolean().default(true),
@@ -544,6 +545,30 @@ export default function CreateEvent() {
                     </FormItem>
                   );
                 }}
+              />
+
+              <FormField
+                control={form.control}
+                name="hostDisplayText"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">
+                      Custom Host Text (Optional)
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={`Default: ${user?.displayName}`}
+                        className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12"
+                        {...field}
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs text-gray-500">
+                      Customize how the host is displayed (e.g. "Hosted by ABC Corp" or "John & Jane")
+                    </FormDescription>
+                    <FormMessage className="text-primary" />
+                  </FormItem>
+                )}
               />
 
               <FormField

@@ -312,8 +312,8 @@ export default function EventPage() {
                   <div>
                     <p className="font-medium tracking-tight">
                       {user && user.id === event.hostId
-                        ? `Hosted by you (${user.displayName})`
-                        : `Hosted by ${event.hostDisplayName || "User"}`}
+                        ? `Hosted by you (${event.hostDisplayText || user.displayName})`
+                        : `Hosted by ${event.hostDisplayText || event.hostDisplayName || "User"}`}
                     </p>
                   </div>
                 </div>
