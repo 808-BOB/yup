@@ -317,8 +317,6 @@ export default function Profile() {
           </Card>
         </div>
       </main>
-      
-      <Footer />
     </div>
   );
 }
