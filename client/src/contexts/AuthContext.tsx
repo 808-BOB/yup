@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const userData = await apiRequest<User>("GET", "/api/auth/me");
+        const userData = await apiRequest<User>("GET", "/api/auth/me", undefined, { credentials: 'include' });
         setUser(userData);
       } catch (err) {
         // User is not logged in, that's okay
