@@ -130,11 +130,13 @@ export default function EventPage() {
   
   const formattedTime = `${event.startTime.slice(0, 5)} - ${event.endTime.slice(0, 5)}`;
   
-  // Debug imageUrl
+  // Enhanced debug for imageUrl
   console.log("Event image URL:", event.imageUrl);
   if (event.imageUrl?.startsWith('data:')) {
     console.log("Image is base64 data, first 40 chars:", event.imageUrl.substring(0, 40));
   }
+  // Log the event object directly to inspect all properties
+  console.log("Full event object:", JSON.stringify(event, null, 2));
 
   // Main UI
   return (
@@ -169,24 +171,27 @@ export default function EventPage() {
             )}
           </div>
           
+          {/* Match the working image display from event-card.tsx */}
           {event.imageUrl && (
-            <div className="w-full h-48 mb-6 overflow-hidden rounded-sm">
-              {/* Using a different approach that guarantees the image will display */}
-              <div
-                className="w-full h-full bg-gray-800"
-                style={{
-                  position: 'relative',
-                  backgroundImage: `url("${event.imageUrl}")`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  backgroundRepeat: 'no-repeat'
-                }}
-              >
-                {/* Fallback text if image fails */}
-                <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                  <span className="opacity-0">Event Image</span>
-                </div>
-              </div>
+            <div className="w-full h-48 mb-6 overflow-hidden rounded-sm bg-gray-800">
+              {event.imageUrl.startsWith('data:') ? (
+                // For base64 images, use background-image approach
+                <div 
+                  className="w-full h-full bg-no-repeat bg-center bg-cover"
+                  style={{ backgroundImage: `url(${event.imageUrl})` }}
+                ></div>
+              ) : (
+                // For regular URLs, use img tag
+                <img 
+                  src={event.imageUrl}
+                  alt={event.title} 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    console.error("Image failed to load:", e);
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              )}
             </div>
           )}
           <Card className="mb-6 animate-slide-up bg-gray-900 border border-gray-800">
