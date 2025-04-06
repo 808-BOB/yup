@@ -140,9 +140,12 @@ export default function CreateEvent() {
     // Create a preview URL for the selected image
     const fileReader = new FileReader();
     fileReader.onload = () => {
-      setPreviewUrl(fileReader.result as string);
-      // We're just using the base64 data URL for now
-      form.setValue("imageUrl", fileReader.result as string);
+      const base64Data = fileReader.result as string;
+      console.log("File converted to base64:", base64Data.substring(0, 50) + "...");
+      
+      setPreviewUrl(base64Data);
+      // Set the image URL in the form
+      form.setValue("imageUrl", base64Data);
     };
     fileReader.readAsDataURL(file);
   };
@@ -252,12 +255,23 @@ export default function CreateEvent() {
                           />
                         </FormControl>
                         {field.value && !previewUrl && (
-                          <div className="mt-2 h-32 w-full bg-gray-800 flex items-center justify-center">
+                          <div className="mt-2 h-32 w-full bg-gray-800 flex items-center justify-center relative">
                             <img 
+                              key={`preview-${Date.now()}`}
                               src={field.value} 
                               alt="Preview" 
                               className="max-h-full max-w-full object-contain"
-                              onError={() => {
+                              style={{ 
+                                position: 'absolute', 
+                                top: 0, 
+                                left: 0, 
+                                width: '100%', 
+                                height: '100%',
+                                objectFit: 'contain'
+                              }}
+                              onError={(e) => {
+                                console.error("Error loading image:", e);
+                                e.currentTarget.style.display = "none";
                                 toast({
                                   title: "Error",
                                   description: "Invalid image URL",
@@ -265,6 +279,8 @@ export default function CreateEvent() {
                                 });
                               }}
                             />
+                            {/* Fallback placeholder */}
+                            <span className="text-gray-400">Image preview</span>
                           </div>
                         )}
                         <FormDescription className="text-xs text-gray-500 mt-1">
@@ -277,9 +293,14 @@ export default function CreateEvent() {
                           {previewUrl ? (
                             <div className="relative">
                               <img 
+                                key={`upload-preview-${Date.now()}`}
                                 src={previewUrl} 
                                 alt="Selected file" 
                                 className="max-h-32 mx-auto object-contain"
+                                onError={(e) => {
+                                  console.error("Error loading uploaded image:", e);
+                                  e.currentTarget.style.display = "none";
+                                }}
                               />
                               <Button
                                 type="button"
