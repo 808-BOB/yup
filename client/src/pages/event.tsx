@@ -130,6 +130,12 @@ export default function EventPage() {
   
   const formattedTime = `${event.startTime.slice(0, 5)} - ${event.endTime.slice(0, 5)}`;
   
+  // Debug imageUrl
+  console.log("Event image URL:", event.imageUrl);
+  if (event.imageUrl?.startsWith('data:')) {
+    console.log("Image is base64 data, first 40 chars:", event.imageUrl.substring(0, 40));
+  }
+
   // Main UI
   return (
     <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
@@ -158,8 +164,31 @@ export default function EventPage() {
           </div>
           
           {event.imageUrl && (
-            <div className="w-full h-48 mb-6 overflow-hidden rounded-sm">
-              <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover" />
+            <div className="w-full h-48 mb-6 overflow-hidden rounded-sm relative">
+              {/* Regular image element that should handle both URLs and base64 data */}
+              <img 
+                key={`img-${event.id}-${Date.now()}`} // Force react to recreate the element
+                src={event.imageUrl}
+                alt={event.title} 
+                className="w-full h-full object-cover" 
+                style={{ 
+                  position: 'absolute', 
+                  top: 0, 
+                  left: 0, 
+                  width: '100%', 
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+                onError={(e) => {
+                  console.error("Image failed to load:", e);
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+              
+              {/* Fallback colored background if image fails to load */}
+              <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                <span className="text-gray-400">Image preview</span>
+              </div>
             </div>
           )}
           <Card className="mb-6 animate-slide-up bg-gray-900 border border-gray-800">
@@ -246,22 +275,9 @@ export default function EventPage() {
           </Card>
           
           <div className="mt-auto pb-6">
-            <Button
-              onClick={() => {
-                const url = `${window.location.origin}/events/${event.slug}`;
-                navigator.clipboard.writeText(url);
-                toast({
-                  title: "Link Copied!",
-                  description: "Share this link to invite people to your event",
-                });
-              }}
-              className="w-full mb-8 bg-gray-900 border border-gray-800 hover:border-gray-700"
-            >
-              Share Event Link
-            </Button>
             <p className="text-center mb-8 text-gray-400 uppercase tracking-wide font-mono">CAN YOU MAKE IT?</p>
             
-            <div className="flex gap-8 justify-center">
+            <div className="flex gap-8 justify-center mb-8">
               <Button
                 onClick={() => handleResponse("nope")}
                 className="btn-nope bg-gray-900 w-32 h-32 rounded-sm flex items-center justify-center border border-gray-800 hover:border-gray-700 transition-colors"
@@ -276,6 +292,20 @@ export default function EventPage() {
                 <span className="text-primary text-2xl font-bold uppercase tracking-widest">YUP</span>
               </Button>
             </div>
+            
+            <Button
+              onClick={() => {
+                const url = `${window.location.origin}/events/${event.slug}`;
+                navigator.clipboard.writeText(url);
+                toast({
+                  title: "Link Copied!",
+                  description: "Share this link to invite people to your event",
+                });
+              }}
+              className="w-full bg-gray-900 border border-gray-800 hover:border-gray-700"
+            >
+              Share Event Link
+            </Button>
           </div>
         </div>
       </main>
