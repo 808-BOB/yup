@@ -19,7 +19,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/events" component={EventList} />
+      <Route path="/event-list" component={EventList} />
       <Route path="/events/create" component={CreateEvent} />
       <Route path="/events/:slug/edit" component={CreateEvent} />{" "}
       {/* Reuse CreateEvent component for editing */}
