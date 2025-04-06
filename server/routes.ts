@@ -281,7 +281,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Event not found" });
       }
       
-      res.json(event);
+      // Get the host user to include their display name
+      const hostUser = await storage.getUser(event.hostId);
+      
+      // Add the host display name to the event object
+      const eventWithHostInfo = {
+        ...event,
+        hostDisplayName: hostUser ? hostUser.displayName : 'Unknown User'
+      };
+      
+      res.json(eventWithHostInfo);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch event" });
     }

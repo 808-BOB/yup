@@ -10,9 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ConfirmationMessage from "@/components/confirmation-message";
 import GuestRsvpModal from "@/components/guest-rsvp-modal";
-import { type Event, type Response } from "@shared/schema";
+import { type Event as BaseEvent, type Response } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+
+// Extended Event type with host display name
+type Event = BaseEvent & {
+  hostDisplayName?: string;
+};
 
 export default function EventPage() {
   // Hooks that must always be called
@@ -244,7 +249,11 @@ export default function EventPage() {
                 <div className="flex items-start">
                   <User className="w-5 h-5 text-gray-500 mr-2 mt-0.5" />
                   <div>
-                    <p className="font-medium tracking-tight">Hosted by Demo User</p>
+                    <p className="font-medium tracking-tight">
+                      {user && user.id === event.hostId 
+                        ? `Hosted by you (${user.displayName})`
+                        : `Hosted by ${event.hostDisplayName || 'User'}`}
+                    </p>
                   </div>
                 </div>
                 
