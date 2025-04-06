@@ -55,8 +55,9 @@ export default function CreateEvent() {
   const [, params] = useRoute("/events/:slug/edit");
   const isEditMode = params && params.slug;
   
-  // Redirect to login if not authenticated
-  if (!authLoading && !user) {
+  // Redirect to login if not authenticated - but only when creating a new event
+  // For editing, we'll check permission after loading the event
+  if (!authLoading && !user && !isEditMode) {
     setLocation("/login");
     return null;
   }
@@ -93,14 +94,27 @@ export default function CreateEvent() {
       setPageTitle("Edit Event");
       setSubmitButtonText("Save Changes");
       
+      // Check if user is logged in
+      if (!user) {
+        // If not logged in, redirect to view the event instead of editing
+        toast({
+          title: "Login Required",
+          description: "Please log in to edit this event.",
+          variant: "destructive"
+        });
+        // Redirect to event view page instead of login page
+        setLocation(`/events/${eventData.slug}`);
+        return;
+      }
+      
       // Check if this user is allowed to edit this event
-      if (eventData.hostId !== user?.id) {
+      if (eventData.hostId !== user.id) {
         toast({
           title: "Permission Denied",
           description: "You can only edit events that you've created.",
           variant: "destructive"
         });
-        setLocation("/my-events");
+        setLocation(`/events/${eventData.slug}`);
         return;
       }
       
@@ -192,8 +206,14 @@ export default function CreateEvent() {
         queryClient.invalidateQueries({ queryKey: [`/api/events/slug/${params.slug}`] });
       }
 
-      // Redirect to the user's events page
-      setLocation("/my-events");
+      // Redirect based on context
+      if (isEditMode && eventData) {
+        // After editing, go back to the event page
+        setLocation(`/events/${eventData.slug}`);
+      } else {
+        // After creating, go to the user's events page
+        setLocation("/my-events");
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -206,7 +226,13 @@ export default function CreateEvent() {
   };
 
   const handleCancel = () => {
-    setLocation("/my-events");
+    if (isEditMode && eventData) {
+      // If we're editing, go back to the event page
+      setLocation(`/events/${eventData.slug}`);
+    } else {
+      // Otherwise, go back to the user's events page
+      setLocation("/my-events");
+    }
   };
 
   return (
