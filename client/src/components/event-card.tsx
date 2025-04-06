@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { ChevronRight, Share2, Edit, Check, X } from "lucide-react";
-import { formatDate } from "@/lib/utils/date-formatter";
+import { formatDate, formatTime } from "@/lib/utils/date-formatter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -20,7 +20,7 @@ export default function EventCard({
   isOwner = showStats, // If showing stats, assume the user is the owner
   userResponse = null,
 }: EventCardProps) {
-  const formattedTime = `${event.startTime.slice(0, 5)}`;
+  const formattedTime = formatTime(event.startTime);
   const { toast } = useToast();
   const userId = 1; // In a real app, we'd get this from auth context
 

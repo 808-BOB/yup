@@ -285,17 +285,8 @@ export default function CreateEvent() {
                     <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">
                       Event Image (Optional)
                     </FormLabel>
-                    <Tabs defaultValue="url" className="w-full">
+                    <Tabs defaultValue="upload" className="w-full">
                       <TabsList className="grid w-full grid-cols-2 bg-gray-800">
-                        <TabsTrigger
-                          value="url"
-                          className="data-[state=active]:bg-gray-700"
-                        >
-                          <div className="flex items-center gap-2">
-                            <LinkIcon className="h-4 w-4" />
-                            <span>URL</span>
-                          </div>
-                        </TabsTrigger>
                         <TabsTrigger
                           value="upload"
                           className="data-[state=active]:bg-gray-700"
@@ -303,6 +294,15 @@ export default function CreateEvent() {
                           <div className="flex items-center gap-2">
                             <Upload className="h-4 w-4" />
                             <span>Upload</span>
+                          </div>
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="url"
+                          className="data-[state=active]:bg-gray-700"
+                        >
+                          <div className="flex items-center gap-2">
+                            <LinkIcon className="h-4 w-4" />
+                            <span>URL</span>
                           </div>
                         </TabsTrigger>
                       </TabsList>
@@ -464,7 +464,7 @@ export default function CreateEvent() {
                       <FormControl>
                         <Input
                           type="time"
-                          className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12 text-gray-200"
+                          className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12 text-gray-200 w-full"
                           {...field}
                         />
                       </FormControl>
@@ -484,7 +484,7 @@ export default function CreateEvent() {
                       <FormControl>
                         <Input
                           type="time"
-                          className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12 text-gray-200"
+                          className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12 text-gray-200 w-full"
                           {...field}
                         />
                       </FormControl>
