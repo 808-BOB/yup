@@ -25,51 +25,51 @@ export default function EventPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
-  
+
   // State management
   const [userResponse, setUserResponse] = useState<"yup" | "nope" | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [pendingResponse, setPendingResponse] = useState<"yup" | "nope" | null>(null);
-  
+
   // Event data query
   const { data: event, isLoading, error } = useQuery<Event>({
     queryKey: [`/api/events/slug/${params?.slug}`],
     enabled: !!params?.slug
   });
-  
+
   // User's response query - only run if user is logged in and event data is loaded
   const { data: existingResponse } = useQuery<Response>({
     queryKey: [`/api/events/${event?.id}/users/${user?.id}/response`],
     enabled: !!event && !!user
   });
-  
+
   // Update state when existing response is loaded
   useEffect(() => {
     if (existingResponse) {
       setUserResponse(existingResponse.response as "yup" | "nope");
     }
   }, [existingResponse]);
-  
+
   // Event handlers
   const handleGuestSuccess = (response: "yup" | "nope") => {
     setUserResponse(response);
     setShowConfirmation(true);
   };
-  
+
   const handleResponse = async (response: "yup" | "nope") => {
     if (!event) return;
-    
+
     try {
       const isLoggedIn = !!user;
-      
+
       // For guest users, show the guest RSVP modal if guest RSVP is allowed
       if (!isLoggedIn && event.allowGuestRsvp) {
         setPendingResponse(response);
         setShowGuestModal(true);
         return;
       }
-      
+
       // For logged in users, submit response directly
       if (!user) {
         toast({
@@ -79,13 +79,13 @@ export default function EventPage() {
         });
         return;
       }
-      
+
       await apiRequest("POST", "/api/responses", {
         eventId: event.id,
         userId: user.id,
         response
       });
-      
+
       setUserResponse(response);
       setShowConfirmation(true);
     } catch (error) {
@@ -96,7 +96,7 @@ export default function EventPage() {
       });
     }
   };
-  
+
   // Loading state
   if (isLoading) {
     return (
@@ -108,7 +108,7 @@ export default function EventPage() {
       </div>
     );
   }
-  
+
   // Error state
   if (error || !event) {
     return (
@@ -120,7 +120,7 @@ export default function EventPage() {
       </div>
     );
   }
-  
+
   // Confirmation state
   if (showConfirmation && userResponse) {
     return (
@@ -132,9 +132,9 @@ export default function EventPage() {
       </div>
     );
   }
-  
+
   const formattedTime = `${event.startTime.slice(0, 5)} - ${event.endTime.slice(0, 5)}`;
-  
+
   // Enhanced debug for imageUrl
   console.log("Event image URL:", event.imageUrl ? "exists" : "missing");
   if (event.imageUrl?.startsWith('data:')) {
@@ -147,7 +147,11 @@ export default function EventPage() {
   return (
     <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col bg-gray-950">
       <Header />
-      
+      {event && (
+        <head>
+          <title>{event.title} | Yup.RSVP</title>
+        </head>
+      )}
       <main className="flex-1 overflow-auto mb-6">
         <div className="flex flex-col animate-fade-in">
           <div className="flex gap-4 mb-4">
@@ -162,7 +166,7 @@ export default function EventPage() {
                 <ArrowLeft className="w-4 h-4" /> Back to Events
               </Button>
             )}
-            
+
             {/* Only show View Responses button if user is the event host */}
             {user && user.id === event.hostId && (
               <Button 
@@ -175,7 +179,7 @@ export default function EventPage() {
               </Button>
             )}
           </div>
-          
+
           {/* Event Image - matching the style from event-card.tsx which we know works */}
           {event.imageUrl && (
             <div className="w-full h-48 mb-6 overflow-hidden rounded-sm bg-gray-800">
@@ -202,7 +206,7 @@ export default function EventPage() {
               <div className="flex justify-between items-start">
                 <div className="flex flex-col space-y-1">
                   <h2 className="text-xl font-bold tracking-tight">{event.title}</h2>
-                  
+
                   {/* Show "Your Event" badge for the owner */}
                   {user && event.hostId === user.id && (
                     <div className="flex items-center space-x-2">
@@ -226,7 +230,7 @@ export default function EventPage() {
                   {event.status}
                 </span>
               </div>
-              
+
               <div className="mt-4 space-y-3">
                 <div className="flex items-start">
                   <Calendar className="w-5 h-5 text-gray-500 mr-2 mt-0.5" />
@@ -235,7 +239,7 @@ export default function EventPage() {
                     <p className="text-gray-500 tracking-tight">{formattedTime}</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start">
                   <MapPin className="w-5 h-5 text-gray-500 mr-2 mt-0.5" />
                   <div>
@@ -245,7 +249,7 @@ export default function EventPage() {
                     )}
                   </div>
                 </div>
-                
+
                 <div className="flex items-start">
                   <User className="w-5 h-5 text-gray-500 mr-2 mt-0.5" />
                   <div>
@@ -256,7 +260,7 @@ export default function EventPage() {
                     </p>
                   </div>
                 </div>
-                
+
                 {event.allowGuestRsvp && (
                   <div className="flex items-start">
                     <Users className="w-5 h-5 text-gray-500 mr-2 mt-0.5" />
@@ -272,7 +276,7 @@ export default function EventPage() {
                     </div>
                   </div>
                 )}
-                
+
                 {event.description && (
                   <div className="border-t border-gray-800 pt-3 mt-4">
                     <p className="text-gray-400 tracking-tight">
@@ -283,10 +287,10 @@ export default function EventPage() {
               </div>
             </CardContent>
           </Card>
-          
+
           <div className="mt-auto pb-6">
             <p className="text-center mb-8 text-gray-400 uppercase tracking-wide font-mono">CAN YOU MAKE IT?</p>
-            
+
             <div className="flex gap-8 justify-center mb-8">
               <Button
                 onClick={() => handleResponse("nope")}
@@ -294,7 +298,7 @@ export default function EventPage() {
               >
                 <span className="text-gray-400 text-2xl font-bold uppercase tracking-widest">NOPE</span>
               </Button>
-              
+
               <Button
                 onClick={() => handleResponse("yup")}
                 className="btn-yup bg-gray-900 w-32 h-32 rounded-sm flex items-center justify-center border border-primary hover:border-primary/80 transition-colors"
@@ -302,7 +306,7 @@ export default function EventPage() {
                 <span className="text-primary text-2xl font-bold uppercase tracking-widest">YUP</span>
               </Button>
             </div>
-            
+
             <Button
               onClick={() => {
                 const url = `${window.location.origin}/events/${event.slug}`;
@@ -319,7 +323,7 @@ export default function EventPage() {
           </div>
         </div>
       </main>
-      
+
       {/* Guest RSVP Modal */}
       {showGuestModal && pendingResponse && (
         <GuestRsvpModal

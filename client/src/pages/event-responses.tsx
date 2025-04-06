@@ -56,7 +56,7 @@ export default function EventResponses() {
       </div>
     );
   }
-  
+
   // Check if the current user is the host of the event
   if (user && event.hostId !== user.id) {
     toast({
@@ -69,7 +69,12 @@ export default function EventResponses() {
   }
 
   return (
-    <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
+    <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col bg-gray-950">
+      {event && (
+        <head>
+          <title>Responses: {event.title} | Yup.RSVP</title>
+        </head>
+      )}
       <Header />
       <main className="flex-1 overflow-auto animate-fade-in">
         <div className="flex mb-4 gap-2">
@@ -81,7 +86,7 @@ export default function EventResponses() {
           >
             <ArrowLeft className="w-4 h-4" /> All Events
           </Button>
-          
+
           <Button 
             variant="outline" 
             size="sm" 
@@ -91,7 +96,7 @@ export default function EventResponses() {
             <ArrowLeft className="w-4 h-4" /> Back to Event
           </Button>
         </div>
-        
+
         <Card className="bg-gray-900 border border-gray-800">
           <CardContent className="p-6">
             <h2 className="text-xl font-bold tracking-tight uppercase mb-6">{event.title} RSVPs</h2>
