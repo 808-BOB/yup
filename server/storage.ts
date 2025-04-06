@@ -414,8 +414,8 @@ export class MemStorage implements IStorage {
     );
   }
 
-  private invitations: Map<number, {id: number, eventId: number, userId: number, status: string}>;
-  private invitationIdCounter: number;
+  private invitations: Map<number, {id: number, eventId: number, userId: number, status: string}> = new Map();
+  private invitationIdCounter: number = 0;
 
   async createInvitation(eventId: number, userId: number): Promise<void> {
     const id = this.invitationIdCounter++;
@@ -435,12 +435,17 @@ export class MemStorage implements IStorage {
   }
 
   async getEventsUserInvitedTo(userId: number): Promise<Event[]> {
-    const userInvitations = Array.from(this.invitations.values())
-      .filter(inv => inv.userId === userId)
-      .map(inv => inv.eventId);
-    
-    return Array.from(this.events.values())
-      .filter(event => userInvitations.includes(event.id));
+    try {
+      const userInvitations = Array.from(this.invitations.values())
+        .filter(inv => inv.userId === userId)
+        .map(inv => inv.eventId);
+      
+      return Array.from(this.events.values())
+        .filter(event => userInvitations.includes(event.id));
+    } catch (error) {
+      console.error('Error fetching user invites:', error);
+      return [];
+    }
   }
 
   async getAllEvents(): Promise<Event[]> {
