@@ -153,7 +153,14 @@ export class MemStorage implements IStorage {
     this.eventIdCounter = 1;
     this.responseIdCounter = 1;
 
-    // Add sample responses
+    // Create initial admin user
+    this.createUser({
+      username: "admin",
+      password: "password",
+      displayName: "Admin"
+    });
+
+    // Add sample responses after creating users and events
     this.createResponse({ eventId: 1, userId: 1, response: 'yup' });
     this.createResponse({ eventId: 1, userId: 2, response: 'yup' });
     this.createResponse({ eventId: 1, userId: 3, response: 'nope' });
