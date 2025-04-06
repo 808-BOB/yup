@@ -83,6 +83,13 @@ export default function Header() {
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
+                  onClick={() => setLocation("/profile")}
+                  className="cursor-pointer"
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  <span>My Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
                   onClick={() => setLocation("/my-events")}
                   className="cursor-pointer"
                 >
