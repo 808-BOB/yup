@@ -21,6 +21,20 @@ const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Session configuration with cookie options
+  app.use(session({
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      sameSite: 'lax'
+    },
+    secret: process.env.SESSION_SECRET!, //Ensure you have a SESSION_SECRET in your .env
+    resave: false,
+    saveUninitialized: false
+  }));
+
+
   // Authentication routes
   app.post("/api/auth/signup", async (req: Request, res: Response) => {
     try {
@@ -294,7 +308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update the event
       const updatedEvent = await storage.updateEvent(eventId, eventUpdateData);
-      
+
       // Force a fresh read to verify the update
       const verifiedEvent = await storage.getEvent(eventId);
       console.log('Event updated, image URL status:', verifiedEvent?.imageUrl ? 'present' : 'missing');
