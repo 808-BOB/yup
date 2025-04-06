@@ -7,18 +7,18 @@ export default function Home() {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    // Redirect to the events list on the home page
-    setLocation("/events");
+    // Redirect to the my-events page as the default view
+    setLocation("/my-events");
   }, [setLocation]);
 
   return (
     <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
       <Header />
       <ViewSelector
-        activeTab="invited"
+        activeTab="your-events"
         onTabChange={(tab) => {
           if (tab === "invited") {
-            setLocation("/events");
+            setLocation("/event-list");
           } else {
             setLocation("/my-events");
           }
