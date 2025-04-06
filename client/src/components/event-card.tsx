@@ -162,7 +162,7 @@ export default function EventCard({
                 }}
               >
                 <Share2 className="w-3.5 h-3.5" />
-                <span>SHARE</span>
+                <span>Share</span>
               </button>
 
               <button
@@ -174,18 +174,18 @@ export default function EventCard({
                 }}
               >
                 <Edit className="w-3.5 h-3.5" />
-                <span>EDIT</span>
+                <span>Edit</span>
               </button>
             </div>
 
             <div className="relative group">
-              <div
+              <button
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   window.location.href = `/events/${event.slug}/responses`;
                 }}
-                className="text-sm text-primary hover:text-primary/80 font-medium cursor-pointer"
+                className="text-sm text-primary hover:text-primary/80 font-medium cursor-pointer flex items-center"
               >
                 View RSVPs
                 {(!event.showRsvpsToInvitees || event.showRsvpsAfterThreshold) && (
@@ -197,7 +197,7 @@ export default function EventCard({
                     </svg>
                   </span>
                 )}
-              </div>
+              </button>
               {(!event.showRsvpsToInvitees || event.showRsvpsAfterThreshold) && (
                 <div className="absolute right-0 bottom-full mb-1 w-48 bg-gray-800 p-2 rounded text-xs text-gray-300 invisible group-hover:visible shadow-lg z-10">
                   {!event.showRsvpsToInvitees && <div>RSVPs hidden from guests</div>}

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import InviteModal from "@/components/invite-modal";
 import { useRoute, useLocation } from "wouter";
-import { Calendar, MapPin, User, Users, ArrowLeft, Eye } from "lucide-react";
+import { Calendar, MapPin, User, Users, ArrowLeft, Eye, Edit } from "lucide-react";
 import { formatDate } from "@/lib/utils/date-formatter";
 import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/header";
@@ -176,7 +176,7 @@ export default function EventPage() {
                 variant="outline"
                 size="sm"
                 className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
-                onClick={() => setLocation("/events")}
+                onClick={() => setLocation("/my-events")}
               >
                 <ArrowLeft className="w-4 h-4" /> Back to Events
               </Button>
@@ -234,28 +234,30 @@ export default function EventPage() {
                         >
                           Your Event
                         </Badge>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setLocation(`/events/${event.slug}/edit`);
-                          }}
-                          className="text-xs text-primary flex items-center gap-1 hover:text-primary/80"
-                        >
-                          Edit Event
-                        </button>
-                      </div>
-                      <div className="flex justify-end">
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setLocation(`/events/${event.slug}/responses`);
-                          }}
-                          className="text-xs text-primary flex items-center gap-1 hover:text-primary/80"
-                        >
-                          View Responses
-                        </button>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setLocation(`/events/${event.slug}/edit`);
+                            }}
+                            className="text-xs text-primary flex items-center gap-1 hover:text-primary/80"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setLocation(`/events/${event.slug}/responses`);
+                            }}
+                            className="text-xs text-primary flex items-center gap-1 hover:text-primary/80"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>RSVPs</span>
+                          </button>
+                        </div>
                       </div>
                       {/* Display RSVP visibility settings to host */}
                       <div className="mt-1 text-xs text-gray-500 text-right">
@@ -318,7 +320,7 @@ export default function EventPage() {
                     <div>
                       <div className="font-medium tracking-tight flex items-center">
                         <span>Guest RSVP</span>{" "}
-                        <span className="ml-1 text-green-500 flex items-center">
+                        <span className="ml-1 text-primary flex items-center">
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                             <polyline points="22 4 12 14.01 9 11.01"></polyline>

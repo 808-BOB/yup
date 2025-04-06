@@ -214,7 +214,7 @@ export default function GuestRsvpModal({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className={`w-full sm:w-auto ${response === "yup" ? "bg-primary hover:bg-primary/90" : "bg-gray-700 hover:bg-gray-600"}`}
+              className="w-full sm:w-auto bg-primary hover:bg-primary/90"
             >
               {isSubmitting ? "Submitting..." : "Submit RSVP"}
             </Button>
