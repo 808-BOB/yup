@@ -46,7 +46,7 @@ export default function MyEvents() {
   const isLoading = authLoading || eventsLoading;
 
   return (
-    <div className="w-full max-w-md mx-auto p-8 h-screen flex flex-col bg-gray-950">
+    <div className="w-full max-w-md mx-auto p-8 min-h-screen flex flex-col bg-gray-950">
       <Header />
       <ViewSelector
         activeTab="your-events"

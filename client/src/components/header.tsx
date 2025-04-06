@@ -38,12 +38,12 @@ export default function Header() {
   return (
     <header className="flex justify-between items-center mb-6 py-4 border-b border-gray-800">
       <div className="flex items-center">
-        <div
+        <img
+          src="/Yup-logo.png"
+          alt="Yup.RSVP"
+          className="h-8 cursor-pointer"
           onClick={() => setLocation("/")}
-          className="text-2xl font-bold tracking-tight font-mono cursor-pointer"
-        >
-          YUP<span className="text-primary font-bold">.RSVP</span>
-        </div>
+        />
       </div>
       <div className="flex items-center space-x-4">
         {user && (
