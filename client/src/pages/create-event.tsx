@@ -128,17 +128,22 @@ export default function CreateEvent() {
         hostId: eventData.hostId
       });
       
-      // If there's an image URL and it's a valid URL (not data:), display it
-      if (eventData.imageUrl && !eventData.imageUrl.startsWith('data:')) {
-        // Set the field value for the URL tab
-        form.setValue("imageUrl", eventData.imageUrl);
-      }
-      
-      // If the event has an image URL, show it
+      // Handle image URLs based on type (URL vs base64)
       if (eventData.imageUrl) {
-        // Set the preview URL if it's a data URL (uploaded file)
         if (eventData.imageUrl.startsWith('data:')) {
-          setPreviewUrl(eventData.imageUrl);
+          // For base64 images, clear the URL field and set the preview URL
+          form.setValue("imageUrl", ""); // Clear the URL field
+          setPreviewUrl(eventData.imageUrl); // Set the preview
+          // Automatically switch to upload tab
+          setTimeout(() => {
+            const uploadTab = document.querySelector('[data-value="upload"]');
+            if (uploadTab) {
+              (uploadTab as HTMLElement).click();
+            }
+          }, 100);
+        } else {
+          // For regular URLs, set the URL field
+          form.setValue("imageUrl", eventData.imageUrl);
         }
       }
     }

@@ -170,31 +170,25 @@ export default function EventPage() {
           </div>
           
           {event.imageUrl && (
-            <div className="w-full h-48 mb-6 overflow-hidden rounded-sm relative">
-              {/* Regular image element that should handle both URLs and base64 data */}
-              <img 
-                key={`img-${event.id}-${Date.now()}`} // Force react to recreate the element
-                src={event.imageUrl}
-                alt={event.title} 
-                className="w-full h-full object-cover" 
-                style={{ 
-                  position: 'absolute', 
-                  top: 0, 
-                  left: 0, 
-                  width: '100%', 
-                  height: '100%',
-                  objectFit: 'cover'
-                }}
-                onError={(e) => {
-                  console.error("Image failed to load:", e);
-                  e.currentTarget.style.display = "none";
-                }}
-              />
-              
-              {/* Fallback colored background if image fails to load */}
-              <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                <span className="text-gray-400">Image preview</span>
-              </div>
+            <div className="w-full h-48 mb-6 overflow-hidden rounded-sm">
+              {/* For base64 images, we'll create a div with background-image to avoid rendering issues */}
+              {event.imageUrl.startsWith('data:') ? (
+                <div 
+                  className="w-full h-full bg-no-repeat bg-center bg-cover"
+                  style={{ backgroundImage: `url(${event.imageUrl})` }}
+                ></div>
+              ) : (
+                /* For regular URLs, use the normal img tag */
+                <img 
+                  src={event.imageUrl}
+                  alt={event.title} 
+                  className="w-full h-full object-cover" 
+                  onError={(e) => {
+                    console.error("Image failed to load:", e);
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              )}
             </div>
           )}
           <Card className="mb-6 animate-slide-up bg-gray-900 border border-gray-800">
