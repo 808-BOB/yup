@@ -344,7 +344,7 @@ export default function CreateEvent() {
                           </div>
                         )}
                         <FormDescription className="text-xs text-gray-500 mt-1">
-                          Add an image URL for your event
+                          Add an image URL for your event. Recommended dimensions: 1200x600px (2:1 ratio) for best display.
                         </FormDescription>
                       </TabsContent>
 
@@ -394,7 +394,7 @@ export default function CreateEvent() {
                                 Choose Image
                               </Button>
                               <p className="text-xs text-gray-500 mt-2">
-                                JPG, PNG, or GIF. Max 2MB.
+                                JPG, PNG, or GIF. Max 2MB. Recommended dimensions: 1200x600px (2:1 ratio) for best display.
                               </p>
                             </>
                           )}
