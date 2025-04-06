@@ -170,15 +170,7 @@ export default function EventCard({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  if (!isOwner) {
-                    toast({
-                      title: "Access Denied",
-                      description: "Only the event host can edit this event",
-                      variant: "destructive",
-                    });
-                    return;
-                  }
-                  window.location.href = `/events/${event.slug}/edit`;
+                  setLocation(`/events/${event.slug}/edit`);
                 }}
               >
                 <Edit className="w-3.5 h-3.5" />
