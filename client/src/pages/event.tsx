@@ -169,7 +169,7 @@ export default function EventPage() {
       )}
       <main className="flex-1 overflow-auto mb-6">
         <div className="flex flex-col animate-fade-in">
-          <div className="flex gap-4 mb-4">
+          <div className="flex mb-4">
             {/* Only show Back to Events button if user is logged in */}
             {user && (
               <Button
@@ -179,18 +179,6 @@ export default function EventPage() {
                 onClick={() => setLocation("/my-events")}
               >
                 <ArrowLeft className="w-4 h-4" /> Back to Events
-              </Button>
-            )}
-
-            {/* Only show View Responses button if user is the event host */}
-            {user && user.id === event.hostId && (
-              <Button
-                variant="outline"
-                size="sm"
-                className={`flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700 ${!user ? "ml-auto" : ""}`}
-                onClick={() => setLocation(`/events/${event.slug}/responses`)}
-              >
-                <Eye className="w-4 h-4" /> View Responses
               </Button>
             )}
           </div>
@@ -223,58 +211,54 @@ export default function EventPage() {
                   <h2 className="text-xl font-bold tracking-tight">
                     {event.title}
                   </h2>
+                </div>
+                
+                {/* Edit button in top right */}
+                {user && user.id === event.hostId && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setLocation(`/events/${event.slug}/edit`);
+                    }}
+                    className="text-xs text-primary flex items-center gap-1 hover:text-primary/80"
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                    <span>Edit</span>
+                  </button>
+                )}
+              </div>
 
-                  {/* Show "Your Event" badge for the owner */}
-                  {user && event.hostId === user.id && (
-                    <div className="flex flex-col space-y-1 w-full">
-                      <div className="flex justify-between items-center w-full">
-                        <Badge
-                          variant="outline"
-                          className="text-xs bg-primary/10 border-primary/20 text-primary"
-                        >
-                          Your Event
-                        </Badge>
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setLocation(`/events/${event.slug}/edit`);
-                            }}
-                            className="text-xs text-primary flex items-center gap-1 hover:text-primary/80"
-                          >
-                            <Edit className="w-3.5 h-3.5" />
-                            <span>Edit</span>
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setLocation(`/events/${event.slug}/responses`);
-                            }}
-                            className="text-xs text-primary flex items-center gap-1 hover:text-primary/80"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                            <span>RSVPs</span>
-                          </button>
-                        </div>
-                      </div>
-                      {/* Display RSVP visibility settings to host */}
-                      <div className="mt-1 text-xs text-gray-500 text-right">
-                        {!event.showRsvpsToInvitees && (
-                          <div>RSVPs hidden from guests</div>
-                        )}
-                        {event.showRsvpsAfterThreshold && (
-                          <div>Visible after {event.rsvpVisibilityThreshold} YUPs</div>
-                        )}
-                      </div>
-                    </div>
+              {/* Event labels row */}
+              {user && user.id === event.hostId && (
+                <div className="flex flex-wrap gap-2 mt-2 items-center">
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-primary/10 border-primary/20 text-primary"
+                  >
+                    Your Event
+                  </Badge>
+                  
+                  <Badge
+                    variant="outline" 
+                    className="text-xs bg-gray-800 border-gray-700 text-primary font-mono uppercase"
+                  >
+                    {event.status === "open" ? "Public" : event.status}
+                  </Badge>
+                  
+                  {/* RSVP visibility badges */}
+                  {!event.showRsvpsToInvitees && (
+                    <Badge variant="outline" className="text-xs bg-gray-800 border-gray-700 text-gray-400">
+                      RSVPs Hidden
+                    </Badge>
+                  )}
+                  {event.showRsvpsAfterThreshold && (
+                    <Badge variant="outline" className="text-xs bg-gray-800 border-gray-700 text-gray-400">
+                      Visible after {event.rsvpVisibilityThreshold} YUPs
+                    </Badge>
                   )}
                 </div>
-                <span className="bg-gray-800 text-primary text-xs px-2 py-1 rounded-sm font-mono uppercase tracking-wide">
-                  {event.status}
-                </span>
-              </div>
+              )}
 
               <div className="mt-4 space-y-3">
                 <div className="flex items-start">
@@ -333,6 +317,27 @@ export default function EventPage() {
                           {event.maxGuestsPerRsvp === 1 ? "guest" : "guests"}
                         </p>
                       )}
+                    </div>
+                  </div>
+                )}
+                
+                {/* View Responses button - moved below Guest RSVP option */}
+                {user && user.id === event.hostId && (
+                  <div className="border-t border-gray-800 pt-3 mt-4 w-full">
+                    <div className="flex justify-end w-full">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setLocation(`/events/${event.slug}/responses`);
+                        }}
+                        className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>View Responses</span>
+                      </Button>
                     </div>
                   </div>
                 )}
