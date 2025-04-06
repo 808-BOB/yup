@@ -5,10 +5,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { type Event, type Response } from "@shared/schema";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 export default function EventResponses() {
   const [, params] = useRoute("/events/:slug/responses");
   const [, setLocation] = useLocation();
+  const { user, isLoading: authLoading } = useAuth();
+  const { toast } = useToast();
 
   const { data: event } = useQuery<Event>({
     queryKey: [`/api/events/slug/${params?.slug}`],
@@ -26,6 +30,22 @@ export default function EventResponses() {
     enabled: !!event?.id
   });
 
+  // Redirect to login if not authenticated
+  if (!authLoading && !user) {
+    // Redirect to event page instead of login page
+    if (event) {
+      toast({
+        title: "Access Denied",
+        description: "Only the event host can view responses.",
+        variant: "destructive"
+      });
+      setLocation(`/events/${event.slug}`);
+    } else {
+      setLocation("/");
+    }
+    return null;
+  }
+
   if (!event) {
     return (
       <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
@@ -35,6 +55,17 @@ export default function EventResponses() {
         </main>
       </div>
     );
+  }
+  
+  // Check if the current user is the host of the event
+  if (user && event.hostId !== user.id) {
+    toast({
+      title: "Access Denied",
+      description: "Only the event host can view responses.",
+      variant: "destructive"
+    });
+    setLocation(`/events/${event.slug}`);
+    return null;
   }
 
   return (

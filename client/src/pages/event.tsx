@@ -144,23 +144,29 @@ export default function EventPage() {
       <main className="flex-1 overflow-auto">
         <div className="flex flex-col h-full animate-fade-in">
           <div className="flex gap-4 mb-4">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700" 
-              onClick={() => setLocation('/events')}
-            >
-              <ArrowLeft className="w-4 h-4" /> Back to Events
-            </Button>
+            {/* Only show Back to Events button if user is logged in */}
+            {user && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700" 
+                onClick={() => setLocation('/events')}
+              >
+                <ArrowLeft className="w-4 h-4" /> Back to Events
+              </Button>
+            )}
             
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700 ml-auto" 
-              onClick={() => setLocation(`/events/${event.slug}/responses`)}
-            >
-              <Eye className="w-4 h-4" /> View Responses
-            </Button>
+            {/* Only show View Responses button if user is the event host */}
+            {user && user.id === event.hostId && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className={`flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700 ${!user ? 'ml-auto' : ''}`}
+                onClick={() => setLocation(`/events/${event.slug}/responses`)}
+              >
+                <Eye className="w-4 h-4" /> View Responses
+              </Button>
+            )}
           </div>
           
           {event.imageUrl && (
