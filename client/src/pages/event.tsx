@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import InviteModal from "@/components/invite-modal";
 import { useRoute, useLocation } from "wouter";
 import { Calendar, MapPin, User, Users, ArrowLeft, Eye } from "lucide-react";
 import { formatDate } from "@/lib/utils/date-formatter";
@@ -30,6 +31,7 @@ export default function EventPage() {
   const [userResponse, setUserResponse] = useState<"yup" | "nope" | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showGuestModal, setShowGuestModal] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [pendingResponse, setPendingResponse] = useState<"yup" | "nope" | null>(null);
 
   // Event data query
@@ -307,19 +309,29 @@ export default function EventPage() {
               </Button>
             </div>
 
-            <Button
-              onClick={() => {
-                const url = `${window.location.origin}/events/${event.slug}`;
-                navigator.clipboard.writeText(url);
-                toast({
-                  title: "Link Copied!",
-                  description: "Share this link to invite people to your event",
-                });
-              }}
-              className="w-full bg-gray-900 border border-gray-800 hover:border-gray-700"
-            >
-              Share Event Link
-            </Button>
+            <div className="flex gap-4">
+              <Button
+                onClick={() => {
+                  const url = `${window.location.origin}/events/${event.slug}`;
+                  navigator.clipboard.writeText(url);
+                  toast({
+                    title: "Link Copied!",
+                    description: "Share this link to invite people to your event",
+                  });
+                }}
+                className="flex-1 bg-gray-900 border border-gray-800 hover:border-gray-700"
+              >
+                Share Event Link
+              </Button>
+              {user && user.id === event.hostId && (
+                <Button
+                  onClick={() => setShowInviteModal(true)}
+                  className="flex-1 bg-primary hover:bg-primary/90"
+                >
+                  Invite People
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </main>
@@ -332,6 +344,15 @@ export default function EventPage() {
           event={event}
           response={pendingResponse}
           onSuccess={handleGuestSuccess}
+        />
+      )}
+
+      {/* Invite Modal */}
+      {showInviteModal && (
+        <InviteModal
+          isOpen={showInviteModal}
+          onClose={() => setShowInviteModal(false)}
+          eventId={event.id}
         />
       )}
     </div>
