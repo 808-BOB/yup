@@ -286,7 +286,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Validate the event update data - using the base event data for simplicity
-      const eventUpdateData = req.body;
+      const eventUpdateData = {
+        ...req.body,
+        // Ensure imageUrl is explicitly included in the update
+        imageUrl: req.body.imageUrl || null
+      };
 
       // Update the event
       const updatedEvent = await storage.updateEvent(eventId, eventUpdateData);

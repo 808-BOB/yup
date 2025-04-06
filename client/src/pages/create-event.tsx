@@ -557,7 +557,7 @@ export default function CreateEvent() {
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder={`Default: ${user?.displayName}`}
+                        placeholder={user?.displayName || ""}
                         className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12"
                         {...field}
                         value={field.value || ''}
