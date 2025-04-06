@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import YupLogo from "@assets/Yup-logo.png";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -60,13 +61,11 @@ export default function Login() {
   };
 
   return (
-    <div className="h-[100svh] flex flex-col bg-gray-950">
+    <div className="min-h-screen flex flex-col bg-gray-950">
       <div className="max-w-md mx-auto w-full px-4 pt-[120px]">
         <div className="text-center mb-8">
           <Link href="/">
-            <div className="text-3xl font-bold tracking-tight font-mono cursor-pointer inline-block">
-              YUP<span className="text-primary font-bold">.RSVP</span>
-            </div>
+            <img src={YupLogo} alt="Yup.RSVP" className="h-10 mx-auto mb-2" />
           </Link>
           <h2 className="mt-6 text-xl font-semibold text-gray-200">
             Sign in to your account

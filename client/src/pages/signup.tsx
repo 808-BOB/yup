@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import YupLogo from "@assets/Yup-logo.png";
 
 const signupSchema = z
   .object({

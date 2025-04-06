@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import YupLogo from "@assets/Yup-logo.png";
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -39,7 +40,7 @@ export default function Header() {
     <header className="flex justify-between items-center mb-6 py-4 border-b border-gray-800">
       <div className="flex items-center">
         <img
-          src="/Yup-logo.png"
+          src={YupLogo}
           alt="Yup.RSVP"
           className="h-8 cursor-pointer"
           onClick={() => setLocation("/")}
