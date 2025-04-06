@@ -8,7 +8,10 @@ interface ConfirmationMessageProps {
   event: Event;
 }
 
-export default function ConfirmationMessage({ response, event }: ConfirmationMessageProps) {
+export default function ConfirmationMessage({
+  response,
+  event,
+}: ConfirmationMessageProps) {
   return (
     <div className="text-center p-8 animate-fade-in">
       {response === "yup" ? (
@@ -31,7 +34,9 @@ export default function ConfirmationMessage({ response, event }: ConfirmationMes
           <div className="w-24 h-24 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center mx-auto mb-6">
             <X className="w-12 h-12 text-gray-400" />
           </div>
-          <h2 className="text-2xl font-bold mb-2 tracking-tight">MAYBE NEXT TIME</h2>
+          <h2 className="text-2xl font-bold mb-2 tracking-tight">
+            MAYBE NEXT TIME
+          </h2>
           <p className="text-gray-400 mb-8 tracking-tight">
             We've noted that you won't be attending {event.title}
           </p>

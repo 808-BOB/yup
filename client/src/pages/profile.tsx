@@ -10,36 +10,69 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import Header from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Footer from "@/components/footer";
 import { cn } from "@/lib/utils";
 
 // Define the schema for form validation
-const profileSchema = z.object({
-  displayName: z.string().min(2, "Display name must be at least 2 characters"),
-  currentPassword: z.string().optional(),
-  newPassword: z.string().min(6, "Password must be at least 6 characters").optional(),
-  confirmPassword: z.string().optional(),
-}).refine(data => {
-  if (data.newPassword && !data.currentPassword) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Current password is required to set new password",
-  path: ["currentPassword"],
-}).refine(data => {
-  if (data.newPassword && data.confirmPassword && data.newPassword !== data.confirmPassword) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
+const profileSchema = z
+  .object({
+    displayName: z
+      .string()
+      .min(2, "Display name must be at least 2 characters"),
+    currentPassword: z.string().optional(),
+    newPassword: z
+      .string()
+      .min(6, "Password must be at least 6 characters")
+      .optional(),
+    confirmPassword: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.newPassword && !data.currentPassword) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Current password is required to set new password",
+      path: ["currentPassword"],
+    },
+  )
+  .refine(
+    (data) => {
+      if (
+        data.newPassword &&
+        data.confirmPassword &&
+        data.newPassword !== data.confirmPassword
+      ) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Passwords do not match",
+      path: ["confirmPassword"],
+    },
+  );
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
@@ -79,23 +112,24 @@ export default function Profile() {
       }
 
       await apiRequest("PUT", `/api/users/${user?.id}`, updateData);
-      
+
       // Invalidate user data cache
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
-      
+
       toast({
         title: "Profile Updated",
         description: "Your profile has been updated successfully.",
       });
-      
+
       setIsEditing(false);
-      
+
       // Reset password fields
       form.setValue("currentPassword", "");
       form.setValue("newPassword", "");
       form.setValue("confirmPassword", "");
     } catch (error: any) {
-      const errorMessage = error?.message || "Something went wrong. Please try again.";
+      const errorMessage =
+        error?.message || "Something went wrong. Please try again.";
       toast({
         title: "Update Failed",
         description: errorMessage,
@@ -115,9 +149,10 @@ export default function Profile() {
       .toUpperCase()
       .slice(0, 2);
   };
-  
+
   // Common classes for form inputs
-  const inputClasses = "bg-transparent border border-gray-700 rounded-none h-10";
+  const inputClasses =
+    "bg-transparent border border-gray-700 rounded-none h-10";
 
   if (isLoading) {
     return (
@@ -135,11 +170,11 @@ export default function Profile() {
   return (
     <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col bg-gray-950">
       <Header />
-      
+
       <main className="flex-1 overflow-auto mb-6">
         <div className="animate-fade-in">
           <h1 className="text-2xl font-bold mb-6">Profile</h1>
-          
+
           <Card className="bg-gray-900 border border-gray-800 mb-6">
             <CardHeader className="pb-2">
               <div className="flex items-center space-x-4">
@@ -148,49 +183,60 @@ export default function Profile() {
                     {getInitials(user?.displayName || "")}
                   </AvatarFallback>
                 </Avatar>
-                
+
                 <div>
                   <CardTitle>{user?.displayName}</CardTitle>
-                  <CardDescription className="text-gray-400">@{user?.username}</CardDescription>
+                  <CardDescription className="text-gray-400">
+                    @{user?.username}
+                  </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            
+
             <Separator className="bg-gray-800" />
-            
+
             <CardContent className="pt-6">
               {isEditing ? (
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="space-y-6"
+                  >
                     <FormField
                       control={form.control}
                       name="displayName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-400">Display Name</FormLabel>
+                          <FormLabel className="text-gray-400">
+                            Display Name
+                          </FormLabel>
                           <FormControl>
-                            <Input 
+                            <Input
                               placeholder="Your display name"
-                              className={inputClasses} 
-                              {...field} 
+                              className={inputClasses}
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage className="text-primary" />
                         </FormItem>
                       )}
                     />
-                    
+
                     <div className="pt-2">
-                      <h3 className="text-sm font-medium mb-3">Change Password</h3>
+                      <h3 className="text-sm font-medium mb-3">
+                        Change Password
+                      </h3>
                       <Separator className="bg-gray-800 mb-4" />
-                      
+
                       <div className="space-y-4">
                         <FormField
                           control={form.control}
                           name="currentPassword"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-gray-400">Current Password</FormLabel>
+                              <FormLabel className="text-gray-400">
+                                Current Password
+                              </FormLabel>
                               <FormControl>
                                 <Input
                                   type="password"
@@ -206,13 +252,15 @@ export default function Profile() {
                             </FormItem>
                           )}
                         />
-                        
+
                         <FormField
                           control={form.control}
                           name="newPassword"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-gray-400">New Password</FormLabel>
+                              <FormLabel className="text-gray-400">
+                                New Password
+                              </FormLabel>
                               <FormControl>
                                 <Input
                                   type="password"
@@ -225,13 +273,15 @@ export default function Profile() {
                             </FormItem>
                           )}
                         />
-                        
+
                         <FormField
                           control={form.control}
                           name="confirmPassword"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-gray-400">Confirm New Password</FormLabel>
+                              <FormLabel className="text-gray-400">
+                                Confirm New Password
+                              </FormLabel>
                               <FormControl>
                                 <Input
                                   type="password"
@@ -246,7 +296,7 @@ export default function Profile() {
                         />
                       </div>
                     </div>
-                    
+
                     <div className="flex justify-end space-x-2 pt-2">
                       <Button
                         type="button"
@@ -257,8 +307,8 @@ export default function Profile() {
                       >
                         Cancel
                       </Button>
-                      <Button 
-                        type="submit" 
+                      <Button
+                        type="submit"
                         disabled={isSubmitting}
                         className="bg-primary hover:bg-primary/90 text-white"
                       >
@@ -270,20 +320,26 @@ export default function Profile() {
               ) : (
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-400 mb-1">Display Name</h3>
+                    <h3 className="text-sm font-medium text-gray-400 mb-1">
+                      Display Name
+                    </h3>
                     <p>{user?.displayName}</p>
                   </div>
-                  
+
                   <div>
-                    <h3 className="text-sm font-medium text-gray-400 mb-1">Username</h3>
+                    <h3 className="text-sm font-medium text-gray-400 mb-1">
+                      Username
+                    </h3>
                     <p>@{user?.username}</p>
                   </div>
-                  
+
                   <div>
-                    <h3 className="text-sm font-medium text-gray-400 mb-1">Password</h3>
+                    <h3 className="text-sm font-medium text-gray-400 mb-1">
+                      Password
+                    </h3>
                     <p>••••••••</p>
                   </div>
-                  
+
                   <div className="pt-2">
                     <Button
                       onClick={() => setIsEditing(true)}
@@ -297,7 +353,7 @@ export default function Profile() {
               )}
             </CardContent>
           </Card>
-          
+
           <Card className="bg-gray-900 border border-gray-800">
             <CardHeader>
               <CardTitle className="text-base">Account Stats</CardTitle>
@@ -305,11 +361,15 @@ export default function Profile() {
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gray-800 p-4 rounded-sm text-center">
-                  <p className="text-gray-400 text-sm uppercase tracking-wider">Created Events</p>
+                  <p className="text-gray-400 text-sm uppercase tracking-wider">
+                    Created Events
+                  </p>
                   <p className="text-2xl font-bold">1</p>
                 </div>
                 <div className="bg-gray-800 p-4 rounded-sm text-center">
-                  <p className="text-gray-400 text-sm uppercase tracking-wider">Responses</p>
+                  <p className="text-gray-400 text-sm uppercase tracking-wider">
+                    Responses
+                  </p>
                   <p className="text-2xl font-bold">0</p>
                 </div>
               </div>

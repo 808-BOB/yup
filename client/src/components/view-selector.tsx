@@ -5,12 +5,15 @@ interface ViewSelectorProps {
   onTabChange: (tab: "invited" | "your-events") => void;
 }
 
-export default function ViewSelector({ activeTab, onTabChange }: ViewSelectorProps) {
+export default function ViewSelector({
+  activeTab,
+  onTabChange,
+}: ViewSelectorProps) {
   const [, setLocation] = useLocation();
 
   const handleTabChange = (tab: "invited" | "your-events") => {
     onTabChange(tab);
-    
+
     if (tab === "invited") {
       setLocation("/events");
     } else {
@@ -21,21 +24,21 @@ export default function ViewSelector({ activeTab, onTabChange }: ViewSelectorPro
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-sm mb-6">
       <div className="flex">
-        <button 
+        <button
           onClick={() => handleTabChange("invited")}
           className={`flex-1 py-2 px-4 rounded-sm font-bold text-center uppercase tracking-wider text-xs ${
-            activeTab === "invited" 
-              ? "text-primary bg-gray-800 border-t-2 border-primary" 
+            activeTab === "invited"
+              ? "text-primary bg-gray-800 border-t-2 border-primary"
               : "text-gray-500"
           }`}
         >
           Invited
         </button>
-        <button 
+        <button
           onClick={() => handleTabChange("your-events")}
           className={`flex-1 py-2 px-4 rounded-sm font-bold text-center uppercase tracking-wider text-xs ${
-            activeTab === "your-events" 
-              ? "text-primary bg-gray-800 border-t-2 border-primary" 
+            activeTab === "your-events"
+              ? "text-primary bg-gray-800 border-t-2 border-primary"
               : "text-gray-500"
           }`}
         >

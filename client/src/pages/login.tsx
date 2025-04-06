@@ -4,7 +4,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -61,9 +68,11 @@ export default function Login() {
               YUP<span className="text-primary font-bold">.RSVP</span>
             </div>
           </Link>
-          <h2 className="mt-6 text-xl font-semibold text-gray-200">Sign in to your account</h2>
+          <h2 className="mt-6 text-xl font-semibold text-gray-200">
+            Sign in to your account
+          </h2>
         </div>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
@@ -71,7 +80,9 @@ export default function Login() {
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">Username</FormLabel>
+                  <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">
+                    Username
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="Enter your username"
@@ -83,13 +94,15 @@ export default function Login() {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">Password</FormLabel>
+                  <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">
+                    Password
+                  </FormLabel>
                   <FormControl>
                     <Input
                       type="password"
@@ -116,7 +129,7 @@ export default function Login() {
         <div className="text-center mt-6">
           <p className="text-gray-400 text-sm">
             Don't have an account?{" "}
-            <span 
+            <span
               onClick={() => setLocation("/signup")}
               className="text-primary hover:text-primary/80 cursor-pointer"
             >

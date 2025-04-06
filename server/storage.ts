@@ -1,10 +1,16 @@
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
 import path from "path";
-import { 
-  users, type User, type InsertUser, 
-  events, type Event, type InsertEvent,
-  responses, type Response, type InsertResponse 
+import {
+  users,
+  type User,
+  type InsertUser,
+  events,
+  type Event,
+  type InsertEvent,
+  responses,
+  type Response,
+  type InsertResponse,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -12,7 +18,7 @@ export interface IStorage {
   createInvitation(eventId: number, userId: number): Promise<void>;
   getEventInvitations(eventId: number): Promise<number[]>;
   getEventsUserInvitedTo(userId: number): Promise<Event[]>;
-  
+
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -21,7 +27,10 @@ export interface IStorage {
 
   // Event operations
   createEvent(event: InsertEvent): Promise<Event>;
-  updateEvent(id: number, eventUpdate: Partial<InsertEvent>): Promise<Event | undefined>;
+  updateEvent(
+    id: number,
+    eventUpdate: Partial<InsertEvent>,
+  ): Promise<Event | undefined>;
   getEvent(id: number): Promise<Event | undefined>;
   getEventBySlug(slug: string): Promise<Event | undefined>;
   getUserEvents(userId: number): Promise<Event[]>;
@@ -31,8 +40,13 @@ export interface IStorage {
   // Response operations
   createResponse(response: InsertResponse): Promise<Response>;
   getResponsesByEvent(eventId: number): Promise<Response[]>;
-  getUserEventResponse(eventId: number, userId: number | null): Promise<Response | undefined>;
-  getEventResponses(eventId: number): Promise<{yupCount: number, nopeCount: number}>;
+  getUserEventResponse(
+    eventId: number,
+    userId: number | null,
+  ): Promise<Response | undefined>;
+  getEventResponses(
+    eventId: number,
+  ): Promise<{ yupCount: number; nopeCount: number }>;
 }
 
 export class MemStorage implements IStorage {
@@ -42,7 +56,7 @@ export class MemStorage implements IStorage {
   private userIdCounter: number;
   private eventIdCounter: number;
   private responseIdCounter: number;
-  private dataFilePath = path.join(process.cwd(), 'data', 'storage.json');
+  private dataFilePath = path.join(process.cwd(), "data", "storage.json");
 
   constructor() {
     // Initialize with empty maps
@@ -72,12 +86,12 @@ export class MemStorage implements IStorage {
 
       // Check if the data file exists
       if (!fs.existsSync(this.dataFilePath)) {
-        console.log('No storage file found. Creating new data.');
+        console.log("No storage file found. Creating new data.");
         return;
       }
 
       // Read and parse data
-      const rawData = fs.readFileSync(this.dataFilePath, 'utf8');
+      const rawData = fs.readFileSync(this.dataFilePath, "utf8");
       const data = JSON.parse(rawData);
 
       // Load users
@@ -87,34 +101,41 @@ export class MemStorage implements IStorage {
 
       // Load events
       if (data.events && Array.isArray(data.events)) {
-        this.events = new Map(data.events.map((event: Event) => {
-          // Convert string dates back to Date objects
-          if (typeof event.createdAt === 'string') {
-            event.createdAt = new Date(event.createdAt);
-          }
-          return [event.id, event];
-        }));
+        this.events = new Map(
+          data.events.map((event: Event) => {
+            // Convert string dates back to Date objects
+            if (typeof event.createdAt === "string") {
+              event.createdAt = new Date(event.createdAt);
+            }
+            return [event.id, event];
+          }),
+        );
       }
 
       // Load responses
       if (data.responses && Array.isArray(data.responses)) {
-        this.responses = new Map(data.responses.map((response: Response) => {
-          // Convert string dates back to Date objects
-          if (typeof response.createdAt === 'string') {
-            response.createdAt = new Date(response.createdAt);
-          }
-          return [response.id, response];
-        }));
+        this.responses = new Map(
+          data.responses.map((response: Response) => {
+            // Convert string dates back to Date objects
+            if (typeof response.createdAt === "string") {
+              response.createdAt = new Date(response.createdAt);
+            }
+            return [response.id, response];
+          }),
+        );
       }
 
       // Set counters to the max ID + 1
       this.userIdCounter = Math.max(0, ...Array.from(this.users.keys())) + 1;
       this.eventIdCounter = Math.max(0, ...Array.from(this.events.keys())) + 1;
-      this.responseIdCounter = Math.max(0, ...Array.from(this.responses.keys())) + 1;
+      this.responseIdCounter =
+        Math.max(0, ...Array.from(this.responses.keys())) + 1;
 
-      console.log(`Loaded data: ${this.users.size} users, ${this.events.size} events, ${this.responses.size} responses`);
+      console.log(
+        `Loaded data: ${this.users.size} users, ${this.events.size} events, ${this.responses.size} responses`,
+      );
     } catch (error) {
-      console.error('Error loading data from file:', error);
+      console.error("Error loading data from file:", error);
       // Initialize with empty state
       this.users = new Map();
       this.events = new Map();
@@ -130,7 +151,7 @@ export class MemStorage implements IStorage {
       const data = {
         users: Array.from(this.users.values()),
         events: Array.from(this.events.values()),
-        responses: Array.from(this.responses.values())
+        responses: Array.from(this.responses.values()),
       };
 
       const dataDir = path.dirname(this.dataFilePath);
@@ -138,9 +159,13 @@ export class MemStorage implements IStorage {
         fs.mkdirSync(dataDir, { recursive: true });
       }
 
-      fs.writeFileSync(this.dataFilePath, JSON.stringify(data, null, 2), 'utf8');
+      fs.writeFileSync(
+        this.dataFilePath,
+        JSON.stringify(data, null, 2),
+        "utf8",
+      );
     } catch (error) {
-      console.error('Error saving data to file:', error);
+      console.error("Error saving data to file:", error);
     }
   }
 
@@ -157,18 +182,18 @@ export class MemStorage implements IStorage {
     this.createUser({
       username: "admin",
       password: "password",
-      displayName: "Admin"
+      displayName: "Admin",
     });
 
     // Add sample responses after creating users and events
-    this.createResponse({ eventId: 1, userId: 1, response: 'yup' });
-    this.createResponse({ eventId: 1, userId: 2, response: 'yup' });
-    this.createResponse({ eventId: 1, userId: 3, response: 'nope' });
-    this.createResponse({ eventId: 1, userId: 4, response: 'yup' });
-    this.createResponse({ eventId: 2, userId: 1, response: 'nope' });
-    this.createResponse({ eventId: 2, userId: 2, response: 'yup' });
-    this.createResponse({ eventId: 3, userId: 2, response: 'nope' });
-    this.createResponse({ eventId: 3, userId: 3, response: 'yup' });
+    this.createResponse({ eventId: 1, userId: 1, response: "yup" });
+    this.createResponse({ eventId: 1, userId: 2, response: "yup" });
+    this.createResponse({ eventId: 1, userId: 3, response: "nope" });
+    this.createResponse({ eventId: 1, userId: 4, response: "yup" });
+    this.createResponse({ eventId: 2, userId: 1, response: "nope" });
+    this.createResponse({ eventId: 2, userId: 2, response: "yup" });
+    this.createResponse({ eventId: 3, userId: 2, response: "nope" });
+    this.createResponse({ eventId: 3, userId: 3, response: "yup" });
 
     // Add sample events
     this.events.set(1, {
@@ -187,7 +212,7 @@ export class MemStorage implements IStorage {
       slug: "summer-coding-meetup-abc123",
       allowGuestRsvp: true,
       allowPlusOne: true,
-      maxGuestsPerRsvp: 3
+      maxGuestsPerRsvp: 3,
     });
 
     this.events.set(2, {
@@ -206,7 +231,7 @@ export class MemStorage implements IStorage {
       slug: "gaming-night-def456",
       allowGuestRsvp: true,
       allowPlusOne: true,
-      maxGuestsPerRsvp: 2
+      maxGuestsPerRsvp: 2,
     });
 
     // Add a second user as event host
@@ -214,7 +239,7 @@ export class MemStorage implements IStorage {
       id: 2,
       username: "host",
       password: "password",
-      displayName: "Event Host"
+      displayName: "Event Host",
     });
 
     // Add some events hosted by user 2 that user 1 is invited to
@@ -234,7 +259,7 @@ export class MemStorage implements IStorage {
       slug: "tech-conference-2024",
       allowGuestRsvp: true,
       allowPlusOne: true,
-      maxGuestsPerRsvp: 5
+      maxGuestsPerRsvp: 5,
     });
 
     this.events.set(4, {
@@ -253,7 +278,7 @@ export class MemStorage implements IStorage {
       slug: "networking-mixer",
       allowGuestRsvp: true,
       allowPlusOne: true,
-      maxGuestsPerRsvp: 1
+      maxGuestsPerRsvp: 1,
     });
 
     this.eventIdCounter = 5;
@@ -262,7 +287,7 @@ export class MemStorage implements IStorage {
     this.createUser({
       username: "demo",
       password: "password",
-      displayName: "Demo User"
+      displayName: "Demo User",
     });
 
     // Add some demo events
@@ -273,10 +298,11 @@ export class MemStorage implements IStorage {
       endTime: "20:00",
       location: "Central Park",
       address: "5th Ave & E 72nd St, New York, NY",
-      description: "Join us for our annual summer BBQ! We'll have food, drinks, games, and music. Bring your family and friends!",
+      description:
+        "Join us for our annual summer BBQ! We'll have food, drinks, games, and music. Bring your family and friends!",
       hostId: 1,
       status: "open",
-      slug: "summer-bbq-" + uuidv4().slice(0, 8)
+      slug: "summer-bbq-" + uuidv4().slice(0, 8),
     });
 
     this.createEvent({
@@ -286,10 +312,11 @@ export class MemStorage implements IStorage {
       endTime: "17:00",
       location: "Office Conference Room",
       address: "123 Business St, Suite 200",
-      description: "Mandatory team building workshop. We'll discuss goals and strategies for the upcoming quarter.",
+      description:
+        "Mandatory team building workshop. We'll discuss goals and strategies for the upcoming quarter.",
       hostId: 1,
       status: "open",
-      slug: "team-building-" + uuidv4().slice(0, 8)
+      slug: "team-building-" + uuidv4().slice(0, 8),
     });
 
     this.createEvent({
@@ -299,10 +326,11 @@ export class MemStorage implements IStorage {
       endTime: "21:00",
       location: "City Library",
       address: "456 Reading Ave",
-      description: "We'll be discussing 'The Great Gatsby' this month. New members welcome!",
+      description:
+        "We'll be discussing 'The Great Gatsby' this month. New members welcome!",
       hostId: 1,
       status: "open",
-      slug: "book-club-" + uuidv4().slice(0, 8)
+      slug: "book-club-" + uuidv4().slice(0, 8),
     });
   }
 
@@ -313,7 +341,7 @@ export class MemStorage implements IStorage {
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(
-      (user) => user.username === username
+      (user) => user.username === username,
     );
   }
 
@@ -324,23 +352,26 @@ export class MemStorage implements IStorage {
     this.saveToFile(); // Save after creating a user
     return user;
   }
-  
-  async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
+
+  async updateUser(
+    id: number,
+    userData: Partial<User>,
+  ): Promise<User | undefined> {
     const user = this.users.get(id);
     if (!user) return undefined;
-    
+
     // Create an updated user by merging the existing user with the updates
     const updatedUser: User = {
       ...user,
       ...userData,
       // Keep the original id
-      id: user.id
+      id: user.id,
     };
-    
+
     // Update the user in the map
     this.users.set(id, updatedUser);
     this.saveToFile(); // Save after updating the user
-    
+
     return updatedUser;
   }
 
@@ -362,11 +393,12 @@ export class MemStorage implements IStorage {
       slug: insertEvent.slug,
       status: insertEvent.status || "open",
       address: insertEvent.address === undefined ? null : insertEvent.address,
-      description: insertEvent.description === undefined ? null : insertEvent.description,
+      description:
+        insertEvent.description === undefined ? null : insertEvent.description,
       imageUrl: insertEvent.imageUrl || null,
       allowGuestRsvp: insertEvent.allowGuestRsvp ?? true,
       allowPlusOne: insertEvent.allowPlusOne ?? true,
-      maxGuestsPerRsvp: insertEvent.maxGuestsPerRsvp ?? 3
+      maxGuestsPerRsvp: insertEvent.maxGuestsPerRsvp ?? 3,
     };
 
     this.events.set(id, event);
@@ -374,14 +406,17 @@ export class MemStorage implements IStorage {
     return event;
   }
 
-  async updateEvent(id: number, eventUpdate: Partial<InsertEvent>): Promise<Event | undefined> {
+  async updateEvent(
+    id: number,
+    eventUpdate: Partial<InsertEvent>,
+  ): Promise<Event | undefined> {
     // Get the existing event
     const existingEvent = this.events.get(id);
-    
+
     if (!existingEvent) {
       return undefined;
     }
-    
+
     // Create an updated event by merging the existing event with the updates
     const updatedEvent: Event = {
       ...existingEvent,
@@ -390,38 +425,52 @@ export class MemStorage implements IStorage {
       id: existingEvent.id,
       createdAt: existingEvent.createdAt,
       // Handle nullable fields (don't override with undefined)
-      address: eventUpdate.address === undefined ? existingEvent.address : eventUpdate.address,
-      description: eventUpdate.description === undefined ? existingEvent.description : eventUpdate.description,
-      imageUrl: eventUpdate.imageUrl === undefined ? existingEvent.imageUrl : eventUpdate.imageUrl,
-      allowGuestRsvp: eventUpdate.allowGuestRsvp ?? existingEvent.allowGuestRsvp,
+      address:
+        eventUpdate.address === undefined
+          ? existingEvent.address
+          : eventUpdate.address,
+      description:
+        eventUpdate.description === undefined
+          ? existingEvent.description
+          : eventUpdate.description,
+      imageUrl:
+        eventUpdate.imageUrl === undefined
+          ? existingEvent.imageUrl
+          : eventUpdate.imageUrl,
+      allowGuestRsvp:
+        eventUpdate.allowGuestRsvp ?? existingEvent.allowGuestRsvp,
       allowPlusOne: eventUpdate.allowPlusOne ?? existingEvent.allowPlusOne,
-      maxGuestsPerRsvp: eventUpdate.maxGuestsPerRsvp ?? existingEvent.maxGuestsPerRsvp
+      maxGuestsPerRsvp:
+        eventUpdate.maxGuestsPerRsvp ?? existingEvent.maxGuestsPerRsvp,
     };
-    
+
     // Update the event in the map
     this.events.set(id, updatedEvent);
     this.saveToFile(); // Save after updating an event
-    
+
     return updatedEvent;
   }
-  
+
   async getEvent(id: number): Promise<Event | undefined> {
     return this.events.get(id);
   }
 
   async getEventBySlug(slug: string): Promise<Event | undefined> {
     return Array.from(this.events.values()).find(
-      (event) => event.slug === slug
+      (event) => event.slug === slug,
     );
   }
 
   async getUserEvents(userId: number): Promise<Event[]> {
     return Array.from(this.events.values()).filter(
-      (event) => event.hostId === userId
+      (event) => event.hostId === userId,
     );
   }
 
-  private invitations: Map<number, {id: number, eventId: number, userId: number, status: string}> = new Map();
+  private invitations: Map<
+    number,
+    { id: number; eventId: number; userId: number; status: string }
+  > = new Map();
   private invitationIdCounter: number = 0;
 
   async createInvitation(eventId: number, userId: number): Promise<void> {
@@ -430,27 +479,28 @@ export class MemStorage implements IStorage {
       id,
       eventId,
       userId,
-      status: 'pending'
+      status: "pending",
     });
     this.saveToFile();
   }
 
   async getEventInvitations(eventId: number): Promise<number[]> {
     return Array.from(this.invitations.values())
-      .filter(inv => inv.eventId === eventId)
-      .map(inv => inv.userId);
+      .filter((inv) => inv.eventId === eventId)
+      .map((inv) => inv.userId);
   }
 
   async getEventsUserInvitedTo(userId: number): Promise<Event[]> {
     try {
       const userInvitations = Array.from(this.invitations.values())
-        .filter(inv => inv.userId === userId)
-        .map(inv => inv.eventId);
-      
-      return Array.from(this.events.values())
-        .filter(event => userInvitations.includes(event.id));
+        .filter((inv) => inv.userId === userId)
+        .map((inv) => inv.eventId);
+
+      return Array.from(this.events.values()).filter((event) =>
+        userInvitations.includes(event.id),
+      );
     } catch (error) {
-      console.error('Error fetching user invites:', error);
+      console.error("Error fetching user invites:", error);
       return [];
     }
   }
@@ -463,24 +513,24 @@ export class MemStorage implements IStorage {
   async createResponse(insertResponse: InsertResponse): Promise<Response> {
     const id = this.responseIdCounter++;
     const createdAt = new Date();
-    
+
     // Set default values for new fields
-    const response: Response = { 
-      ...insertResponse, 
-      id, 
+    const response: Response = {
+      ...insertResponse,
+      id,
       createdAt,
       userId: insertResponse.userId || null,
       isGuest: insertResponse.isGuest || false,
       guestName: insertResponse.guestName || null,
       guestEmail: insertResponse.guestEmail || null,
-      guestCount: insertResponse.guestCount || 0
+      guestCount: insertResponse.guestCount || 0,
     };
 
     // Check if user already responded to this event (only for logged in users)
     if (response.userId && !response.isGuest) {
       const existingResponse = await this.getUserEventResponse(
         insertResponse.eventId,
-        response.userId
+        response.userId,
       );
 
       if (existingResponse) {
@@ -496,26 +546,31 @@ export class MemStorage implements IStorage {
 
   async getResponsesByEvent(eventId: number): Promise<Response[]> {
     return Array.from(this.responses.values()).filter(
-      (response) => response.eventId === eventId
+      (response) => response.eventId === eventId,
     );
   }
 
-  async getUserEventResponse(eventId: number, userId: number | null): Promise<Response | undefined> {
+  async getUserEventResponse(
+    eventId: number,
+    userId: number | null,
+  ): Promise<Response | undefined> {
     // If userId is null (not logged in), we want to return undefined as there's no user to check
     if (userId === null) {
       return undefined;
     }
-    
+
     // Find a response where the eventId matches and the userId matches the provided userId
     return Array.from(this.responses.values()).find(
-      (response) => response.eventId === eventId && response.userId === userId
+      (response) => response.eventId === eventId && response.userId === userId,
     );
   }
 
-  async getEventResponses(eventId: number): Promise<{yupCount: number, nopeCount: number}> {
+  async getEventResponses(
+    eventId: number,
+  ): Promise<{ yupCount: number; nopeCount: number }> {
     const responses = await this.getResponsesByEvent(eventId);
-    const yupCount = responses.filter(r => r.response === 'yup').length;
-    const nopeCount = responses.filter(r => r.response === 'nope').length;
+    const yupCount = responses.filter((r) => r.response === "yup").length;
+    const nopeCount = responses.filter((r) => r.response === "nope").length;
 
     return { yupCount, nopeCount };
   }

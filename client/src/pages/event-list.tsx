@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
@@ -13,20 +12,24 @@ import { Loader2 } from "lucide-react";
 export default function EventList() {
   const { user, isLoading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
-  
+
   // Initialize query (will only fetch if enabled)
-  const { data: events = [], isLoading: eventsLoading, error } = useQuery<Event[]>({
+  const {
+    data: events = [],
+    isLoading: eventsLoading,
+    error,
+  } = useQuery<Event[]>({
     queryKey: [`/api/users/${user?.id || 0}/invites`],
-    enabled: !!user
+    enabled: !!user,
   });
-  
+
   // Using useEffect for navigation to avoid React update during render warnings
   useEffect(() => {
     if (!authLoading && !user) {
       setLocation("/login");
     }
   }, [authLoading, user, setLocation]);
-  
+
   // Early return if still loading or no user
   if (authLoading || !user) {
     return (
@@ -40,23 +43,25 @@ export default function EventList() {
   }
 
   const isLoading = authLoading || eventsLoading;
-  
+
   return (
     <div className="w-full max-w-md mx-auto p-8 h-screen flex flex-col bg-gray-950">
       <Header />
-      <ViewSelector 
-        activeTab="invited" 
+      <ViewSelector
+        activeTab="invited"
         onTabChange={(tab) => {
           if (tab === "your-events") {
             setLocation("/my-events");
           }
-        }} 
+        }}
       />
-      
+
       <main className="flex-1 w-full overflow-auto animate-fade-in pb-32">
         <Card className="w-full bg-gray-900 border border-gray-800">
           <CardContent className="w-full p-6 flex flex-col gap-6">
-            <h2 className="text-xl font-bold tracking-tight uppercase mb-6">Invited Events</h2>
+            <h2 className="text-xl font-bold tracking-tight uppercase mb-6">
+              Invited Events
+            </h2>
             {isLoading ? (
               <div className="flex justify-center items-center py-10">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -68,17 +73,17 @@ export default function EventList() {
             ) : events && events.length > 0 ? (
               <div className="flex flex-col gap-4">
                 {events.map((event) => (
-                  <EventCard 
-                    key={event.id} 
-                    event={event} 
-                    isOwner={false} 
-                  />
+                  <EventCard key={event.id} event={event} isOwner={false} />
                 ))}
               </div>
             ) : (
               <div className="text-center py-8">
-                <p className="text-gray-500 font-mono uppercase tracking-wide">NO EVENTS FOUND</p>
-                <p className="text-gray-600 mt-2 text-sm">Check back later or create a new event</p>
+                <p className="text-gray-500 font-mono uppercase tracking-wide">
+                  NO EVENTS FOUND
+                </p>
+                <p className="text-gray-600 mt-2 text-sm">
+                  Check back later or create a new event
+                </p>
               </div>
             )}
           </CardContent>

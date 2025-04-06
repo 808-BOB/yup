@@ -7,7 +7,15 @@ import { Users, Loader2, Image, Upload, Link as LinkIcon } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/header";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -49,12 +57,13 @@ export default function CreateEvent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user, isLoading: authLoading } = useAuth();
   const [pageTitle, setPageTitle] = useState<string>("Create Event");
-  const [submitButtonText, setSubmitButtonText] = useState<string>("Create Event");
-  
+  const [submitButtonText, setSubmitButtonText] =
+    useState<string>("Create Event");
+
   // Check if we're in edit mode by looking at the URL
   const [, params] = useRoute("/events/:slug/edit");
   const isEditMode = params && params.slug;
-  
+
   // Redirect to login if not authenticated - but only when creating a new event
   // For editing, we'll check permission after loading the event
   if (!authLoading && !user && !isEditMode) {
@@ -77,8 +86,8 @@ export default function CreateEvent() {
       hostId: user?.id || 0,
       allowGuestRsvp: true,
       allowPlusOne: true,
-      maxGuestsPerRsvp: 3
-    }
+      maxGuestsPerRsvp: 3,
+    },
   });
 
   // Fetch event data if in edit mode
@@ -93,31 +102,31 @@ export default function CreateEvent() {
       // Update page title
       setPageTitle("Edit Event");
       setSubmitButtonText("Save Changes");
-      
+
       // Check if user is logged in
       if (!user) {
         // If not logged in, redirect to view the event instead of editing
         toast({
           title: "Login Required",
           description: "Please log in to edit this event.",
-          variant: "destructive"
+          variant: "destructive",
         });
         // Redirect to event view page instead of login page
         setLocation(`/events/${eventData.slug}`);
         return;
       }
-      
+
       // Check if this user is allowed to edit this event
       if (eventData.hostId !== user.id) {
         toast({
           title: "Permission Denied",
           description: "You can only edit events that you've created.",
-          variant: "destructive"
+          variant: "destructive",
         });
         setLocation(`/events/${eventData.slug}`);
         return;
       }
-      
+
       // Update form with event data
       form.reset({
         ...eventData,
@@ -125,12 +134,12 @@ export default function CreateEvent() {
         address: eventData.address || "",
         description: eventData.description || "",
         imageUrl: eventData.imageUrl || "",
-        hostId: eventData.hostId
+        hostId: eventData.hostId,
       });
-      
+
       // Handle image URLs based on type (URL vs base64)
       if (eventData.imageUrl) {
-        if (eventData.imageUrl.startsWith('data:')) {
+        if (eventData.imageUrl.startsWith("data:")) {
           // For base64 images, clear the URL field and set the preview URL
           form.setValue("imageUrl", ""); // Clear the URL field
           setPreviewUrl(eventData.imageUrl); // Set the preview
@@ -153,22 +162,25 @@ export default function CreateEvent() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
     setSelectedFile(file);
-    
+
     // Create a preview URL for the selected image
     const fileReader = new FileReader();
     fileReader.onload = () => {
       const base64Data = fileReader.result as string;
-      console.log("File converted to base64:", base64Data.substring(0, 50) + "...");
-      
+      console.log(
+        "File converted to base64:",
+        base64Data.substring(0, 50) + "...",
+      );
+
       setPreviewUrl(base64Data);
       // Set the image URL in the form
       form.setValue("imageUrl", base64Data);
     };
     fileReader.readAsDataURL(file);
   };
-  
+
   // Clear the selected file
   const clearSelectedFile = () => {
     setSelectedFile(null);
@@ -186,29 +198,33 @@ export default function CreateEvent() {
       if (isEditMode && eventData) {
         // Update existing event
         await apiRequest("PUT", `/api/events/${eventData.id}`, data);
-        
+
         toast({
           title: "Event Updated",
-          description: "Your event has been updated successfully."
+          description: "Your event has been updated successfully.",
         });
       } else {
         // Create new event
         await apiRequest("POST", "/api/events", data);
-        
+
         toast({
           title: "Event Created",
-          description: "Your event has been created successfully."
+          description: "Your event has been created successfully.",
         });
       }
 
       // Invalidate the cache for events queries
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
       if (user) {
-        queryClient.invalidateQueries({ queryKey: [`/api/users/${user.id}/events`] });
+        queryClient.invalidateQueries({
+          queryKey: [`/api/users/${user.id}/events`],
+        });
       }
       // Also invalidate the specific event if we're editing
       if (isEditMode && params?.slug) {
-        queryClient.invalidateQueries({ queryKey: [`/api/events/slug/${params.slug}`] });
+        queryClient.invalidateQueries({
+          queryKey: [`/api/events/slug/${params.slug}`],
+        });
       }
 
       // Redirect based on context
@@ -222,8 +238,10 @@ export default function CreateEvent() {
     } catch (error) {
       toast({
         title: "Error",
-        description: isEditMode ? "Failed to update event. Please try again." : "Failed to create event. Please try again.",
-        variant: "destructive"
+        description: isEditMode
+          ? "Failed to update event. Please try again."
+          : "Failed to create event. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
@@ -242,12 +260,12 @@ export default function CreateEvent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-950">
-  <head>
-    <title>{isEditMode ? "Edit Event" : "Create Event"} | Yup.RSVP</title>
-  </head>
+      <head>
+        <title>{isEditMode ? "Edit Event" : "Create Event"} | Yup.RSVP</title>
+      </head>
       <div className="max-w-md mx-auto px-4 w-full">
         <Header />
-      
+
         {/* Main Form Content */}
         <main className="animate-fade-in py-6">
           <h1 className="text-2xl font-bold mb-6">{pageTitle}</h1>
@@ -258,28 +276,36 @@ export default function CreateEvent() {
                 name="imageUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">Event Image (Optional)</FormLabel>
+                    <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">
+                      Event Image (Optional)
+                    </FormLabel>
                     <Tabs defaultValue="url" className="w-full">
                       <TabsList className="grid w-full grid-cols-2 bg-gray-800">
-                        <TabsTrigger value="url" className="data-[state=active]:bg-gray-700">
+                        <TabsTrigger
+                          value="url"
+                          className="data-[state=active]:bg-gray-700"
+                        >
                           <div className="flex items-center gap-2">
                             <LinkIcon className="h-4 w-4" />
                             <span>URL</span>
                           </div>
                         </TabsTrigger>
-                        <TabsTrigger value="upload" className="data-[state=active]:bg-gray-700">
+                        <TabsTrigger
+                          value="upload"
+                          className="data-[state=active]:bg-gray-700"
+                        >
                           <div className="flex items-center gap-2">
                             <Upload className="h-4 w-4" />
                             <span>Upload</span>
                           </div>
                         </TabsTrigger>
                       </TabsList>
-                      
+
                       <TabsContent value="url" className="mt-2">
                         <FormControl>
-                          <Input 
+                          <Input
                             placeholder="Enter image URL"
-                            className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12" 
+                            className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12"
                             value={field.value || ""}
                             onChange={(e) => {
                               field.onChange(e.target.value);
@@ -290,18 +316,18 @@ export default function CreateEvent() {
                         </FormControl>
                         {field.value && !previewUrl && (
                           <div className="mt-2 h-32 w-full bg-gray-800 flex items-center justify-center relative">
-                            <img 
+                            <img
                               key={`preview-${Date.now()}`}
-                              src={field.value} 
-                              alt="Preview" 
+                              src={field.value}
+                              alt="Preview"
                               className="max-h-full max-w-full object-contain"
-                              style={{ 
-                                position: 'absolute', 
-                                top: 0, 
-                                left: 0, 
-                                width: '100%', 
-                                height: '100%',
-                                objectFit: 'contain'
+                              style={{
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "contain",
                               }}
                               onError={(e) => {
                                 console.error("Error loading image:", e);
@@ -309,7 +335,7 @@ export default function CreateEvent() {
                                 toast({
                                   title: "Error",
                                   description: "Invalid image URL",
-                                  variant: "destructive"
+                                  variant: "destructive",
                                 });
                               }}
                             />
@@ -321,18 +347,21 @@ export default function CreateEvent() {
                           Add an image URL for your event
                         </FormDescription>
                       </TabsContent>
-                      
+
                       <TabsContent value="upload" className="mt-2">
                         <div className="border border-dashed border-gray-700 rounded-sm p-4 text-center">
                           {previewUrl ? (
                             <div className="relative">
-                              <img 
+                              <img
                                 key={`upload-preview-${Date.now()}`}
-                                src={previewUrl} 
-                                alt="Selected file" 
+                                src={previewUrl}
+                                alt="Selected file"
                                 className="max-h-32 mx-auto object-contain"
                                 onError={(e) => {
-                                  console.error("Error loading uploaded image:", e);
+                                  console.error(
+                                    "Error loading uploaded image:",
+                                    e,
+                                  );
                                   e.currentTarget.style.display = "none";
                                 }}
                               />
@@ -376,73 +405,81 @@ export default function CreateEvent() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">Event Title</FormLabel>
+                    <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">
+                      Event Title
+                    </FormLabel>
                     <FormControl>
-                      <Input 
+                      <Input
                         placeholder="Enter title"
-                        className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12" 
-                        {...field} 
+                        className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12"
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage className="text-primary" />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">Date</FormLabel>
+                    <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">
+                      Date
+                    </FormLabel>
                     <FormControl>
-                      <Input 
-                        type="date" 
-                        className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12 text-gray-200" 
-                        {...field} 
+                      <Input
+                        type="date"
+                        className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12 text-gray-200"
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage className="text-primary" />
                   </FormItem>
                 )}
               />
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="startTime"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">Start Time</FormLabel>
+                      <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">
+                        Start Time
+                      </FormLabel>
                       <FormControl>
-                        <Input 
-                          type="time" 
-                          className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12 text-gray-200" 
-                          {...field} 
+                        <Input
+                          type="time"
+                          className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12 text-gray-200"
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage className="text-primary" />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="endTime"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">End Time</FormLabel>
+                      <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">
+                        End Time
+                      </FormLabel>
                       <FormControl>
-                        <Input 
-                          type="time" 
-                          className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12 text-gray-200" 
-                          {...field} 
+                        <Input
+                          type="time"
+                          className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12 text-gray-200"
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage className="text-primary" />
@@ -450,39 +487,46 @@ export default function CreateEvent() {
                   )}
                 />
               </div>
-              
+
               <FormField
                 control={form.control}
                 name="location"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">Location</FormLabel>
+                    <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">
+                      Location
+                    </FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="Enter location" 
-                        className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12" 
-                        {...field} 
+                      <Input
+                        placeholder="Enter location"
+                        className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12"
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage className="text-primary" />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="address"
                 render={({ field }) => {
                   // Ensure field.value is a string
-                  const value = field.value === null || field.value === undefined ? "" : field.value;
-                  
+                  const value =
+                    field.value === null || field.value === undefined
+                      ? ""
+                      : field.value;
+
                   return (
                     <FormItem>
-                      <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">Address (Optional)</FormLabel>
+                      <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">
+                        Address (Optional)
+                      </FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="Enter address" 
-                          className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12" 
+                        <Input
+                          placeholder="Enter address"
+                          className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12"
                           value={value}
                           onChange={field.onChange}
                           onBlur={field.onBlur}
@@ -495,20 +539,25 @@ export default function CreateEvent() {
                   );
                 }}
               />
-              
+
               <FormField
                 control={form.control}
                 name="description"
                 render={({ field }) => {
                   // Ensure field.value is a string
-                  const value = field.value === null || field.value === undefined ? "" : field.value;
-                  
+                  const value =
+                    field.value === null || field.value === undefined
+                      ? ""
+                      : field.value;
+
                   return (
                     <FormItem>
-                      <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">Description (Optional)</FormLabel>
+                      <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">
+                        Description (Optional)
+                      </FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="Tell people about your event" 
+                        <Textarea
+                          placeholder="Tell people about your event"
                           rows={3}
                           className="bg-transparent border border-gray-700 focus:border-primary resize-none min-h-[100px] rounded-none"
                           value={value}
@@ -523,22 +572,27 @@ export default function CreateEvent() {
                   );
                 }}
               />
-              
+
               <div className="mt-8 pt-4 border-t border-gray-800">
                 <div className="flex items-center gap-2 mb-4">
                   <Users className="w-5 h-5 text-gray-500" />
-                  <h3 className="text-gray-300 text-sm font-medium">Guest RSVP Options</h3>
+                  <h3 className="text-gray-300 text-sm font-medium">
+                    Guest RSVP Options
+                  </h3>
                 </div>
-                
+
                 <FormField
                   control={form.control}
                   name="allowGuestRsvp"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-800 p-4 mb-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">Allow Guest RSVP</FormLabel>
+                        <FormLabel className="text-base">
+                          Allow Guest RSVP
+                        </FormLabel>
                         <FormDescription className="text-xs text-gray-500">
-                          When enabled, non-registered users can respond to your event
+                          When enabled, non-registered users can respond to your
+                          event
                         </FormDescription>
                       </div>
                       <FormControl>
@@ -551,7 +605,7 @@ export default function CreateEvent() {
                     </FormItem>
                   )}
                 />
-                
+
                 {form.watch("allowGuestRsvp") && (
                   <>
                     <FormField
@@ -560,9 +614,12 @@ export default function CreateEvent() {
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-800 p-4 mb-4">
                           <div className="space-y-0.5">
-                            <FormLabel className="text-base">Allow Plus-Ones</FormLabel>
+                            <FormLabel className="text-base">
+                              Allow Plus-Ones
+                            </FormLabel>
                             <FormDescription className="text-xs text-gray-500">
-                              When enabled, guests can bring additional attendees
+                              When enabled, guests can bring additional
+                              attendees
                             </FormDescription>
                           </div>
                           <FormControl>
@@ -576,7 +633,7 @@ export default function CreateEvent() {
                         </FormItem>
                       )}
                     />
-                    
+
                     {form.watch("allowPlusOne") && (
                       <FormField
                         control={form.control}
@@ -593,12 +650,18 @@ export default function CreateEvent() {
                                   defaultValue={[field.value]}
                                   max={10}
                                   step={1}
-                                  onValueChange={(vals) => field.onChange(vals[0])}
-                                  disabled={!form.watch("allowGuestRsvp") || !form.watch("allowPlusOne")}
+                                  onValueChange={(vals) =>
+                                    field.onChange(vals[0])
+                                  }
+                                  disabled={
+                                    !form.watch("allowGuestRsvp") ||
+                                    !form.watch("allowPlusOne")
+                                  }
                                   className="w-full"
                                 />
                                 <div className="text-center text-sm text-primary font-semibold">
-                                  {field.value} {field.value === 1 ? 'guest' : 'guests'}
+                                  {field.value}{" "}
+                                  {field.value === 1 ? "guest" : "guests"}
                                 </div>
                               </div>
                             </FormControl>
@@ -609,24 +672,26 @@ export default function CreateEvent() {
                   </>
                 )}
               </div>
-              
+
               <div className="pt-6 flex space-x-4">
-                <Button 
+                <Button
                   type="button"
                   variant="outline"
-                  className="flex-1 bg-black border-black text-gray-300 hover:text-white uppercase tracking-wider rounded-none h-12" 
+                  className="flex-1 bg-black border-black text-gray-300 hover:text-white uppercase tracking-wider rounded-none h-12"
                   onClick={handleCancel}
                 >
                   Cancel
                 </Button>
-                <Button 
+                <Button
                   type="submit"
-                  className="flex-1 bg-primary hover:bg-primary/90 rounded-none h-12 uppercase tracking-wider" 
+                  className="flex-1 bg-primary hover:bg-primary/90 rounded-none h-12 uppercase tracking-wider"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? 
-                    (isEditMode ? "Updating..." : "Creating...") : 
-                    submitButtonText}
+                  {isSubmitting
+                    ? isEditMode
+                      ? "Updating..."
+                      : "Creating..."
+                    : submitButtonText}
                 </Button>
               </div>
             </form>

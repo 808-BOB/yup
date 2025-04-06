@@ -1,11 +1,11 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { 
-  insertEventSchema, 
+import {
+  insertEventSchema,
   insertResponseSchema,
   insertUserSchema,
-  guestResponseSchema
+  guestResponseSchema,
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -25,24 +25,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/signup", async (req: Request, res: Response) => {
     try {
       const userData = insertUserSchema.parse(req.body);
-      
+
       // Check if user already exists
       const existingUser = await storage.getUserByUsername(userData.username);
       if (existingUser) {
         return res.status(400).json({ message: "Username already exists" });
       }
-      
+
       const newUser = await storage.createUser(userData);
-      
+
       // Auto-login: store user ID in session
       if (req.session) {
         req.session.userId = newUser.id;
       }
-      
-      res.status(201).json({ 
-        id: newUser.id, 
-        username: newUser.username, 
-        displayName: newUser.displayName 
+
+      res.status(201).json({
+        id: newUser.id,
+        username: newUser.username,
+        displayName: newUser.displayName,
       });
     } catch (error) {
       if (error instanceof ZodError) {
@@ -55,26 +55,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
       const { username, password } = req.body;
-      
+
       if (!username || !password) {
-        return res.status(400).json({ message: "Username and password are required" });
+        return res
+          .status(400)
+          .json({ message: "Username and password are required" });
       }
-      
+
       const user = await storage.getUserByUsername(username);
-      
+
       if (!user || user.password !== password) {
-        return res.status(401).json({ message: "Invalid username or password" });
+        return res
+          .status(401)
+          .json({ message: "Invalid username or password" });
       }
-      
+
       // Store user ID in session
       if (req.session) {
         req.session.userId = user.id;
       }
-      
-      res.json({ 
-        id: user.id, 
-        username: user.username, 
-        displayName: user.displayName 
+
+      res.json({
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
       });
     } catch (error) {
       res.status(500).json({ message: "Login failed" });
@@ -94,39 +98,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/auth/me", isAuthenticated, async (req: Request, res: Response) => {
-    try {
-      // The middleware ensures req.session and userId exist
-      const userId = Number(req.session!.userId);
-      const user = await storage.getUser(userId);
-      
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
+  app.get(
+    "/api/auth/me",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        // The middleware ensures req.session and userId exist
+        const userId = Number(req.session!.userId);
+        const user = await storage.getUser(userId);
+
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
+
+        res.json({
+          id: user.id,
+          username: user.username,
+          displayName: user.displayName,
+        });
+      } catch (error) {
+        res.status(500).json({ message: "Failed to fetch user data" });
       }
-      
-      res.json({ 
-        id: user.id, 
-        username: user.username, 
-        displayName: user.displayName 
-      });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch user data" });
-    }
-  });
+    },
+  );
 
   // User routes
   app.post("/api/users", async (req: Request, res: Response) => {
     try {
       const userData = insertUserSchema.parse(req.body);
-      
+
       // Check if user already exists
       const existingUser = await storage.getUserByUsername(userData.username);
       if (existingUser) {
         return res.status(400).json({ message: "Username already exists" });
       }
-      
+
       const newUser = await storage.createUser(userData);
-      res.status(201).json({ id: newUser.id, username: newUser.username, displayName: newUser.displayName });
+      res
+        .status(201)
+        .json({
+          id: newUser.id,
+          username: newUser.username,
+          displayName: newUser.displayName,
+        });
     } catch (error) {
       if (error instanceof ZodError) {
         return res.status(400).json({ message: fromZodError(error).message });
@@ -139,75 +153,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = parseInt(req.params.id);
       const user = await storage.getUser(userId);
-      
+
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      
-      res.json({ id: user.id, username: user.username, displayName: user.displayName });
+
+      res.json({
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
+      });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch user" });
     }
   });
-  
-  app.put("/api/users/:id", isAuthenticated, async (req: Request, res: Response) => {
-    try {
-      const userId = parseInt(req.params.id);
-      
-      // Only allow users to update their own profile
-      if (req.session!.userId !== userId) {
-        return res.status(403).json({ message: "You don't have permission to update this user" });
-      }
-      
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      
-      const { displayName, currentPassword, newPassword } = req.body;
-      
-      // Validate the data
-      if (!displayName || displayName.trim() === '') {
-        return res.status(400).json({ message: "Display name is required" });
-      }
-      
-      // Create the updates object
-      const updates: Partial<typeof user> = { displayName };
-      
-      // Handle password change if requested
-      if (newPassword) {
-        // Check if current password matches
-        if (!currentPassword || currentPassword !== user.password) {
-          return res.status(400).json({ message: "Current password is incorrect" });
+
+  app.put(
+    "/api/users/:id",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const userId = parseInt(req.params.id);
+
+        // Only allow users to update their own profile
+        if (req.session!.userId !== userId) {
+          return res
+            .status(403)
+            .json({ message: "You don't have permission to update this user" });
         }
-        
-        // Update the password
-        updates.password = newPassword;
-      }
-      
-      // Update the user
-      const updatedUser = await storage.updateUser(userId, updates);
-      
-      // Don't return the password to the client
-      if (updatedUser) {
-        const { password: _, ...userWithoutPassword } = updatedUser;
-        res.json(userWithoutPassword);
-      } else {
+
+        const user = await storage.getUser(userId);
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
+
+        const { displayName, currentPassword, newPassword } = req.body;
+
+        // Validate the data
+        if (!displayName || displayName.trim() === "") {
+          return res.status(400).json({ message: "Display name is required" });
+        }
+
+        // Create the updates object
+        const updates: Partial<typeof user> = { displayName };
+
+        // Handle password change if requested
+        if (newPassword) {
+          // Check if current password matches
+          if (!currentPassword || currentPassword !== user.password) {
+            return res
+              .status(400)
+              .json({ message: "Current password is incorrect" });
+          }
+
+          // Update the password
+          updates.password = newPassword;
+        }
+
+        // Update the user
+        const updatedUser = await storage.updateUser(userId, updates);
+
+        // Don't return the password to the client
+        if (updatedUser) {
+          const { password: _, ...userWithoutPassword } = updatedUser;
+          res.json(userWithoutPassword);
+        } else {
+          res.status(500).json({ message: "Failed to update user" });
+        }
+      } catch (error) {
         res.status(500).json({ message: "Failed to update user" });
       }
-    } catch (error) {
-      res.status(500).json({ message: "Failed to update user" });
-    }
-  });
+    },
+  );
 
   // Event routes
   app.post("/api/events", async (req: Request, res: Response) => {
     try {
       const eventData = insertEventSchema.parse({
         ...req.body,
-        slug: `${req.body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${uuidv4().slice(0, 8)}`
+        slug: `${req.body.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${uuidv4().slice(0, 8)}`,
       });
-      
+
       const newEvent = await storage.createEvent(eventData);
       res.status(201).json(newEvent);
     } catch (error) {
@@ -231,38 +257,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const eventId = parseInt(req.params.id);
       const event = await storage.getEvent(eventId);
-      
+
       if (!event) {
         return res.status(404).json({ message: "Event not found" });
       }
-      
+
       res.json(event);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch event" });
     }
   });
-  
+
   app.put("/api/events/:id", async (req: Request, res: Response) => {
     try {
       const eventId = parseInt(req.params.id);
       const existingEvent = await storage.getEvent(eventId);
-      
+
       if (!existingEvent) {
         return res.status(404).json({ message: "Event not found" });
       }
-      
+
       // Check if the user is the owner of the event
       const userId = req.session?.userId;
       if (!userId || existingEvent.hostId !== userId) {
-        return res.status(403).json({ message: "You don't have permission to update this event" });
+        return res
+          .status(403)
+          .json({ message: "You don't have permission to update this event" });
       }
-      
+
       // Validate the event update data - using the base event data for simplicity
       const eventUpdateData = req.body;
-      
+
       // Update the event
       const updatedEvent = await storage.updateEvent(eventId, eventUpdateData);
-      
+
       res.json(updatedEvent);
     } catch (error) {
       if (error instanceof ZodError) {
@@ -276,20 +304,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { slug } = req.params;
       const event = await storage.getEventBySlug(slug);
-      
+
       if (!event) {
         return res.status(404).json({ message: "Event not found" });
       }
-      
+
       // Get the host user to include their display name
       const hostUser = await storage.getUser(event.hostId);
-      
+
       // Add the host display name to the event object
       const eventWithHostInfo = {
         ...event,
-        hostDisplayName: hostUser ? hostUser.displayName : 'Unknown User'
+        hostDisplayName: hostUser ? hostUser.displayName : "Unknown User",
       };
-      
+
       res.json(eventWithHostInfo);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch event" });
@@ -320,13 +348,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/responses", async (req: Request, res: Response) => {
     try {
       const responseData = insertResponseSchema.parse(req.body);
-      
+
       // Verify the event exists
       const event = await storage.getEvent(responseData.eventId);
       if (!event) {
         return res.status(404).json({ message: "Event not found" });
       }
-      
+
       // Verify the user exists if userId is provided
       if (responseData.userId) {
         const user = await storage.getUser(responseData.userId);
@@ -334,7 +362,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ message: "User not found" });
         }
       }
-      
+
       const newResponse = await storage.createResponse(responseData);
       res.status(201).json(newResponse);
     } catch (error) {
@@ -349,25 +377,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/guest-responses", async (req: Request, res: Response) => {
     try {
       const guestData = guestResponseSchema.parse(req.body);
-      
+
       // Verify the event exists
       const event = await storage.getEvent(guestData.eventId);
       if (!event) {
         return res.status(404).json({ message: "Event not found" });
       }
-      
+
       // Check if guest RSVPs are allowed for this event
       if (!event.allowGuestRsvp) {
-        return res.status(403).json({ message: "Guest RSVPs are not allowed for this event" });
+        return res
+          .status(403)
+          .json({ message: "Guest RSVPs are not allowed for this event" });
       }
-      
+
       // Check if the +1 count is within the allowed limit
       if (guestData.guestCount > event.maxGuestsPerRsvp) {
-        return res.status(400).json({ 
-          message: `Sorry, you can only bring up to ${event.maxGuestsPerRsvp} additional guests` 
+        return res.status(400).json({
+          message: `Sorry, you can only bring up to ${event.maxGuestsPerRsvp} additional guests`,
         });
       }
-      
+
       // Create a response with isGuest flag
       const responseData = {
         eventId: guestData.eventId,
@@ -375,9 +405,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isGuest: true,
         guestName: guestData.guestName,
         guestEmail: guestData.guestEmail,
-        guestCount: guestData.guestCount || 0
+        guestCount: guestData.guestCount || 0,
       };
-      
+
       const newResponse = await storage.createResponse(responseData);
       res.status(201).json(newResponse);
     } catch (error) {
@@ -388,79 +418,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/events/:eventId/responses", async (req: Request, res: Response) => {
-    try {
-      const eventId = parseInt(req.params.eventId);
-      const responses = await storage.getResponsesByEvent(eventId);
-      res.json(responses);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch responses" });
-    }
-  });
+  app.get(
+    "/api/events/:eventId/responses",
+    async (req: Request, res: Response) => {
+      try {
+        const eventId = parseInt(req.params.eventId);
+        const responses = await storage.getResponsesByEvent(eventId);
+        res.json(responses);
+      } catch (error) {
+        res.status(500).json({ message: "Failed to fetch responses" });
+      }
+    },
+  );
 
   // Invitation endpoints
-  app.post("/api/events/:eventId/invitations", isAuthenticated, async (req: Request, res: Response) => {
-    try {
-      const eventId = parseInt(req.params.eventId);
-      const { userIds } = req.body;
-      
-      // Verify the event exists and user is the host
-      const event = await storage.getEvent(eventId);
-      if (!event) {
-        return res.status(404).json({ message: "Event not found" });
-      }
-      
-      if (event.hostId !== req.session!.userId) {
-        return res.status(403).json({ message: "Only the event host can send invitations" });
-      }
-      
-      // Create invitations
-      for (const userId of userIds) {
-        await storage.createInvitation(eventId, userId);
-      }
-      
-      res.status(201).json({ message: "Invitations sent successfully" });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to send invitations" });
-    }
-  });
+  app.post(
+    "/api/events/:eventId/invitations",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const eventId = parseInt(req.params.eventId);
+        const { userIds } = req.body;
 
-  app.get("/api/events/:eventId/invitations", isAuthenticated, async (req: Request, res: Response) => {
-    try {
-      const eventId = parseInt(req.params.eventId);
-      const invitedUsers = await storage.getEventInvitations(eventId);
-      res.json(invitedUsers);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch invitations" });
-    }
-  });
+        // Verify the event exists and user is the host
+        const event = await storage.getEvent(eventId);
+        if (!event) {
+          return res.status(404).json({ message: "Event not found" });
+        }
 
-  app.get("/api/events/:eventId/responses/count", async (req: Request, res: Response) => {
-    try {
-      const eventId = parseInt(req.params.eventId);
-      const counts = await storage.getEventResponses(eventId);
-      res.json(counts);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch response counts" });
-    }
-  });
+        if (event.hostId !== req.session!.userId) {
+          return res
+            .status(403)
+            .json({ message: "Only the event host can send invitations" });
+        }
 
-  app.get("/api/events/:eventId/users/:userId/response", async (req: Request, res: Response) => {
-    try {
-      const eventId = parseInt(req.params.eventId);
-      const userId = parseInt(req.params.userId);
-      const response = await storage.getUserEventResponse(eventId, userId);
-      
-      // Return null if not found (instead of 404) so the frontend can handle it
-      if (!response) {
-        return res.json(null);
+        // Create invitations
+        for (const userId of userIds) {
+          await storage.createInvitation(eventId, userId);
+        }
+
+        res.status(201).json({ message: "Invitations sent successfully" });
+      } catch (error) {
+        res.status(500).json({ message: "Failed to send invitations" });
       }
-      
-      res.json(response);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch user response" });
-    }
-  });
+    },
+  );
+
+  app.get(
+    "/api/events/:eventId/invitations",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const eventId = parseInt(req.params.eventId);
+        const invitedUsers = await storage.getEventInvitations(eventId);
+        res.json(invitedUsers);
+      } catch (error) {
+        res.status(500).json({ message: "Failed to fetch invitations" });
+      }
+    },
+  );
+
+  app.get(
+    "/api/events/:eventId/responses/count",
+    async (req: Request, res: Response) => {
+      try {
+        const eventId = parseInt(req.params.eventId);
+        const counts = await storage.getEventResponses(eventId);
+        res.json(counts);
+      } catch (error) {
+        res.status(500).json({ message: "Failed to fetch response counts" });
+      }
+    },
+  );
+
+  app.get(
+    "/api/events/:eventId/users/:userId/response",
+    async (req: Request, res: Response) => {
+      try {
+        const eventId = parseInt(req.params.eventId);
+        const userId = parseInt(req.params.userId);
+        const response = await storage.getUserEventResponse(eventId, userId);
+
+        // Return null if not found (instead of 404) so the frontend can handle it
+        if (!response) {
+          return res.json(null);
+        }
+
+        res.json(response);
+      } catch (error) {
+        res.status(500).json({ message: "Failed to fetch user response" });
+      }
+    },
+  );
 
   const httpServer = createServer(app);
   return httpServer;
