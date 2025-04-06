@@ -165,7 +165,8 @@
       "maxGuestsPerRsvp": 3,
       "showRsvpsToInvitees": true,
       "showRsvpsAfterThreshold": true,
-      "rsvpVisibilityThreshold": 20
+      "rsvpVisibilityThreshold": 20,
+      "hostDisplayText": "Former Colleagues"
     },
     {
       "id": 9,
