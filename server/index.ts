@@ -30,7 +30,7 @@ if (!fs.existsSync(sessionStorePath)) {
 app.use(
   session({
     secret: "yup-rsvp-secret-key",
-    resave: false,
+    resave: true,
     saveUninitialized: true, // Changed to true to ensure new sessions are saved
     store: new MemoryStoreSession({
       checkPeriod: 86400000, // Prune expired entries every 24h

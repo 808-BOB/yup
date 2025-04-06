@@ -288,12 +288,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate the event update data - using the base event data for simplicity
       const eventUpdateData = {
         ...req.body,
-        // Ensure imageUrl is explicitly included in the update
-        imageUrl: req.body.imageUrl || null
+        // Ensure imageUrl is explicitly included in the update and validate it's not empty
+        imageUrl: req.body.imageUrl && req.body.imageUrl.trim() !== '' ? req.body.imageUrl : null
       };
 
       // Update the event
       const updatedEvent = await storage.updateEvent(eventId, eventUpdateData);
+      
+      // Force a fresh read to verify the update
+      const verifiedEvent = await storage.getEvent(eventId);
+      console.log('Event updated, image URL status:', verifiedEvent?.imageUrl ? 'present' : 'missing');
 
       res.json(updatedEvent);
     } catch (error) {
