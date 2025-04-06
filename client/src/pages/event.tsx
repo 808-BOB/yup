@@ -95,7 +95,7 @@ export default function EventPage() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
+      <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col bg-gray-950">
         <Header />
         <div className="flex-1 flex items-center justify-center">
           <p className="text-gray-400 tracking-tight">Loading event details...</p>
@@ -107,7 +107,7 @@ export default function EventPage() {
   // Error state
   if (error || !event) {
     return (
-      <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
+      <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col bg-gray-950">
         <Header />
         <div className="flex-1 flex items-center justify-center">
           <p className="text-gray-400 tracking-tight">Event not found. It may not exist or has been removed.</p>
@@ -119,7 +119,7 @@ export default function EventPage() {
   // Confirmation state
   if (showConfirmation && userResponse) {
     return (
-      <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
+      <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col bg-gray-950">
         <Header />
         <div className="flex-1 flex items-center justify-center">
           <ConfirmationMessage response={userResponse} event={event} />
@@ -140,11 +140,11 @@ export default function EventPage() {
 
   // Main UI
   return (
-    <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
+    <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col bg-gray-950">
       <Header />
       
-      <main className="flex-1 overflow-auto">
-        <div className="flex flex-col h-full animate-fade-in">
+      <main className="flex-1 overflow-auto mb-6">
+        <div className="flex flex-col animate-fade-in">
           <div className="flex gap-4 mb-4">
             {/* Only show Back to Events button if user is logged in */}
             {user && (
@@ -171,14 +171,25 @@ export default function EventPage() {
             )}
           </div>
           
-          {/* Using direct img src with fallback text */}
+          {/* Event Image - matching the style from event-card.tsx which we know works */}
           {event.imageUrl && (
-            <div className="relative w-full h-48 mb-6 rounded-sm bg-gray-800">
-              <img 
-                src={event.imageUrl}
-                alt={event.title || "Event image"}
-                className="absolute top-0 left-0 w-full h-full object-cover"
-              />
+            <div className="w-full h-48 mb-6 overflow-hidden rounded-sm bg-gray-800">
+              {event.imageUrl.startsWith('data:') ? (
+                <div 
+                  className="w-full h-full bg-no-repeat bg-center bg-cover"
+                  style={{ backgroundImage: `url(${event.imageUrl})` }}
+                ></div>
+              ) : (
+                <img 
+                  src={event.imageUrl}
+                  alt={event.title} 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    console.error("Image failed to load:", e);
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              )}
             </div>
           )}
           <Card className="mb-6 animate-slide-up bg-gray-900 border border-gray-800">
