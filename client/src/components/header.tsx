@@ -38,7 +38,7 @@ export default function Header() {
   return (
     <header className="flex justify-between items-center mb-6 py-4 border-b border-gray-800">
       <div className="flex items-center">
-        <div 
+        <div
           onClick={() => setLocation("/")}
           className="text-2xl font-bold tracking-tight font-mono cursor-pointer"
         >
@@ -47,7 +47,7 @@ export default function Header() {
       </div>
       <div className="flex items-center space-x-4">
         {user && (
-          <Button 
+          <Button
             variant="default"
             size="icon"
             onClick={() => setLocation("/events/create")}
@@ -56,7 +56,7 @@ export default function Header() {
             <Plus className="h-5 w-5" />
           </Button>
         )}
-        
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             {user ? (
@@ -66,9 +66,9 @@ export default function Header() {
                 </AvatarFallback>
               </Avatar>
             ) : (
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="rounded-sm bg-gray-900 border border-primary w-8 h-8 flex items-center justify-center"
               >
                 <User className="h-4 w-4 text-primary" />
@@ -82,14 +82,14 @@ export default function Header() {
                   {user.displayName}
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => setLocation("/profile")}
                   className="cursor-pointer"
                 >
                   <User className="mr-2 h-4 w-4" />
                   <span>My Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => setLocation("/my-events")}
                   className="cursor-pointer"
                 >
@@ -103,7 +103,7 @@ export default function Header() {
               </>
             ) : (
               <>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => setLocation("/login")}
                   className="cursor-pointer"
                 >

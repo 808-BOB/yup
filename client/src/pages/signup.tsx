@@ -4,22 +4,30 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
-const signupSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
-  displayName: z.string().min(1, "Display name is required"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string().min(1, "Confirm your password"),
-})
-.refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
+const signupSchema = z
+  .object({
+    username: z.string().min(3, "Username must be at least 3 characters"),
+    displayName: z.string().min(1, "Display name is required"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string().min(1, "Confirm your password"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 type SignupFormValues = z.infer<typeof signupSchema>;
 
@@ -69,9 +77,11 @@ export default function Signup() {
               YUP<span className="text-primary font-bold">.RSVP</span>
             </div>
           </Link>
-          <h2 className="mt-6 text-xl font-semibold text-gray-200">Create your account</h2>
+          <h2 className="mt-6 text-xl font-semibold text-gray-200">
+            Create your account
+          </h2>
         </div>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
@@ -79,7 +89,9 @@ export default function Signup() {
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">Username</FormLabel>
+                  <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">
+                    Username
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="Choose a username"
@@ -91,13 +103,15 @@ export default function Signup() {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="displayName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">Display Name</FormLabel>
+                  <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">
+                    Display Name
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="Your name (visible to others)"
@@ -109,13 +123,15 @@ export default function Signup() {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">Password</FormLabel>
+                  <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">
+                    Password
+                  </FormLabel>
                   <FormControl>
                     <Input
                       type="password"
@@ -128,13 +144,15 @@ export default function Signup() {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">Confirm Password</FormLabel>
+                  <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">
+                    Confirm Password
+                  </FormLabel>
                   <FormControl>
                     <Input
                       type="password"
@@ -161,7 +179,7 @@ export default function Signup() {
         <div className="text-center mt-6">
           <p className="text-gray-400 text-sm">
             Already have an account?{" "}
-            <span 
+            <span
               onClick={() => setLocation("/login")}
               className="text-primary hover:text-primary/80 cursor-pointer"
             >

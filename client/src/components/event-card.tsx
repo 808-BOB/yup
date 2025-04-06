@@ -14,11 +14,11 @@ interface EventCardProps {
   userResponse?: "yup" | "nope" | null;
 }
 
-export default function EventCard({ 
-  event, 
-  showStats = false, 
+export default function EventCard({
+  event,
+  showStats = false,
   isOwner = showStats, // If showing stats, assume the user is the owner
-  userResponse = null
+  userResponse = null,
 }: EventCardProps) {
   const formattedTime = `${event.startTime.slice(0, 5)}`;
   const { toast } = useToast();
@@ -26,18 +26,19 @@ export default function EventCard({
 
   const { data: responses } = useQuery<Response[]>({
     queryKey: [`/api/events/${event.id}/responses`],
-    enabled: showStats
+    enabled: showStats,
   });
 
   // Query for user's response to this event if not provided
   const { data: responseData } = useQuery<Response>({
     queryKey: [`/api/events/${event.id}/users/${userId}/response`],
-    enabled: !showStats && userResponse === null // Only fetch if we're not the owner and don't have response
+    enabled: !showStats && userResponse === null, // Only fetch if we're not the owner and don't have response
   });
 
   // Use the provided userResponse or the one fetched from the API
-  const actualUserResponse = userResponse || (responseData?.response as "yup" | "nope" | null);
-  
+  const actualUserResponse =
+    userResponse || (responseData?.response as "yup" | "nope" | null);
+
   // Function to determine card border color based on response or ownership
   const getBorderColor = () => {
     if (isOwner) return "border-primary/30"; // Owner events have primary color border
@@ -47,23 +48,28 @@ export default function EventCard({
   };
 
   return (
-    <Card className={`w-full bg-gray-900 ${getBorderColor()} hover:border-gray-700 transition-colors relative z-10`}>
-      <div onClick={() => window.location.href = `/events/${event.slug}`} className="cursor-pointer">
+    <Card
+      className={`w-full bg-gray-900 ${getBorderColor()} hover:border-gray-700 transition-colors relative z-10`}
+    >
+      <div
+        onClick={() => (window.location.href = `/events/${event.slug}`)}
+        className="cursor-pointer"
+      >
         {/* Event Image Section */}
         {event.imageUrl && (
           <div className="w-full h-32 overflow-hidden">
-            {event.imageUrl.startsWith('data:') ? (
+            {event.imageUrl.startsWith("data:") ? (
               // For base64 images
-              <div 
+              <div
                 className="w-full h-full bg-no-repeat bg-center bg-cover"
                 style={{ backgroundImage: `url(${event.imageUrl})` }}
               ></div>
             ) : (
               // For regular URLs
-              <img 
+              <img
                 src={event.imageUrl}
-                alt={event.title} 
-                className="w-full h-full object-cover" 
+                alt={event.title}
+                className="w-full h-full object-cover"
                 onError={(e) => {
                   console.error("Image failed to load:", e);
                   e.currentTarget.style.display = "none";
@@ -72,29 +78,41 @@ export default function EventCard({
             )}
           </div>
         )}
-        
+
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row justify-between sm:items-start">
             <div className="mb-2 sm:mb-0">
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <h3 className="font-bold tracking-tight">{event.title}</h3>
                 {isOwner && (
-                  <Badge variant="outline" className="text-xs bg-primary/10 border-primary/20 text-primary">
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-primary/10 border-primary/20 text-primary"
+                  >
                     Your Event
                   </Badge>
                 )}
                 {!isOwner && actualUserResponse === "yup" && (
-                  <Badge variant="outline" className="text-xs bg-green-900/20 border-green-800 text-green-500">
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-green-900/20 border-green-800 text-green-500"
+                  >
                     <Check className="mr-1 h-3 w-3" /> Going
                   </Badge>
                 )}
                 {!isOwner && actualUserResponse === "nope" && (
-                  <Badge variant="outline" className="text-xs bg-red-900/20 border-red-800 text-red-500">
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-red-900/20 border-red-800 text-red-500"
+                  >
                     <X className="mr-1 h-3 w-3" /> Not Going
                   </Badge>
                 )}
                 {!isOwner && actualUserResponse === null && (
-                  <Badge variant="outline" className="text-xs bg-yellow-900/20 border-yellow-800 text-yellow-500">
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-yellow-900/20 border-yellow-800 text-yellow-500"
+                  >
                     No Response
                   </Badge>
                 )}
@@ -107,11 +125,13 @@ export default function EventCard({
             {showStats && (
               <div className="flex items-center gap-2 mt-1 sm:mt-0">
                 <span className="text-sm text-primary font-medium">
-                  {responses?.filter(r => r.response === 'yup').length || 0} yup
+                  {responses?.filter((r) => r.response === "yup").length || 0}{" "}
+                  yup
                 </span>
                 <span className="text-sm text-gray-600">|</span>
                 <span className="text-sm text-gray-400 font-medium">
-                  {responses?.filter(r => r.response === 'nope').length || 0} nope
+                  {responses?.filter((r) => r.response === "nope").length || 0}{" "}
+                  nope
                 </span>
               </div>
             )}
@@ -128,7 +148,7 @@ export default function EventCard({
         <>
           <div className="flex justify-between px-4 pb-4 mt-1">
             <div className="flex space-x-4">
-              <button 
+              <button
                 className="text-xs text-primary flex items-center gap-1 hover:text-primary/80"
                 onClick={(e) => {
                   e.preventDefault();
@@ -137,15 +157,15 @@ export default function EventCard({
                   navigator.clipboard.writeText(eventUrl);
                   toast({
                     title: "Link Copied!",
-                    description: "Event link copied to clipboard"
+                    description: "Event link copied to clipboard",
                   });
                 }}
               >
                 <Share2 className="w-3.5 h-3.5" />
                 <span>SHARE</span>
               </button>
-              
-              <button 
+
+              <button
                 className="text-xs text-primary flex items-center gap-1 hover:text-primary/80"
                 onClick={(e) => {
                   e.preventDefault();
@@ -157,8 +177,8 @@ export default function EventCard({
                 <span>EDIT</span>
               </button>
             </div>
-            
-            <div 
+
+            <div
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -175,7 +195,6 @@ export default function EventCard({
   );
 }
 
-
 // Placeholder for RSVP page
 function EventResponses({ eventId }: { eventId: string }) {
   // Sample RSVP data - replace with actual data fetching logic
@@ -190,7 +209,9 @@ function EventResponses({ eventId }: { eventId: string }) {
       <h1>RSVPs for Event {eventId}</h1>
       <ul>
         {responses.map((response) => (
-          <li key={response.name}>{response.name}: {response.rsvp}</li>
+          <li key={response.name}>
+            {response.name}: {response.rsvp}
+          </li>
         ))}
       </ul>
     </div>

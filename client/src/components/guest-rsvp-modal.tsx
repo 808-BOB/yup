@@ -52,30 +52,30 @@ export default function GuestRsvpModal({
   const { toast } = useToast();
   const [guestCount, setGuestCount] = useState(0);
   const isMobile = useIsMobile();
-  const [modalHeight, setModalHeight] = useState('80vh');
-  
+  const [modalHeight, setModalHeight] = useState("80vh");
+
   // Adjust modal height when keyboard appears on mobile
   useEffect(() => {
     if (!isMobile) return;
-    
+
     const handleResize = () => {
       // If visual viewport height is significantly less than window height,
       // keyboard is probably shown
       const windowHeight = window.innerHeight;
       const visibleHeight = window.visualViewport?.height || windowHeight;
-      
+
       if (visibleHeight < windowHeight * 0.8) {
         // Keyboard is likely shown
-        setModalHeight('60vh');
+        setModalHeight("60vh");
       } else {
-        setModalHeight('80vh');
+        setModalHeight("80vh");
       }
     };
-    
-    window.visualViewport?.addEventListener('resize', handleResize);
-    
+
+    window.visualViewport?.addEventListener("resize", handleResize);
+
     return () => {
-      window.visualViewport?.removeEventListener('resize', handleResize);
+      window.visualViewport?.removeEventListener("resize", handleResize);
     };
   }, [isMobile]);
 
@@ -115,17 +115,19 @@ export default function GuestRsvpModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose} modal={true}>
-      <DialogContent 
+      <DialogContent
         className={`sm:max-w-[425px] bg-gray-900 border-gray-800 text-white overflow-y-auto fixed w-[90%] max-w-md z-50 rounded-md shadow-lg p-6`}
         style={{
           maxHeight: modalHeight,
-          top: isMobile ? '40%' : '50%',
-          left: '50%',
-          transform: isMobile ? 'translate(-50%, -40%)' : 'translate(-50%, -50%)'
+          top: isMobile ? "40%" : "50%",
+          left: "50%",
+          transform: isMobile
+            ? "translate(-50%, -40%)"
+            : "translate(-50%, -50%)",
         }}
         onInteractOutside={(e) => {
           // Prevent closing when interacting with keyboard
-          if (e.target && (e.target as HTMLElement).tagName === 'INPUT') {
+          if (e.target && (e.target as HTMLElement).tagName === "INPUT") {
             e.preventDefault();
           }
         }}
@@ -150,7 +152,9 @@ export default function GuestRsvpModal({
                 autoComplete="name"
               />
               {form.formState.errors.guestName && (
-                <p className="text-red-500 text-sm">{form.formState.errors.guestName.message}</p>
+                <p className="text-red-500 text-sm">
+                  {form.formState.errors.guestName.message}
+                </p>
               )}
             </div>
             <div className="grid gap-1">
@@ -164,7 +168,9 @@ export default function GuestRsvpModal({
                 autoComplete="email"
               />
               {form.formState.errors.guestEmail && (
-                <p className="text-red-500 text-sm">{form.formState.errors.guestEmail.message}</p>
+                <p className="text-red-500 text-sm">
+                  {form.formState.errors.guestEmail.message}
+                </p>
               )}
             </div>
 
@@ -179,11 +185,17 @@ export default function GuestRsvpModal({
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent position="item-aligned">
-                    {Array.from({ length: event.maxGuestsPerRsvp + 1 }).map((_, i) => (
-                      <SelectItem key={i} value={String(i)}>
-                        {i === 0 ? "Just me" : i === 1 ? `+1 guest` : `+${i} guests`}
-                      </SelectItem>
-                    ))}
+                    {Array.from({ length: event.maxGuestsPerRsvp + 1 }).map(
+                      (_, i) => (
+                        <SelectItem key={i} value={String(i)}>
+                          {i === 0
+                            ? "Just me"
+                            : i === 1
+                              ? `+1 guest`
+                              : `+${i} guests`}
+                        </SelectItem>
+                      ),
+                    )}
                   </SelectContent>
                 </Select>
               </div>

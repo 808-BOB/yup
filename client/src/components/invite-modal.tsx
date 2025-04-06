@@ -1,4 +1,9 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 interface InviteModalProps {
@@ -15,9 +20,12 @@ export default function InviteModal({ isOpen, onClose }: InviteModalProps) {
           <DialogTitle>Invite People</DialogTitle>
         </DialogHeader>
         <div className="py-4 text-gray-300">
-          Email invites coming soon. For now, please use the "share link" url to invite your friends via text or email.
+          Email invites coming soon. For now, please use the "share link" url to
+          invite your friends via text or email.
         </div>
-        <Button onClick={onClose} className="w-full">Close</Button>
+        <Button onClick={onClose} className="w-full">
+          Close
+        </Button>
       </DialogContent>
     </Dialog>
   );

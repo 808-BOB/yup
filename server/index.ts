@@ -14,12 +14,12 @@ declare module "express-session" {
 
 const app = express();
 // Increase JSON payload limit to 10MB for image uploads
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: false, limit: "10mb" }));
 
 // Set up persistent memory store
 const MemoryStoreSession = MemoryStore(session);
-const sessionStorePath = './data/sessions';
+const sessionStorePath = "./data/sessions";
 
 // Ensure the sessions directory exists
 if (!fs.existsSync(sessionStorePath)) {
@@ -27,22 +27,24 @@ if (!fs.existsSync(sessionStorePath)) {
 }
 
 // Session configuration
-app.use(session({
-  secret: "yup-rsvp-secret-key",
-  resave: false,
-  saveUninitialized: true, // Changed to true to ensure new sessions are saved
-  store: new MemoryStoreSession({
-    checkPeriod: 86400000, // Prune expired entries every 24h
-    stale: false, // Avoid "stale" session checks as we're persisting sessions
-    ttl: 604800000 // 7 days in milliseconds
+app.use(
+  session({
+    secret: "yup-rsvp-secret-key",
+    resave: false,
+    saveUninitialized: true, // Changed to true to ensure new sessions are saved
+    store: new MemoryStoreSession({
+      checkPeriod: 86400000, // Prune expired entries every 24h
+      stale: false, // Avoid "stale" session checks as we're persisting sessions
+      ttl: 604800000, // 7 days in milliseconds
+    }),
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+      httpOnly: true,
+      sameSite: "lax",
+    },
   }),
-  cookie: { 
-    secure: process.env.NODE_ENV === "production", 
-    maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-    httpOnly: true,
-    sameSite: 'lax'
-  }
-}));
+);
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -98,11 +100,14 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
+  server.listen(
+    {
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    },
+    () => {
+      log(`serving on port ${port}`);
+    },
+  );
 })();

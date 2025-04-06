@@ -1,4 +1,11 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  integer,
+  boolean,
+  timestamp,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -64,7 +71,7 @@ export const responses = pgTable("responses", {
   // Guest information
   isGuest: boolean("is_guest").default(false),
   guestName: text("guest_name"), // For guest responses
-  guestEmail: text("guest_email"), // For guest responses 
+  guestEmail: text("guest_email"), // For guest responses
   guestCount: integer("guest_count").default(0), // Number of additional guests (+1, +2, etc.)
 });
 
@@ -76,7 +83,7 @@ export const insertResponseSchema = createInsertSchema(responses).omit({
 // Schema for guest responses
 export const guestResponseSchema = z.object({
   eventId: z.number(),
-  response: z.enum(['yup', 'nope']),
+  response: z.enum(["yup", "nope"]),
   isGuest: z.literal(true),
   guestName: z.string().min(1, "Name is required"),
   guestEmail: z.string().email("Valid email is required"),

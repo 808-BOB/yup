@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { type User } from "@shared/schema";
 
@@ -7,7 +13,11 @@ interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   login: (username: string, password: string) => Promise<void>;
-  signup: (username: string, displayName: string, password: string) => Promise<void>;
+  signup: (
+    username: string,
+    displayName: string,
+    password: string,
+  ) => Promise<void>;
   logout: () => void;
 }
 
@@ -38,13 +48,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (username: string, password: string) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const userData = await apiRequest<User>("POST", "/api/auth/login", {
         username,
-        password
+        password,
       });
-      
+
       setUser(userData);
     } catch (err) {
       setError("Invalid username or password");
@@ -54,17 +64,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signup = async (username: string, displayName: string, password: string) => {
+  const signup = async (
+    username: string,
+    displayName: string,
+    password: string,
+  ) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const userData = await apiRequest<User>("POST", "/api/auth/signup", {
         username,
         displayName,
-        password
+        password,
       });
-      
+
       setUser(userData);
     } catch (err) {
       setError("Failed to create account. Username may already be taken.");
@@ -76,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     setIsLoading(true);
-    
+
     try {
       await apiRequest("POST", "/api/auth/logout");
       setUser(null);
@@ -95,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error,
         login,
         signup,
-        logout
+        logout,
       }}
     >
       {children}

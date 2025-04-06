@@ -32,18 +32,24 @@ export default function EventPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [pendingResponse, setPendingResponse] = useState<"yup" | "nope" | null>(null);
+  const [pendingResponse, setPendingResponse] = useState<"yup" | "nope" | null>(
+    null,
+  );
 
   // Event data query
-  const { data: event, isLoading, error } = useQuery<Event>({
+  const {
+    data: event,
+    isLoading,
+    error,
+  } = useQuery<Event>({
     queryKey: [`/api/events/slug/${params?.slug}`],
-    enabled: !!params?.slug
+    enabled: !!params?.slug,
   });
 
   // User's response query - only run if user is logged in and event data is loaded
   const { data: existingResponse } = useQuery<Response>({
     queryKey: [`/api/events/${event?.id}/users/${user?.id}/response`],
-    enabled: !!event && !!user
+    enabled: !!event && !!user,
   });
 
   // Update state when existing response is loaded
@@ -77,7 +83,7 @@ export default function EventPage() {
         toast({
           title: "Login Required",
           description: "Please log in to respond to this event",
-          variant: "destructive"
+          variant: "destructive",
         });
         return;
       }
@@ -85,7 +91,7 @@ export default function EventPage() {
       await apiRequest("POST", "/api/responses", {
         eventId: event.id,
         userId: user.id,
-        response
+        response,
       });
 
       setUserResponse(response);
@@ -94,7 +100,7 @@ export default function EventPage() {
       toast({
         title: "Error",
         description: "Failed to submit your response. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -105,7 +111,9 @@ export default function EventPage() {
       <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col bg-gray-950">
         <Header />
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-gray-400 tracking-tight">Loading event details...</p>
+          <p className="text-gray-400 tracking-tight">
+            Loading event details...
+          </p>
         </div>
       </div>
     );
@@ -117,7 +125,9 @@ export default function EventPage() {
       <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col bg-gray-950">
         <Header />
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-gray-400 tracking-tight">Event not found. It may not exist or has been removed.</p>
+          <p className="text-gray-400 tracking-tight">
+            Event not found. It may not exist or has been removed.
+          </p>
         </div>
       </div>
     );
@@ -139,8 +149,11 @@ export default function EventPage() {
 
   // Enhanced debug for imageUrl
   console.log("Event image URL:", event.imageUrl ? "exists" : "missing");
-  if (event.imageUrl?.startsWith('data:')) {
-    console.log("Image is base64 data, first 40 chars:", event.imageUrl.substring(0, 40));
+  if (event.imageUrl?.startsWith("data:")) {
+    console.log(
+      "Image is base64 data, first 40 chars:",
+      event.imageUrl.substring(0, 40),
+    );
     // Print the length of the base64 string for debugging
     console.log("Image base64 data length:", event.imageUrl.length);
   }
@@ -159,11 +172,11 @@ export default function EventPage() {
           <div className="flex gap-4 mb-4">
             {/* Only show Back to Events button if user is logged in */}
             {user && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700" 
-                onClick={() => setLocation('/events')}
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
+                onClick={() => setLocation("/events")}
               >
                 <ArrowLeft className="w-4 h-4" /> Back to Events
               </Button>
@@ -171,10 +184,10 @@ export default function EventPage() {
 
             {/* Only show View Responses button if user is the event host */}
             {user && user.id === event.hostId && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className={`flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700 ${!user ? 'ml-auto' : ''}`}
+              <Button
+                variant="outline"
+                size="sm"
+                className={`flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700 ${!user ? "ml-auto" : ""}`}
                 onClick={() => setLocation(`/events/${event.slug}/responses`)}
               >
                 <Eye className="w-4 h-4" /> View Responses
@@ -185,15 +198,15 @@ export default function EventPage() {
           {/* Event Image - matching the style from event-card.tsx which we know works */}
           {event.imageUrl && (
             <div className="w-full h-48 mb-6 overflow-hidden rounded-sm bg-gray-800">
-              {event.imageUrl.startsWith('data:') ? (
-                <div 
+              {event.imageUrl.startsWith("data:") ? (
+                <div
                   className="w-full h-full bg-no-repeat bg-center bg-cover"
                   style={{ backgroundImage: `url(${event.imageUrl})` }}
                 ></div>
               ) : (
-                <img 
+                <img
                   src={event.imageUrl}
-                  alt={event.title} 
+                  alt={event.title}
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     console.error("Image failed to load:", e);
@@ -207,15 +220,20 @@ export default function EventPage() {
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
                 <div className="flex flex-col space-y-1">
-                  <h2 className="text-xl font-bold tracking-tight">{event.title}</h2>
+                  <h2 className="text-xl font-bold tracking-tight">
+                    {event.title}
+                  </h2>
 
                   {/* Show "Your Event" badge for the owner */}
                   {user && event.hostId === user.id && (
                     <div className="flex items-center space-x-2">
-                      <Badge variant="outline" className="text-xs bg-primary/10 border-primary/20 text-primary">
+                      <Badge
+                        variant="outline"
+                        className="text-xs bg-primary/10 border-primary/20 text-primary"
+                      >
                         Your Event
                       </Badge>
-                      <button 
+                      <button
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -237,17 +255,25 @@ export default function EventPage() {
                 <div className="flex items-start">
                   <Calendar className="w-5 h-5 text-gray-500 mr-2 mt-0.5" />
                   <div>
-                    <p className="font-medium tracking-tight">{formatDate(event.date)}</p>
-                    <p className="text-gray-500 tracking-tight">{formattedTime}</p>
+                    <p className="font-medium tracking-tight">
+                      {formatDate(event.date)}
+                    </p>
+                    <p className="text-gray-500 tracking-tight">
+                      {formattedTime}
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex items-start">
                   <MapPin className="w-5 h-5 text-gray-500 mr-2 mt-0.5" />
                   <div>
-                    <p className="font-medium tracking-tight">{event.location}</p>
+                    <p className="font-medium tracking-tight">
+                      {event.location}
+                    </p>
                     {event.address && (
-                      <p className="text-gray-500 tracking-tight">{event.address}</p>
+                      <p className="text-gray-500 tracking-tight">
+                        {event.address}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -256,9 +282,9 @@ export default function EventPage() {
                   <User className="w-5 h-5 text-gray-500 mr-2 mt-0.5" />
                   <div>
                     <p className="font-medium tracking-tight">
-                      {user && user.id === event.hostId 
+                      {user && user.id === event.hostId
                         ? `Hosted by you (${user.displayName})`
-                        : `Hosted by ${event.hostDisplayName || 'User'}`}
+                        : `Hosted by ${event.hostDisplayName || "User"}`}
                     </p>
                   </div>
                 </div>
@@ -268,11 +294,18 @@ export default function EventPage() {
                     <Users className="w-5 h-5 text-gray-500 mr-2 mt-0.5" />
                     <div>
                       <div className="font-medium tracking-tight flex items-center">
-                        <span>Guest RSVP</span> <Badge variant="outline" className="ml-1 text-xs font-normal">enabled</Badge>
+                        <span>Guest RSVP</span>{" "}
+                        <Badge
+                          variant="outline"
+                          className="ml-1 text-xs font-normal"
+                        >
+                          enabled
+                        </Badge>
                       </div>
                       {event.allowPlusOne && (
                         <p className="text-gray-500 tracking-tight">
-                          Bring up to {event.maxGuestsPerRsvp} {event.maxGuestsPerRsvp === 1 ? 'guest' : 'guests'}
+                          Bring up to {event.maxGuestsPerRsvp}{" "}
+                          {event.maxGuestsPerRsvp === 1 ? "guest" : "guests"}
                         </p>
                       )}
                     </div>
@@ -291,21 +324,27 @@ export default function EventPage() {
           </Card>
 
           <div className="mt-auto pb-6">
-            <p className="text-center mb-8 text-gray-400 uppercase tracking-wide font-mono">CAN YOU MAKE IT?</p>
+            <p className="text-center mb-8 text-gray-400 uppercase tracking-wide font-mono">
+              CAN YOU MAKE IT?
+            </p>
 
             <div className="flex gap-8 justify-center mb-8">
               <Button
                 onClick={() => handleResponse("nope")}
                 className="btn-nope bg-gray-900 w-32 h-32 rounded-sm flex items-center justify-center border border-gray-800 hover:border-gray-700 transition-colors"
               >
-                <span className="text-gray-400 text-2xl font-bold uppercase tracking-widest">NOPE</span>
+                <span className="text-gray-400 text-2xl font-bold uppercase tracking-widest">
+                  NOPE
+                </span>
               </Button>
 
               <Button
                 onClick={() => handleResponse("yup")}
                 className="btn-yup bg-gray-900 w-32 h-32 rounded-sm flex items-center justify-center border border-primary hover:border-primary/80 transition-colors"
               >
-                <span className="text-primary text-2xl font-bold uppercase tracking-widest">YUP</span>
+                <span className="text-primary text-2xl font-bold uppercase tracking-widest">
+                  YUP
+                </span>
               </Button>
             </div>
 
@@ -316,7 +355,8 @@ export default function EventPage() {
                   navigator.clipboard.writeText(url);
                   toast({
                     title: "Link Copied!",
-                    description: "Share this link to invite people to your event",
+                    description:
+                      "Share this link to invite people to your event",
                   });
                 }}
                 className="flex-1 bg-gray-900 border border-gray-800 hover:border-gray-700"
