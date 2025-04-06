@@ -53,8 +53,8 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-950">
-      <div className="max-w-md mx-auto w-full px-4 py-12">
+    <div className="h-[100svh] flex flex-col bg-gray-950">
+      <div className="max-w-md mx-auto w-full px-4 py-8 flex-1 flex flex-col justify-center">
         <div className="text-center mb-8">
           <Link href="/">
             <div className="text-3xl font-bold tracking-tight font-mono cursor-pointer inline-block">
