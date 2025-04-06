@@ -178,15 +178,34 @@ export default function EventCard({
               </button>
             </div>
 
-            <div
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                window.location.href = `/events/${event.slug}/responses`;
-              }}
-              className="text-sm text-primary hover:text-primary/80 font-medium cursor-pointer"
-            >
-              View RSVPs
+            <div className="relative group">
+              <div
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.location.href = `/events/${event.slug}/responses`;
+                }}
+                className="text-sm text-primary hover:text-primary/80 font-medium cursor-pointer"
+              >
+                View RSVPs
+                {(!event.showRsvpsToInvitees || event.showRsvpsAfterThreshold) && (
+                  <span className="inline-block ml-1 text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="16" x2="12" y2="12"></line>
+                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                  </span>
+                )}
+              </div>
+              {(!event.showRsvpsToInvitees || event.showRsvpsAfterThreshold) && (
+                <div className="absolute right-0 bottom-full mb-1 w-48 bg-gray-800 p-2 rounded text-xs text-gray-300 invisible group-hover:visible shadow-lg z-10">
+                  {!event.showRsvpsToInvitees && <div>RSVPs hidden from guests</div>}
+                  {event.showRsvpsAfterThreshold && (
+                    <div>RSVPs visible after {event.rsvpVisibilityThreshold} positive responses</div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </>

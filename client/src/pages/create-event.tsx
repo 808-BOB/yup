@@ -44,6 +44,9 @@ const formSchema = z.object({
   allowGuestRsvp: z.boolean().default(true),
   allowPlusOne: z.boolean().default(true),
   maxGuestsPerRsvp: z.number().min(0).max(10).default(3),
+  showRsvpsToInvitees: z.boolean().default(true),
+  showRsvpsAfterThreshold: z.boolean().default(false),
+  rsvpVisibilityThreshold: z.number().min(1).max(20).default(5),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -87,6 +90,9 @@ export default function CreateEvent() {
       allowGuestRsvp: true,
       allowPlusOne: true,
       maxGuestsPerRsvp: 3,
+      showRsvpsToInvitees: true,
+      showRsvpsAfterThreshold: false,
+      rsvpVisibilityThreshold: 5,
     },
   });
 
@@ -670,6 +676,90 @@ export default function CreateEvent() {
                       />
                     )}
                   </>
+                )}
+              </div>
+
+              <div className="border-t border-gray-800 mt-6 pt-6">
+                <h3 className="text-gray-400 uppercase text-xs tracking-wider mb-4">RSVP Visibility Settings</h3>
+                
+                <FormField
+                  control={form.control}
+                  name="showRsvpsToInvitees"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-800 p-4 mb-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                          Show RSVPs to Invitees
+                        </FormLabel>
+                        <FormDescription className="text-xs text-gray-500">
+                          Allow people invited to this event to see who else is going
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="showRsvpsAfterThreshold"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-800 p-4 mb-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                          Show RSVPs after threshold
+                        </FormLabel>
+                        <FormDescription className="text-xs text-gray-500">
+                          Only show RSVPs when a minimum number of "YUP" responses are received
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                {form.watch("showRsvpsAfterThreshold") && (
+                  <FormField
+                    control={form.control}
+                    name="rsvpVisibilityThreshold"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">
+                          Minimum "YUP" responses required
+                        </FormLabel>
+                        <FormControl>
+                          <div className="flex flex-col space-y-4 pt-2">
+                            <Slider
+                              value={[field.value]}
+                              min={1}
+                              max={20}
+                              step={1}
+                              onValueChange={(vals) =>
+                                field.onChange(vals[0])
+                              }
+                              className="w-full"
+                            />
+                            <div className="text-center text-sm text-primary font-semibold">
+                              {field.value} {field.value === 1 ? "response" : "responses"}
+                            </div>
+                          </div>
+                        </FormControl>
+                        <FormDescription className="text-xs text-gray-500 text-center mt-2">
+                          RSVPs will be visible when at least {field.value} people respond with "YUP"
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
                 )}
               </div>
 
