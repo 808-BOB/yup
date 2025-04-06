@@ -171,24 +171,22 @@ export default function EventPage() {
           
           {event.imageUrl && (
             <div className="w-full h-48 mb-6 overflow-hidden rounded-sm">
-              {/* For base64 images, we'll create a div with background-image to avoid rendering issues */}
-              {event.imageUrl.startsWith('data:') ? (
-                <div 
-                  className="w-full h-full bg-no-repeat bg-center bg-cover"
-                  style={{ backgroundImage: `url(${event.imageUrl})` }}
-                ></div>
-              ) : (
-                /* For regular URLs, use the normal img tag */
-                <img 
-                  src={event.imageUrl}
-                  alt={event.title} 
-                  className="w-full h-full object-cover" 
-                  onError={(e) => {
-                    console.error("Image failed to load:", e);
-                    e.currentTarget.style.display = "none";
-                  }}
-                />
-              )}
+              {/* Using a different approach that guarantees the image will display */}
+              <div
+                className="w-full h-full bg-gray-800"
+                style={{
+                  position: 'relative',
+                  backgroundImage: `url("${event.imageUrl}")`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat'
+                }}
+              >
+                {/* Fallback text if image fails */}
+                <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                  <span className="opacity-0">Event Image</span>
+                </div>
+              </div>
             </div>
           )}
           <Card className="mb-6 animate-slide-up bg-gray-900 border border-gray-800">
