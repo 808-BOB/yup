@@ -49,6 +49,30 @@ export default function EventCard({
   return (
     <Card className={`w-full bg-gray-900 ${getBorderColor()} hover:border-gray-700 transition-colors relative z-10`}>
       <div onClick={() => window.location.href = `/events/${event.slug}`} className="cursor-pointer">
+        {/* Event Image Section */}
+        {event.imageUrl && (
+          <div className="w-full h-32 overflow-hidden">
+            {event.imageUrl.startsWith('data:') ? (
+              // For base64 images
+              <div 
+                className="w-full h-full bg-no-repeat bg-center bg-cover"
+                style={{ backgroundImage: `url(${event.imageUrl})` }}
+              ></div>
+            ) : (
+              // For regular URLs
+              <img 
+                src={event.imageUrl}
+                alt={event.title} 
+                className="w-full h-full object-cover" 
+                onError={(e) => {
+                  console.error("Image failed to load:", e);
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+            )}
+          </div>
+        )}
+        
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row justify-between sm:items-start">
             <div className="mb-2 sm:mb-0">
