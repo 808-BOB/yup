@@ -12,6 +12,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, userData: Partial<User>): Promise<User | undefined>;
 
   // Event operations
   createEvent(event: InsertEvent): Promise<Event>;
@@ -310,6 +311,25 @@ export class MemStorage implements IStorage {
     this.users.set(id, user);
     this.saveToFile(); // Save after creating a user
     return user;
+  }
+  
+  async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+    
+    // Create an updated user by merging the existing user with the updates
+    const updatedUser: User = {
+      ...user,
+      ...userData,
+      // Keep the original id
+      id: user.id
+    };
+    
+    // Update the user in the map
+    this.users.set(id, updatedUser);
+    this.saveToFile(); // Save after updating the user
+    
+    return updatedUser;
   }
 
   // Event operations

@@ -149,6 +149,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch user" });
     }
   });
+  
+  app.put("/api/users/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Only allow users to update their own profile
+      if (req.session!.userId !== userId) {
+        return res.status(403).json({ message: "You don't have permission to update this user" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const { displayName, currentPassword, newPassword } = req.body;
+      
+      // Validate the data
+      if (!displayName || displayName.trim() === '') {
+        return res.status(400).json({ message: "Display name is required" });
+      }
+      
+      // Create the updates object
+      const updates: Partial<typeof user> = { displayName };
+      
+      // Handle password change if requested
+      if (newPassword) {
+        // Check if current password matches
+        if (!currentPassword || currentPassword !== user.password) {
+          return res.status(400).json({ message: "Current password is incorrect" });
+        }
+        
+        // Update the password
+        updates.password = newPassword;
+      }
+      
+      // Update the user
+      const updatedUser = await storage.updateUser(userId, updates);
+      
+      // Don't return the password to the client
+      if (updatedUser) {
+        const { password: _, ...userWithoutPassword } = updatedUser;
+        res.json(userWithoutPassword);
+      } else {
+        res.status(500).json({ message: "Failed to update user" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
 
   // Event routes
   app.post("/api/events", async (req: Request, res: Response) => {

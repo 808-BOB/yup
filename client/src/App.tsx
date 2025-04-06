@@ -12,6 +12,7 @@ import EventList from "@/pages/event-list";
 import EventResponses from "@/pages/event-responses";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
+import Profile from "@/pages/profile";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 function Router() {
@@ -24,6 +25,7 @@ function Router() {
       <Route path="/events/:slug/responses" component={EventResponses} />
       <Route path="/events/:slug" component={Event} />
       <Route path="/my-events" component={MyEvents} />
+      <Route path="/profile" component={Profile} />
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
       <Route component={NotFound} />
