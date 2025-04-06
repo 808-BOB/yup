@@ -50,9 +50,9 @@ export default function EventCard({
     <Card className={`w-full bg-gray-900 ${getBorderColor()} hover:border-gray-700 transition-colors relative z-10`}>
       <div onClick={() => window.location.href = `/events/${event.slug}`} className="cursor-pointer">
         <CardContent className="p-4">
-          <div className="flex justify-between items-start">
-            <div>
-              <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-start">
+            <div className="mb-2 sm:mb-0">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
                 <h3 className="font-bold tracking-tight">{event.title}</h3>
                 {isOwner && (
                   <Badge variant="outline" className="text-xs bg-primary/10 border-primary/20 text-primary">
@@ -81,7 +81,7 @@ export default function EventCard({
             </div>
 
             {showStats && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mt-1 sm:mt-0">
                 <span className="text-sm text-primary font-medium">
                   {responses?.filter(r => r.response === 'yup').length || 0} yup
                 </span>
