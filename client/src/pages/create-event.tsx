@@ -767,7 +767,7 @@ export default function CreateEvent() {
                             <Slider
                               value={[field.value]}
                               min={1}
-                              max={20}
+                              max={50}
                               step={1}
                               onValueChange={(vals) =>
                                 field.onChange(vals[0])
