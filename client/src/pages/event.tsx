@@ -226,7 +226,7 @@ export default function EventPage() {
 
                   {/* Show "Your Event" badge for the owner */}
                   {user && event.hostId === user.id && (
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center justify-between w-full">
                       <Badge
                         variant="outline"
                         className="text-xs bg-primary/10 border-primary/20 text-primary"
