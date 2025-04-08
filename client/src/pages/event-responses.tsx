@@ -3,7 +3,7 @@ import { useRoute, useLocation } from "wouter";
 import Header from "@/components/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Eye } from "lucide-react";
 import { type Event, type Response } from "@shared/schema";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -33,22 +33,7 @@ export default function EventResponses() {
     enabled: !!event?.id,
   });
 
-  // Redirect to login if not authenticated
-  if (!authLoading && !user) {
-    // Redirect to event page instead of login page
-    if (event) {
-      toast({
-        title: "Access Denied",
-        description: "Only the event host can view responses.",
-        variant: "destructive",
-      });
-      setLocation(`/events/${event.slug}`);
-    } else {
-      setLocation("/");
-    }
-    return null;
-  }
-
+  // Loading state
   if (!event) {
     return (
       <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
@@ -61,37 +46,29 @@ export default function EventResponses() {
   }
 
   // Check if the current user has access to view responses
-  if (user) {
-    const isHost = event.hostId === user.id;
-    
-    // Host can always view responses
-    if (isHost) {
-      // Continue with displaying responses
-    } else {
-      // For non-hosts, check visibility settings
-      const hasYupThresholdReached = event.showRsvpsAfterThreshold && responseCounts.yupCount >= event.rsvpVisibilityThreshold;
-      const canViewAsInvitee = event.showRsvpsToInvitees || hasYupThresholdReached;
-
-      if (!canViewAsInvitee) {
-      let description = "Access to view RSVPs has been restricted by the event host.";
-      
-      if (event.showRsvpsAfterThreshold) {
-        description = `RSVPs will be visible once ${event.rsvpVisibilityThreshold} people respond with "YUP".`;
-      }
-      
-      toast({
-        title: "Access Restricted",
-        description,
-        variant: "destructive",
-      });
-      setLocation(`/events/${event.slug}`);
-      return null;
-    }
-  } else {
-    // Not logged in
+  if (!user) {
     toast({
       title: "Access Denied",
       description: "You must be logged in to view responses.",
+      variant: "destructive",
+    });
+    setLocation(`/events/${event.slug}`);
+    return null;
+  }
+
+  const isHost = event.hostId === user.id;
+  const hasYupThresholdReached = event.showRsvpsAfterThreshold && responseCounts.yupCount >= event.rsvpVisibilityThreshold;
+  const canViewAsInvitee = event.showRsvpsToInvitees || hasYupThresholdReached;
+
+  // Always allow host to view responses
+  if (!isHost && !canViewAsInvitee) {
+    let description = "Access to view RSVPs has been restricted by the event host.";
+    if (event.showRsvpsAfterThreshold) {
+      description = `RSVPs will be visible once ${event.rsvpVisibilityThreshold} people respond with "YUP".`;
+    }
+    toast({
+      title: "Access Restricted",
+      description,
       variant: "destructive",
     });
     setLocation(`/events/${event.slug}`);
@@ -108,15 +85,6 @@ export default function EventResponses() {
       <Header />
       <main className="flex-1 overflow-auto animate-fade-in">
         <div className="flex mb-4 gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
-            onClick={() => setLocation("/events")}
-          >
-            <ArrowLeft className="w-4 h-4" /> All Events
-          </Button>
-
           <Button
             variant="outline"
             size="sm"
