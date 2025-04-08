@@ -63,11 +63,16 @@ export default function EventResponses() {
   // Check if the current user has access to view responses
   if (user) {
     const isHost = event.hostId === user.id;
-    const hasYupThresholdReached = event.showRsvpsAfterThreshold && responseCounts.yupCount >= event.rsvpVisibilityThreshold;
-    const canViewAsInvitee = event.showRsvpsToInvitees || hasYupThresholdReached;
+    
+    // Host can always view responses
+    if (isHost) {
+      // Continue with displaying responses
+    } else {
+      // For non-hosts, check visibility settings
+      const hasYupThresholdReached = event.showRsvpsAfterThreshold && responseCounts.yupCount >= event.rsvpVisibilityThreshold;
+      const canViewAsInvitee = event.showRsvpsToInvitees || hasYupThresholdReached;
 
-    // If not the host and also not allowed to view as invitee
-    if (!isHost && !canViewAsInvitee) {
+      if (!canViewAsInvitee) {
       let description = "Access to view RSVPs has been restricted by the event host.";
       
       if (event.showRsvpsAfterThreshold) {
