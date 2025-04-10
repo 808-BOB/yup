@@ -23,7 +23,7 @@ export default function EventCard({
   const formattedTime = formatTime(event.startTime);
   const { toast } = useToast();
   const userId = 1; // In a real app, we'd get this from auth context
-  const [_, setLocation] = useLocation();
+  const [_, setLocation] = useLocation(); // Not used, we use window.location.href for navigation
 
   const { data: responses } = useQuery<Response[]>({
     queryKey: [`/api/events/${event.id}/responses`],
