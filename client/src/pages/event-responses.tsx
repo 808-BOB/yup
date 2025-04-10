@@ -66,8 +66,14 @@ export default function EventResponses() {
   // Check visibility permissions for guests
   const canViewAsInvitee = event.showRsvpsToInvitees || hasYupThresholdReached;
 
-  // Allow access if user is host or has proper permissions
-  if (!user) {
+  // Allow access based on permissions
+  
+  // Check if non-logged user can view based on the threshold
+  const canViewAsPublic = event.showRsvpsAfterThreshold && 
+                         responseCounts.yupCount >= event.rsvpVisibilityThreshold;
+  
+  // If user is not logged in AND cannot view as public, deny access
+  if (!user && !canViewAsPublic) {
     toast({
       title: "Access Denied",
       description: "You must be logged in to view responses.",
@@ -77,7 +83,8 @@ export default function EventResponses() {
     return null;
   }
 
-  if (!isHost && !canViewAsInvitee) {
+  // If user is logged in but not host and doesn't have viewing permissions
+  if (user && !isHost && !canViewAsInvitee && !canViewAsPublic) {
     let description = "Access to view RSVPs has been restricted by the event host.";
     if (event.showRsvpsAfterThreshold) {
       description = `RSVPs will be visible once ${event.rsvpVisibilityThreshold} people respond with "YUP".`;
@@ -167,10 +174,10 @@ export default function EventResponses() {
                           ) : (
                             <>
                               <span className="text-sm text-gray-200">
-                                {response.userName || `User ${response.userId}`}
+                                {`User ${response.userId || 'unknown'}`}
                               </span>
                               <span className="text-xs text-gray-400">
-                                {response.userEmail || `user${response.userId}@example.com`}
+                                {response.userId ? `user${response.userId}@example.com` : 'unknown email'}
                               </span>
                             </>
                           )}
@@ -208,10 +215,10 @@ export default function EventResponses() {
                           ) : (
                             <>
                               <span className="text-sm text-gray-200">
-                                {response.userName || `User ${response.userId}`}
+                                {`User ${response.userId || 'unknown'}`}
                               </span>
                               <span className="text-xs text-gray-400">
-                                {response.userEmail || `user${response.userId}@example.com`}
+                                {response.userId ? `user${response.userId}@example.com` : 'unknown email'}
                               </span>
                             </>
                           )}

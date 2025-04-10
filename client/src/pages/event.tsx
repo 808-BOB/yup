@@ -51,6 +51,15 @@ export default function EventPage() {
     queryKey: [`/api/events/${event?.id}/users/${user?.id}/response`],
     enabled: !!event && !!user,
   });
+  
+  // Get response counts to determine if threshold is reached for visibility
+  const { data: responseCounts = { yupCount: 0, nopeCount: 0 } } = useQuery<{
+    yupCount: number;
+    nopeCount: number;
+  }>({
+    queryKey: [`/api/events/${event?.id}/responses/count`],
+    enabled: !!event?.id,
+  });
 
   // Update state when existing response is loaded
   useEffect(() => {
@@ -183,7 +192,14 @@ export default function EventPage() {
             )}
             
             {/* View Responses button top right */}
-            {user && user.id === event.hostId && (
+            {(
+              // Show if user is the host
+              (user && user.id === event.hostId) || 
+              // OR if user is logged in AND event allows RSVP viewing for invitees
+              (user && event.showRsvpsToInvitees) || 
+              // OR if threshold viewing is enabled AND the threshold has been reached
+              (event.showRsvpsAfterThreshold && responseCounts.yupCount >= event.rsvpVisibilityThreshold)
+            ) && (
               <Button
                 variant="outline"
                 size="sm"
