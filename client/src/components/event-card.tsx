@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { ChevronRight, Share2, Edit, Check, X } from "lucide-react";
 import { formatDate, formatTime } from "@/lib/utils/date-formatter";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,10 +23,20 @@ export default function EventCard({
   const formattedTime = formatTime(event.startTime);
   const { toast } = useToast();
   const userId = 1; // In a real app, we'd get this from auth context
+  const [_, setLocation] = useLocation();
 
   const { data: responses } = useQuery<Response[]>({
     queryKey: [`/api/events/${event.id}/responses`],
     enabled: showStats,
+  });
+  
+  // Get response counts to determine if threshold is reached for visibility
+  const { data: responseCounts = { yupCount: 0, nopeCount: 0 } } = useQuery<{
+    yupCount: number;
+    nopeCount: number;
+  }>({
+    queryKey: [`/api/events/${event.id}/responses/count`],
+    enabled: !!event.id,
   });
 
   // Query for user's response to this event if not provided
@@ -188,7 +198,10 @@ export default function EventCard({
                 className="text-sm text-primary hover:text-primary/80 font-medium cursor-pointer flex items-center"
               >
                 View RSVPs
-                {(!event.showRsvpsToInvitees || event.showRsvpsAfterThreshold) && (
+                {(
+                  (!event.showRsvpsToInvitees || 
+                  (event.showRsvpsAfterThreshold && responseCounts.yupCount < event.rsvpVisibilityThreshold))
+                ) && (
                   <span className="inline-block ml-1 text-gray-400">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="10"></circle>
@@ -198,11 +211,18 @@ export default function EventCard({
                   </span>
                 )}
               </button>
-              {(!event.showRsvpsToInvitees || event.showRsvpsAfterThreshold) && (
+              {(
+                (!event.showRsvpsToInvitees || 
+                (event.showRsvpsAfterThreshold && responseCounts.yupCount < event.rsvpVisibilityThreshold))
+              ) && (
                 <div className="absolute right-0 bottom-full mb-1 w-48 bg-gray-800 p-2 rounded text-xs text-gray-300 invisible group-hover:visible shadow-lg z-10">
                   {!event.showRsvpsToInvitees && <div>RSVPs hidden from guests</div>}
                   {event.showRsvpsAfterThreshold && (
-                    <div>RSVPs visible after {event.rsvpVisibilityThreshold} positive responses</div>
+                    <div>
+                      {responseCounts.yupCount >= event.rsvpVisibilityThreshold 
+                       ? "RSVPs now visible" 
+                       : `RSVPs visible after ${event.rsvpVisibilityThreshold} positive responses (${responseCounts.yupCount}/${event.rsvpVisibilityThreshold})`}
+                    </div>
                   )}
                 </div>
               )}
