@@ -45,16 +45,38 @@ export default function EventResponses() {
     );
   }
 
+  // Wait for auth to finish loading
+  if (authLoading) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <p className="text-gray-400">Loading...</p>
+        </main>
+      </div>
+    );
+  }
+
   // Host can always view responses
   const isHost = user?.id === event.hostId;
   
   // Calculate if threshold is reached for showing responses
   const hasYupThresholdReached = event.showRsvpsAfterThreshold && responseCounts.yupCount >= event.rsvpVisibilityThreshold;
   
-  // Check visibility permissions
+  // Check visibility permissions for guests
   const canViewAsInvitee = event.showRsvpsToInvitees || hasYupThresholdReached;
 
-  // Allow access if user is host or event settings permit
+  // Allow access if user is host or has proper permissions
+  if (!user) {
+    toast({
+      title: "Access Denied",
+      description: "You must be logged in to view responses.",
+      variant: "destructive",
+    });
+    setLocation(`/events/${event.slug}`);
+    return null;
+  }
+
   if (!isHost && !canViewAsInvitee) {
     let description = "Access to view RSVPs has been restricted by the event host.";
     if (event.showRsvpsAfterThreshold) {
