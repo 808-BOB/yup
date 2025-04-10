@@ -39,7 +39,11 @@
   }
 
   .btn-yup {
-    @apply bg-primary text-black font-bold uppercase tracking-wider hover:bg-primary/90 hover:text-white rounded-sm;
+    @apply bg-primary text-black font-bold uppercase tracking-wider hover:bg-primary/90 hover:text-white rounded-sm relative hover:shadow-lg transition-all;
+  }
+
+  .btn-yup span {
+    @apply relative z-10;
   }
 
   .btn-nope {
