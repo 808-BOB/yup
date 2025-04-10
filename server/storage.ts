@@ -526,8 +526,21 @@ export class MemStorage implements IStorage {
       guestCount: insertResponse.guestCount || 0,
     };
 
-    // Check if user already responded to this event (only for logged in users)
-    if (response.userId && !response.isGuest) {
+    // For guest responses, check if they already responded by email
+    if (response.isGuest && response.guestEmail) {
+      const existingGuestResponse = Array.from(this.responses.values()).find(
+        r => r.eventId === response.eventId && 
+            r.isGuest && 
+            r.guestEmail === response.guestEmail
+      );
+
+      if (existingGuestResponse) {
+        // Update existing response
+        this.responses.delete(existingGuestResponse.id);
+      }
+    }
+    // For logged in users, check by userId
+    else if (response.userId) {
       const existingResponse = await this.getUserEventResponse(
         insertResponse.eventId,
         response.userId,
