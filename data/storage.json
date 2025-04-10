@@ -348,6 +348,17 @@
       "id": 14,
       "createdAt": "2025-04-10T21:35:16.465Z",
       "userId": null
+    },
+    {
+      "eventId": 9,
+      "userId": 3,
+      "response": "nope",
+      "id": 15,
+      "createdAt": "2025-04-10T21:43:00.943Z",
+      "isGuest": false,
+      "guestName": null,
+      "guestEmail": null,
+      "guestCount": 0
     }
   ]
 }
