@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { type Event } from "@shared/schema";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ConfirmationMessageProps {
   response: "yup" | "nope";
@@ -12,6 +13,10 @@ export default function ConfirmationMessage({
   response,
   event,
 }: ConfirmationMessageProps) {
+  const { user } = useAuth();
+  // Determine where the "back" button should go
+  const backLinkHref = user ? "/events" : `/events/${event.slug}`;
+  
   return (
     <div className="text-center p-8 animate-fade-in">
       {response === "yup" ? (
@@ -23,11 +28,20 @@ export default function ConfirmationMessage({
           <p className="text-gray-400 mb-8 tracking-tight">
             We've confirmed your attendance to {event.title}
           </p>
-          <Link href="/events">
-            <Button className="btn-yup py-3 px-8 rounded-sm font-bold uppercase tracking-wider hover:bg-primary/90 transition">
-              Back to Events
-            </Button>
-          </Link>
+          <div className="flex flex-col gap-4">
+            <Link href={backLinkHref}>
+              <Button className="btn-yup py-3 px-8 rounded-sm font-bold uppercase tracking-wider hover:bg-primary/90 transition">
+                {user ? "Back to Events" : "Back to Event"}
+              </Button>
+            </Link>
+            {!user && (
+              <Link href="/login">
+                <Button variant="outline" className="py-3 px-8 rounded-sm font-medium">
+                  Login to Manage RSVPs
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
       ) : (
         <div id="nope-confirmation">
@@ -40,11 +54,20 @@ export default function ConfirmationMessage({
           <p className="text-gray-400 mb-8 tracking-tight">
             We've noted that you won't be attending {event.title}
           </p>
-          <Link href="/events">
-            <Button className="btn-nope py-3 px-8 rounded-sm font-bold uppercase tracking-wider">
-              Back to Events
-            </Button>
-          </Link>
+          <div className="flex flex-col gap-4">
+            <Link href={backLinkHref}>
+              <Button className="btn-nope py-3 px-8 rounded-sm font-bold uppercase tracking-wider">
+                {user ? "Back to Events" : "Back to Event"}
+              </Button>
+            </Link>
+            {!user && (
+              <Link href="/login">
+                <Button variant="outline" className="py-3 px-8 rounded-sm font-medium">
+                  Login to Manage RSVPs
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
       )}
     </div>
