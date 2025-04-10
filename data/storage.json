@@ -326,6 +326,17 @@
       "id": 12,
       "createdAt": "2025-04-10T17:52:13.933Z",
       "userId": null
+    },
+    {
+      "eventId": 8,
+      "response": "nope",
+      "isGuest": true,
+      "guestName": "Test User",
+      "guestEmail": "test@example.com",
+      "guestCount": 0,
+      "id": 13,
+      "createdAt": "2025-04-10T20:10:53.351Z",
+      "userId": null
     }
   ]
 }
