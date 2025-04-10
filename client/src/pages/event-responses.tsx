@@ -83,7 +83,7 @@ export default function EventResponses() {
     return null;
   }
 
-  // If user is logged in but not host and doesn't have viewing permissions
+  // If user is logged in but NOT the host and doesn't have viewing permissions
   if (user && !isHost && !canViewAsInvitee && !canViewAsPublic) {
     let description = "Access to view RSVPs has been restricted by the event host.";
     if (event.showRsvpsAfterThreshold) {
@@ -97,6 +97,8 @@ export default function EventResponses() {
     setLocation(`/events/${event.slug}`);
     return null;
   }
+  
+  // The host, or users with proper permissions can continue to view responses
 
   return (
     <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col bg-gray-950">

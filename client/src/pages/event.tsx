@@ -193,7 +193,7 @@ export default function EventPage() {
             
             {/* View Responses button top right */}
             {(
-              // Show if user is the host
+              // Show if user is the host (always)
               (user && user.id === event.hostId) || 
               // OR if user is logged in AND event allows RSVP viewing for invitees
               (user && event.showRsvpsToInvitees) || 
