@@ -105,7 +105,7 @@ export default function EventResponses() {
             variant="outline"
             size="sm"
             className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
-            onClick={() => setLocation(`/events/${event.slug}`)}
+            onClick={() => window.location.href = `/events/${event.slug}`}
           >
             <ArrowLeft className="w-4 h-4" /> Back to Event
           </Button>
