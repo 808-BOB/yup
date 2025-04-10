@@ -59,10 +59,10 @@ export default function EventResponses() {
 
   // Host can always view responses
   const isHost = user?.id === event.hostId;
-  
+
   // Calculate if threshold is reached for showing responses
   const hasYupThresholdReached = event.showRsvpsAfterThreshold && responseCounts.yupCount >= event.rsvpVisibilityThreshold;
-  
+
   // Check visibility permissions for guests
   const canViewAsInvitee = event.showRsvpsToInvitees || hasYupThresholdReached;
 
@@ -167,10 +167,10 @@ export default function EventResponses() {
                           ) : (
                             <>
                               <span className="text-sm text-gray-200">
-                                User {response.userId}
+                                {response.userName || `User ${response.userId}`}
                               </span>
                               <span className="text-xs text-gray-400">
-                                user{response.userId}@example.com
+                                {response.userEmail || `user${response.userId}@example.com`}
                               </span>
                             </>
                           )}
@@ -208,10 +208,10 @@ export default function EventResponses() {
                           ) : (
                             <>
                               <span className="text-sm text-gray-200">
-                                User {response.userId}
+                                {response.userName || `User ${response.userId}`}
                               </span>
                               <span className="text-xs text-gray-400">
-                                user{response.userId}@example.com
+                                {response.userEmail || `user${response.userId}@example.com`}
                               </span>
                             </>
                           )}
