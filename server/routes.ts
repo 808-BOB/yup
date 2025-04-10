@@ -446,7 +446,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const eventId = parseInt(req.params.eventId);
         const responses = await storage.getResponsesByEvent(eventId);
-        res.json(responses);
+        
+        // Enhance responses with user information
+        const enhancedResponses = await Promise.all(responses.map(async (response) => {
+          if (!response.isGuest && response.userId) {
+            const user = await storage.getUser(response.userId);
+            return {
+              ...response,
+              userName: user?.displayName,
+              userEmail: user?.username
+            };
+          }
+          return response;
+        }));
+        
+        res.json(enhancedResponses);
       } catch (error) {
         res.status(500).json({ message: "Failed to fetch responses" });
       }
