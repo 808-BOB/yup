@@ -8,6 +8,12 @@ import { type Event, type Response } from "@shared/schema";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
+// Extended Response type that includes user info added by the API
+type ResponseWithUserInfo = Response & {
+  userName?: string;
+  userEmail?: string;
+};
+
 export default function EventResponses() {
   const [, params] = useRoute("/events/:slug/responses");
   const [, setLocation] = useLocation();
@@ -20,7 +26,7 @@ export default function EventResponses() {
     retry: 1,
   });
 
-  const { data: responses = [] } = useQuery<Response[]>({
+  const { data: responses = [] } = useQuery<ResponseWithUserInfo[]>({
     queryKey: [`/api/events/${event?.id}/responses`],
     enabled: !!event?.id,
   });
@@ -153,7 +159,7 @@ export default function EventResponses() {
                 <div className="space-y-2">
                   {responses
                     ?.filter((r) => r.response === "yup")
-                    .map((response) => (
+                    .map((response: ResponseWithUserInfo) => (
                       <div
                         key={response.id}
                         className="flex items-center justify-between p-3 bg-gray-800/50 rounded-sm"
@@ -176,10 +182,10 @@ export default function EventResponses() {
                           ) : (
                             <>
                               <span className="text-sm text-gray-200">
-                                {`User ${response.userId || 'unknown'}`}
+                                {response.userName || `User ${response.userId || 'unknown'}`}
                               </span>
                               <span className="text-xs text-gray-400">
-                                {response.userId ? `user${response.userId}@example.com` : 'unknown email'}
+                                {response.userEmail || (response.userId ? `user${response.userId}@example.com` : 'unknown email')}
                               </span>
                             </>
                           )}
@@ -199,7 +205,7 @@ export default function EventResponses() {
                 <div className="space-y-2">
                   {responses
                     ?.filter((r) => r.response === "nope")
-                    .map((response) => (
+                    .map((response: ResponseWithUserInfo) => (
                       <div
                         key={response.id}
                         className="flex items-center justify-between p-3 bg-gray-800/50 rounded-sm"
@@ -217,10 +223,10 @@ export default function EventResponses() {
                           ) : (
                             <>
                               <span className="text-sm text-gray-200">
-                                {`User ${response.userId || 'unknown'}`}
+                                {response.userName || `User ${response.userId || 'unknown'}`}
                               </span>
                               <span className="text-xs text-gray-400">
-                                {response.userId ? `user${response.userId}@example.com` : 'unknown email'}
+                                {response.userEmail || (response.userId ? `user${response.userId}@example.com` : 'unknown email')}
                               </span>
                             </>
                           )}
