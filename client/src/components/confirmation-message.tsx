@@ -14,8 +14,9 @@ export default function ConfirmationMessage({
   event,
 }: ConfirmationMessageProps) {
   const { user } = useAuth();
-  // Determine where the "back" button should go
-  const backLinkHref = user ? "/events" : `/events/${event.slug}`;
+  
+  // Determine where the "back" button should go - only used for logged-in users
+  const backLinkHref = "/events";
   
   return (
     <div className="text-center p-8 animate-fade-in">
@@ -29,11 +30,20 @@ export default function ConfirmationMessage({
             We've confirmed your attendance to {event.title}
           </p>
           <div className="flex flex-col gap-4">
-            <Link href={backLinkHref}>
-              <Button className="btn-yup py-3 px-8 rounded-sm font-bold uppercase tracking-wider hover:bg-primary/90 transition">
-                {user ? "Back to Events" : "Back to Event"}
+            {user ? (
+              <Link href={backLinkHref}>
+                <Button className="btn-yup py-3 px-8 rounded-sm font-bold uppercase tracking-wider hover:bg-primary/90 transition">
+                  Back to Events
+                </Button>
+              </Link>
+            ) : (
+              <Button 
+                className="btn-yup py-3 px-8 rounded-sm font-bold uppercase tracking-wider hover:bg-primary/90 transition"
+                onClick={() => window.location.href = `/events/${event.slug}`}
+              >
+                Back to Event
               </Button>
-            </Link>
+            )}
             {!user && (
               <Link href="/login">
                 <Button variant="outline" className="py-3 px-8 rounded-sm font-medium">
@@ -55,11 +65,20 @@ export default function ConfirmationMessage({
             We've noted that you won't be attending {event.title}
           </p>
           <div className="flex flex-col gap-4">
-            <Link href={backLinkHref}>
-              <Button className="btn-nope py-3 px-8 rounded-sm font-bold uppercase tracking-wider">
-                {user ? "Back to Events" : "Back to Event"}
+            {user ? (
+              <Link href={backLinkHref}>
+                <Button className="btn-nope py-3 px-8 rounded-sm font-bold uppercase tracking-wider">
+                  Back to Events
+                </Button>
+              </Link>
+            ) : (
+              <Button 
+                className="btn-nope py-3 px-8 rounded-sm font-bold uppercase tracking-wider"
+                onClick={() => window.location.href = `/events/${event.slug}`}
+              >
+                Back to Event
               </Button>
-            </Link>
+            )}
             {!user && (
               <Link href="/login">
                 <Button variant="outline" className="py-3 px-8 rounded-sm font-medium">
