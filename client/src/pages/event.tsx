@@ -212,26 +212,32 @@ export default function EventPage() {
           </div>
 
           {/* Event Image - matching the style from event-card.tsx which we know works */}
-          {event.imageUrl && (
+          {event.imageUrl ? (
             <div className="w-full h-48 mb-6 overflow-hidden rounded-sm bg-gray-800">
+              {console.log("Event image URL:", event.imageUrl ? "exists" : "missing")}
               {event.imageUrl.startsWith("data:") ? (
                 <div
                   className="w-full h-full bg-no-repeat bg-center bg-cover"
                   style={{ backgroundImage: `url(${event.imageUrl})` }}
-                ></div>
+                  onLoad={() => console.log("Image base64 loaded successfully")}
+                >
+                  {console.log("Image is base64 data, first 40 chars:", event.imageUrl.substring(0, 40))}
+                  {console.log("Image base64 data length:", event.imageUrl.length)}
+                </div>
               ) : (
                 <img
                   src={event.imageUrl}
                   alt={event.title}
                   className="w-full h-full object-cover"
+                  onLoad={() => console.log("Image URL loaded successfully:", event.imageUrl)}
                   onError={(e) => {
-                    console.error("Image failed to load:", e);
+                    console.error("Image failed to load:", event.imageUrl);
                     e.currentTarget.style.display = "none";
                   }}
                 />
               )}
             </div>
-          )}
+          ) : console.log("No image URL for event:", event.title)}
           <Card className="mb-6 animate-slide-up bg-gray-900 border border-gray-800">
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
