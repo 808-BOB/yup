@@ -205,7 +205,8 @@ export default function EventPage() {
                 size="sm"
                 className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
                 onClick={() => {
-                  // Use direct window.location.href navigation instead of setLocation
+                  // Use direct window.location.href navigation with debug
+                  console.log("Navigating to:", `/events/${event.slug}/responses`);
                   window.location.href = `/events/${event.slug}/responses`;
                 }}
               >
