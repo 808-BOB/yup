@@ -23,13 +23,8 @@ function Router() {
       <Route path="/events/create" component={CreateEvent} />
       <Route path="/events/:slug/edit" component={CreateEvent} />{" "}
       {/* Reuse CreateEvent component for editing */}
-      {/* Route for responses with debugging logs */}
-      <Route path="/responses/:slug">
-        {(params) => {
-          console.log("Rendering responses with params:", params);
-          return <EventResponses />;
-        }}
-      </Route>
+      {/* Using original route pattern for responses */}
+      <Route path="/events/:slug/responses" component={EventResponses} />
       <Route path="/events/:slug" component={Event} />
       <Route path="/my-events" component={MyEvents} />
       <Route path="/profile" component={Profile} />

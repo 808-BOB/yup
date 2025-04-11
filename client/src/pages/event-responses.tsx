@@ -16,13 +16,13 @@ type ResponseWithUserInfo = Response & {
 };
 
 export default function EventResponses() {
-  // Use our new route format
-  const [match, params] = useRoute("/responses/:slug");
+  // Use the updated route pattern
+  const [match, params] = useRoute("/events/:slug/responses");
   const [, setLocation] = useLocation();
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   
-  console.log("EventResponses Component - New Route Format:", { 
+  console.log("EventResponses Component - Updated Route Format:", { 
     match, 
     params, 
     url: window.location.href, 
@@ -108,7 +108,8 @@ export default function EventResponses() {
       description: "You must be logged in to view responses.",
       variant: "destructive",
     });
-    window.location.href = `/events/${event.slug}`;
+    // Use client-side routing instead of full page reload
+    setLocation(`/events/${event.slug}`);
     return null;
   }
 
@@ -123,7 +124,8 @@ export default function EventResponses() {
       description,
       variant: "destructive",
     });
-    window.location.href = `/events/${event.slug}`;
+    // Use client-side routing instead of full page reload
+    setLocation(`/events/${event.slug}`);
     return null;
   }
   
