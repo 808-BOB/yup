@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useRoute, useLocation } from "wouter";
+import { useRoute, useLocation, Link } from "wouter";
 import Header from "@/components/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -136,15 +136,18 @@ export default function EventResponses() {
       {event && <PageTitle title={`${event.title} RSVPs`} />}
       <main className="flex-1 overflow-auto animate-fade-in">
         <div className="flex mb-4 gap-2">
-          <a href={`/events/${event.slug}`} style={{ textDecoration: 'none' }}>
+          <Link href={`/events/${event.slug}`}>
             <Button
               variant="outline"
               size="sm"
               className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
+              onClick={() => {
+                console.log("Navigating back to event:", `/events/${event.slug}`);
+              }}
             >
               <ArrowLeft className="w-4 h-4" /> Back to Event
             </Button>
-          </a>
+          </Link>
         </div>
 
         <Card className="bg-gray-900 border border-gray-800">
