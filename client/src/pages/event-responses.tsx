@@ -85,7 +85,7 @@ export default function EventResponses() {
       description: "You must be logged in to view responses.",
       variant: "destructive",
     });
-    setLocation(`/events/${event.slug}`);
+    window.location.href = `/events/${event.slug}`;
     return null;
   }
 
@@ -100,7 +100,7 @@ export default function EventResponses() {
       description,
       variant: "destructive",
     });
-    setLocation(`/events/${event.slug}`);
+    window.location.href = `/events/${event.slug}`;
     return null;
   }
   
@@ -108,11 +108,6 @@ export default function EventResponses() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col bg-gray-950">
-      {event && (
-        <head>
-          <title>Responses: {event.title} | Yup.RSVP</title>
-        </head>
-      )}
       <Header />
       <main className="flex-1 overflow-auto animate-fade-in">
         <div className="flex mb-4 gap-2">
