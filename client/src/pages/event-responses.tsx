@@ -15,10 +15,17 @@ type ResponseWithUserInfo = Response & {
 };
 
 export default function EventResponses() {
-  const [, params] = useRoute("/events/:slug/responses");
+  const [match, params] = useRoute("/events/:slug/responses");
   const [, setLocation] = useLocation();
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  
+  console.log("EventResponses Component:", { 
+    match, 
+    params, 
+    url: window.location.href, 
+    pathName: window.location.pathname 
+  });
 
   const { data: event } = useQuery<Event>({
     queryKey: [`/api/events/slug/${params?.slug}`],
@@ -26,17 +33,20 @@ export default function EventResponses() {
     retry: 1,
   });
 
+  // Get the eventId to prevent dependency issue
+  const eventId = event?.id;
+
   const { data: responses = [] } = useQuery<ResponseWithUserInfo[]>({
-    queryKey: [`/api/events/${event?.id}/responses`],
-    enabled: !!event?.id,
+    queryKey: [`/api/events/${eventId}/responses`],
+    enabled: !!eventId,
   });
 
   const { data: responseCounts = { yupCount: 0, nopeCount: 0 } } = useQuery<{
     yupCount: number;
     nopeCount: number;
   }>({
-    queryKey: [`/api/events/${event?.id}/responses/count`],
-    enabled: !!event?.id,
+    queryKey: [`/api/events/${eventId}/responses/count`],
+    enabled: !!eventId,
   });
 
   // Loading state
