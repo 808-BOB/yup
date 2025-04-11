@@ -15,12 +15,13 @@ type ResponseWithUserInfo = Response & {
 };
 
 export default function EventResponses() {
-  const [match, params] = useRoute("/events/:slug/responses");
+  // Use our new route format
+  const [match, params] = useRoute("/responses/:slug");
   const [, setLocation] = useLocation();
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   
-  console.log("EventResponses Component:", { 
+  console.log("EventResponses Component - New Route Format:", { 
     match, 
     params, 
     url: window.location.href, 
@@ -132,14 +133,15 @@ export default function EventResponses() {
       <Header />
       <main className="flex-1 overflow-auto animate-fade-in">
         <div className="flex mb-4 gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
-            onClick={() => window.location.href = `/events/${event.slug}`}
-          >
-            <ArrowLeft className="w-4 h-4" /> Back to Event
-          </Button>
+          <a href={`/events/${event.slug}`} style={{ textDecoration: 'none' }}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back to Event
+            </Button>
+          </a>
         </div>
 
         <Card className="bg-gray-900 border border-gray-800">
