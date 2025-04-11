@@ -22,16 +22,21 @@ export default function EventResponses() {
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   
-  console.log("EventResponses Component - Updated Route Format:", { 
+  // Get the event slug from URL if params is undefined (direct navigation case)
+  const eventSlug = params?.slug || window.location.pathname.split('/').slice(-2)[0];
+  
+  console.log("EventResponses Component - Route debugging:", { 
     match, 
     params, 
+    eventSlug,
+    manualSlug: window.location.pathname.split('/').slice(-2)[0],
     url: window.location.href, 
     pathName: window.location.pathname 
   });
 
   const { data: event } = useQuery<Event>({
-    queryKey: [`/api/events/slug/${params?.slug}`],
-    enabled: !!params?.slug,
+    queryKey: [`/api/events/slug/${eventSlug}`],
+    enabled: !!eventSlug,
     retry: 1,
   });
 
@@ -138,18 +143,15 @@ export default function EventResponses() {
       {event && <PageTitle title={`${event.title} RSVPs`} />}
       <main className="flex-1 overflow-auto animate-fade-in">
         <div className="flex mb-4 gap-2">
-          <Link href={`/events/${event.slug}`}>
+          <a href={`/events/${event.slug}`} style={{ textDecoration: 'none' }}>
             <Button
               variant="outline"
               size="sm"
               className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
-              onClick={() => {
-                console.log("Navigating back to event:", `/events/${event.slug}`);
-              }}
             >
               <ArrowLeft className="w-4 h-4" /> Back to Event
             </Button>
-          </Link>
+          </a>
         </div>
 
         <Card className="bg-gray-900 border border-gray-800">
