@@ -187,29 +187,19 @@ export default function EventPage() {
               </Button>
             )}
             
-            {/* View Responses button top right */}
+            {/* View Responses button top right with direct link */}
             {(user && user.id === event.hostId) || 
               (user && event.showRsvpsToInvitees) || 
               (event.showRsvpsAfterThreshold && responseCounts.yupCount >= event.rsvpVisibilityThreshold) ? (
-              <form 
-                action={`/events/${event.slug}/responses`} 
-                method="GET"
-                style={{ display: 'inline' }}
-              >
+              <a href={`/responses/${event.slug}`} style={{ textDecoration: 'none' }}>
                 <Button
                   variant="outline"
                   size="sm"
-                  type="submit"
                   className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    console.log("Navigating to RSVP responses");
-                    window.location.href = `/events/${event.slug}/responses`;
-                  }}
                 >
                   <Eye className="w-4 h-4" /> View Responses
                 </Button>
-              </form>
+              </a>
             ) : null}
           </div>
 
