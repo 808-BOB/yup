@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import InviteModal from "@/components/invite-modal";
-import { useRoute, useLocation } from "wouter";
+import { useRoute, useLocation, Link } from "wouter";
 import { Calendar, MapPin, User, Users, ArrowLeft, Eye, Edit } from "lucide-react";
 import { formatDate, formatTime } from "@/lib/utils/date-formatter";
 import { apiRequest } from "@/lib/queryClient";
@@ -189,19 +189,22 @@ export default function EventPage() {
               </Button>
             )}
             
-            {/* View Responses button top right with direct link */}
+            {/* View Responses button top right with wouter Link */}
             {(user && user.id === event.hostId) || 
               (user && event.showRsvpsToInvitees) || 
               (event.showRsvpsAfterThreshold && responseCounts.yupCount >= event.rsvpVisibilityThreshold) ? (
-              <a href={`/responses/${event.slug}`} style={{ textDecoration: 'none' }}>
+              <Link href={`/responses/${event.slug}`}>
                 <Button
                   variant="outline"
                   size="sm"
                   className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
+                  onClick={() => {
+                    console.log("Navigating to responses view:", `/responses/${event.slug}`);
+                  }}
                 >
                   <Eye className="w-4 h-4" /> View Responses
                 </Button>
-              </a>
+              </Link>
             ) : null}
           </div>
 
