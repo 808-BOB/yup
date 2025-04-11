@@ -63,20 +63,31 @@ export default function EventResponses() {
     );
   }
 
-  // Host can always view responses
-  const isHost = user?.id === event.hostId;
+  // Host can always view responses - make sure we handle user and event values safely
+  const isHost = user && event && user.id === event.hostId;
 
   // Calculate if threshold is reached for showing responses
-  const hasYupThresholdReached = event.showRsvpsAfterThreshold && responseCounts.yupCount >= event.rsvpVisibilityThreshold;
+  const hasYupThresholdReached = 
+    event && event.showRsvpsAfterThreshold && 
+    responseCounts && responseCounts.yupCount >= (event.rsvpVisibilityThreshold || 0);
 
   // Check visibility permissions for guests
-  const canViewAsInvitee = event.showRsvpsToInvitees || hasYupThresholdReached;
+  const canViewAsInvitee = 
+    event && (event.showRsvpsToInvitees || hasYupThresholdReached);
 
-  // Allow access based on permissions
-  
   // Check if non-logged user can view based on the threshold
-  const canViewAsPublic = event.showRsvpsAfterThreshold && 
-                         responseCounts.yupCount >= event.rsvpVisibilityThreshold;
+  const canViewAsPublic = 
+    event && event.showRsvpsAfterThreshold && 
+    responseCounts && responseCounts.yupCount >= (event.rsvpVisibilityThreshold || 0);
+
+  console.log("RSVP Access Check:", { 
+    isHost, 
+    user: user?.id, 
+    eventHostId: event?.hostId,
+    hasYupThresholdReached,
+    canViewAsInvitee,
+    canViewAsPublic 
+  });
   
   // If user is not logged in AND cannot view as public, deny access
   if (!user && !canViewAsPublic) {
@@ -89,10 +100,10 @@ export default function EventResponses() {
     return null;
   }
 
-  // If user is logged in but NOT the host and doesn't have viewing permissions
+  // If user is logged in but NOT the host and doesn't have viewing permissions, deny access
   if (user && !isHost && !canViewAsInvitee && !canViewAsPublic) {
     let description = "Access to view RSVPs has been restricted by the event host.";
-    if (event.showRsvpsAfterThreshold) {
+    if (event && event.showRsvpsAfterThreshold) {
       description = `RSVPs will be visible once ${event.rsvpVisibilityThreshold} people respond with "YUP".`;
     }
     toast({
