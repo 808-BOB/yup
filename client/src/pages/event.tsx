@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ConfirmationMessage from "@/components/confirmation-message";
 import GuestRsvpModal from "@/components/guest-rsvp-modal";
+import PageTitle from "@/components/page-title";
 import { type Event as BaseEvent, type Response } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -171,7 +172,8 @@ export default function EventPage() {
   return (
     <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col bg-gray-950">
       <Header />
-      {/* Title is handled by the parent component */}
+      {/* Set page title to event name */}
+      {event && <PageTitle title={event.title} />}
       <main className="flex-1 overflow-auto mb-6">
         <div className="flex flex-col animate-fade-in">
           <div className="flex justify-between mb-4">
