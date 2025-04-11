@@ -204,7 +204,10 @@ export default function EventPage() {
                 variant="outline"
                 size="sm"
                 className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
-                onClick={() => setLocation(`/events/${event.slug}/responses`)}
+                onClick={() => {
+                  // Use direct window.location.href navigation instead of setLocation
+                  window.location.href = `/events/${event.slug}/responses`;
+                }}
               >
                 <Eye className="w-4 h-4" /> View Responses
               </Button>
@@ -214,22 +217,18 @@ export default function EventPage() {
           {/* Event Image - matching the style from event-card.tsx which we know works */}
           {event.imageUrl ? (
             <div className="w-full h-48 mb-6 overflow-hidden rounded-sm bg-gray-800">
-              {console.log("Event image URL:", event.imageUrl ? "exists" : "missing")}
               {event.imageUrl.startsWith("data:") ? (
                 <div
                   className="w-full h-full bg-no-repeat bg-center bg-cover"
                   style={{ backgroundImage: `url(${event.imageUrl})` }}
-                  onLoad={() => console.log("Image base64 loaded successfully")}
                 >
-                  {console.log("Image is base64 data, first 40 chars:", event.imageUrl.substring(0, 40))}
-                  {console.log("Image base64 data length:", event.imageUrl.length)}
+                  {/* Image debugging was here */}
                 </div>
               ) : (
                 <img
                   src={event.imageUrl}
                   alt={event.title}
                   className="w-full h-full object-cover"
-                  onLoad={() => console.log("Image URL loaded successfully:", event.imageUrl)}
                   onError={(e) => {
                     console.error("Image failed to load:", event.imageUrl);
                     e.currentTarget.style.display = "none";
@@ -237,7 +236,11 @@ export default function EventPage() {
                 />
               )}
             </div>
-          ) : console.log("No image URL for event:", event.title)}
+          ) : (
+            <div className="mb-6">
+              {/* No image */}
+            </div>
+          )}
           <Card className="mb-6 animate-slide-up bg-gray-900 border border-gray-800">
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
@@ -261,7 +264,8 @@ export default function EventPage() {
                         });
                         return;
                       }
-                      setLocation(`/events/${event.slug}/edit`);
+                      // Use direct navigation instead of setLocation
+                      window.location.href = `/events/${event.slug}/edit`;
                     }}
                     className="text-xs text-primary flex items-center gap-1 hover:text-primary/80"
                   >
