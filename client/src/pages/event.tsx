@@ -193,18 +193,15 @@ export default function EventPage() {
             {(user && user.id === event.hostId) || 
               (user && event.showRsvpsToInvitees) || 
               (event.showRsvpsAfterThreshold && responseCounts.yupCount >= event.rsvpVisibilityThreshold) ? (
-              <Link href={`/events/${event.slug}/responses`}>
+              <a href={`/events/${event.slug}/responses`} style={{ textDecoration: 'none' }}>
                 <Button
                   variant="outline"
                   size="sm"
                   className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
-                  onClick={() => {
-                    console.log("Navigating to responses view:", `/events/${event.slug}/responses`);
-                  }}
                 >
                   <Eye className="w-4 h-4" /> View Responses
                 </Button>
-              </Link>
+              </a>
             ) : null}
           </div>
 
