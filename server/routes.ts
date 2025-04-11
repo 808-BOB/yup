@@ -555,6 +555,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     },
   );
+  
+  // Get event visibility settings - NEW API endpoint that doesn't require authentication
+  app.get(
+    "/api/events/:eventId/visibility",
+    async (req: Request, res: Response) => {
+      try {
+        const eventId = parseInt(req.params.eventId);
+        const event = await storage.getEvent(eventId);
+        
+        if (!event) {
+          return res.status(404).json({ message: "Event not found" });
+        }
+        
+        // Return only the visibility settings needed for the frontend
+        res.json({
+          id: event.id,
+          hostId: event.hostId,
+          showRsvpsToInvitees: event.showRsvpsToInvitees,
+          showRsvpsAfterThreshold: event.showRsvpsAfterThreshold,
+          rsvpVisibilityThreshold: event.rsvpVisibilityThreshold
+        });
+      } catch (error) {
+        console.error("Error fetching event visibility settings:", error);
+        res.status(500).json({ message: "Error fetching event visibility settings" });
+      }
+    },
+  );
 
   app.get(
     "/api/events/:eventId/users/:userId/response",
