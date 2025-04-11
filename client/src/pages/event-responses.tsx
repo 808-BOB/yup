@@ -7,6 +7,7 @@ import { ArrowLeft, Eye } from "lucide-react";
 import { type Event, type Response } from "@shared/schema";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import PageTitle from "@/components/page-title";
 
 // Extended Response type that includes user info added by the API
 type ResponseWithUserInfo = Response & {
@@ -131,6 +132,8 @@ export default function EventResponses() {
   return (
     <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col bg-gray-950">
       <Header />
+      {/* Set the page title using event name */}
+      {event && <PageTitle title={`${event.title} RSVPs`} />}
       <main className="flex-1 overflow-auto animate-fade-in">
         <div className="flex mb-4 gap-2">
           <a href={`/events/${event.slug}`} style={{ textDecoration: 'none' }}>
