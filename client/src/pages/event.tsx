@@ -171,11 +171,7 @@ export default function EventPage() {
   return (
     <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col bg-gray-950">
       <Header />
-      {event && (
-        <head>
-          <title>{event.title} | Yup.RSVP</title>
-        </head>
-      )}
+      {/* Title is handled by the parent component */}
       <main className="flex-1 overflow-auto mb-6">
         <div className="flex flex-col animate-fade-in">
           <div className="flex justify-between mb-4">
@@ -192,27 +188,29 @@ export default function EventPage() {
             )}
             
             {/* View Responses button top right */}
-            {(
-              // Show if user is the host (always)
-              (user && user.id === event.hostId) || 
-              // OR if user is logged in AND event allows RSVP viewing for invitees
+            {(user && user.id === event.hostId) || 
               (user && event.showRsvpsToInvitees) || 
-              // OR if threshold viewing is enabled AND the threshold has been reached
-              (event.showRsvpsAfterThreshold && responseCounts.yupCount >= event.rsvpVisibilityThreshold)
-            ) && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
-                onClick={() => {
-                  // Use direct window.location.href navigation with debug
-                  console.log("Navigating to:", `/events/${event.slug}/responses`);
-                  window.location.href = `/events/${event.slug}/responses`;
-                }}
+              (event.showRsvpsAfterThreshold && responseCounts.yupCount >= event.rsvpVisibilityThreshold) ? (
+              <form 
+                action={`/events/${event.slug}/responses`} 
+                method="GET"
+                style={{ display: 'inline' }}
               >
-                <Eye className="w-4 h-4" /> View Responses
-              </Button>
-            )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="submit"
+                  className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    console.log("Navigating to RSVP responses");
+                    window.location.href = `/events/${event.slug}/responses`;
+                  }}
+                >
+                  <Eye className="w-4 h-4" /> View Responses
+                </Button>
+              </form>
+            ) : null}
           </div>
 
           {/* Event Image - matching the style from event-card.tsx which we know works */}
