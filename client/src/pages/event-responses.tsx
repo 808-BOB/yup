@@ -17,7 +17,7 @@ type ResponseWithUserInfo = Response & {
 
 export default function EventResponses() {
   // Use our new route format
-  const [match, params] = useRoute("/responses/:slug");
+  const [match, params] = useRoute("/events/:slug/responses");
   const [, setLocation] = useLocation();
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
