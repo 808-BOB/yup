@@ -94,11 +94,17 @@ export default function EventResponses() {
 
   console.log("RSVP Access Check:", { 
     isHost, 
-    user: user?.id, 
+    userId: user?.id, 
+    userObj: user,
     eventHostId: event?.hostId,
+    eventId: event?.id,
     hasYupThresholdReached,
     canViewAsInvitee,
-    canViewAsPublic 
+    canViewAsPublic,
+    showRsvpsToInvitees: event?.showRsvpsToInvitees,
+    showRsvpsAfterThreshold: event?.showRsvpsAfterThreshold,
+    rsvpVisibilityThreshold: event?.rsvpVisibilityThreshold,
+    currentYupCount: responseCounts?.yupCount
   });
 
   // If user is not logged in AND cannot view as public, deny access
