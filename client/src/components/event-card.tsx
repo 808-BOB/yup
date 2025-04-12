@@ -182,7 +182,7 @@ export default function EventCard({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  window.location.href = `/events/${event.slug}/edit`;
+                  setLocation(`/events/${event.slug}/edit`);
                 }}
               >
                 <Edit className="w-3.5 h-3.5" />
