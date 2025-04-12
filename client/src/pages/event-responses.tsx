@@ -120,6 +120,16 @@ export default function EventResponses() {
 
   // If user is logged in but NOT the host and doesn't have viewing permissions, deny access
   if (user && !isHost && !canViewAsInvitee && !canViewAsPublic) {
+    // Added more detailed logging to troubleshoot access issues
+    console.log("Access denied for logged-in user:", {
+      userId: user.id,
+      username: user.username,
+      displayName: user.displayName,
+      isAdmin: user.isAdmin,
+      eventHostId: event.hostId,
+      matchCheck: user.id === event.hostId
+    });
+    
     let description = "Access to view RSVPs has been restricted by the event host.";
     if (event && event.showRsvpsAfterThreshold) {
       description = `RSVPs will be visible once ${event.rsvpVisibilityThreshold} people respond with "YUP".`;
@@ -142,15 +152,14 @@ export default function EventResponses() {
       {event && <PageTitle title={`${event.title} RSVPs`} />}
       <main className="flex-1 overflow-auto animate-fade-in">
         <div className="flex mb-4 gap-2">
-          <a href={`/events/${event.slug}`} style={{ textDecoration: 'none' }}>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
-            >
-              <ArrowLeft className="w-4 h-4" /> Back to Event
-            </Button>
-          </a>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
+            onClick={() => setLocation(`/events/${event.slug}`)}
+          >
+            <ArrowLeft className="w-4 h-4" /> Back to Event
+          </Button>
         </div>
 
         <Card className="bg-gray-900 border border-gray-800">
