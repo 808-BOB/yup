@@ -93,6 +93,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: user.id,
         username: user.username,
         displayName: user.displayName,
+        isAdmin: user.isAdmin || false,
       });
     } catch (error) {
       res.status(500).json({ message: "Login failed" });
