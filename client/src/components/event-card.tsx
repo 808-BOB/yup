@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { type Event, type Response } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface EventCardProps {
   event: Event;
@@ -22,7 +23,8 @@ export default function EventCard({
 }: EventCardProps) {
   const formattedTime = formatTime(event.startTime);
   const { toast } = useToast();
-  const userId = 1; // In a real app, we'd get this from auth context
+  const { user } = useAuth();
+  const userId = user?.id;
   const [_, setLocation] = useLocation(); // Not used, we use window.location.href for navigation
 
   const { data: responses } = useQuery<Response[]>({
@@ -39,10 +41,10 @@ export default function EventCard({
     enabled: !!event.id,
   });
 
-  // Query for user's response to this event if not provided
+  // Query for user's response to this event if not provided and user is logged in
   const { data: responseData } = useQuery<Response>({
     queryKey: [`/api/events/${event.id}/users/${userId}/response`],
-    enabled: !showStats && userResponse === null, // Only fetch if we're not the owner and don't have response
+    enabled: !showStats && userResponse === null && !!userId, 
   });
 
   // Use the provided userResponse or the one fetched from the API
