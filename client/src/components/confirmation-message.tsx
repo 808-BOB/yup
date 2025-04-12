@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { type Event } from "@shared/schema";
@@ -14,6 +14,7 @@ export default function ConfirmationMessage({
   event,
 }: ConfirmationMessageProps) {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
 
   return (
     <div className="text-center p-8 animate-fade-in">
