@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Plus, User, LogOut, LogIn, UserPlus } from "lucide-react";
+import { Plus, User, LogOut, LogIn, UserPlus, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -97,6 +97,16 @@ export default function Header() {
                   <User className="mr-2 h-4 w-4" />
                   <span>My Events</span>
                 </DropdownMenuItem>
+                {/* Admin-only link to style guide */}
+                {user.isAdmin && (
+                  <DropdownMenuItem
+                    onClick={() => setLocation("/style-guide")}
+                    className="cursor-pointer"
+                  >
+                    <Palette className="mr-2 h-4 w-4" />
+                    <span>Style Guide</span>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log Out</span>
