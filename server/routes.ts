@@ -57,6 +57,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: newUser.id,
         username: newUser.username,
         displayName: newUser.displayName,
+        isAdmin: newUser.isAdmin || false,
       });
     } catch (error) {
       if (error instanceof ZodError) {
@@ -156,6 +157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: newUser.id,
           username: newUser.username,
           displayName: newUser.displayName,
+          isAdmin: newUser.isAdmin || false,
         });
     } catch (error) {
       if (error instanceof ZodError) {
@@ -178,6 +180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: user.id,
         username: user.username,
         displayName: user.displayName,
+        isAdmin: user.isAdmin || false,
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch user" });
