@@ -13,6 +13,7 @@ import EventResponses from "@/pages/event-responses";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import Profile from "@/pages/profile";
+import StyleGuide from "@/pages/style-guide";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 function Router() {
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/profile" component={Profile} />
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
+      <Route path="/style-guide" component={StyleGuide} />
       <Route component={NotFound} />
     </Switch>
   );
