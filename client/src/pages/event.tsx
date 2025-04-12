@@ -379,16 +379,26 @@ export default function EventPage() {
             <div className="flex gap-8 justify-center mb-8">
               <Button
                 onClick={() => handleResponse("nope")}
-                className="btn-nope bg-gray-900 w-32 h-32 rounded-sm flex items-center justify-center border border-gray-800 hover:border-gray-700 transition-colors"
+                className={`btn-nope w-32 h-32 rounded-sm flex items-center justify-center border transition-colors ${
+                  userResponse === "nope"
+                    ? "bg-gray-800 border-gray-600 hover:bg-gray-800"
+                    : "bg-gray-900 border-gray-800 hover:border-gray-700"
+                }`}
               >
-                <span className="text-gray-400 text-2xl font-bold uppercase tracking-widest">
+                <span className={`text-2xl font-bold uppercase tracking-widest ${
+                  userResponse === "nope" ? "text-gray-200" : "text-gray-400"
+                }`}>
                   NOPE
                 </span>
               </Button>
 
               <Button
                 onClick={() => handleResponse("yup")}
-                className="btn-yup bg-gray-900 w-32 h-32 rounded-sm flex items-center justify-center border border-primary hover:border-primary/80 transition-colors"
+                className={`btn-yup w-32 h-32 rounded-sm flex items-center justify-center border transition-colors ${
+                  userResponse === "yup"
+                    ? "bg-primary/20 border-primary hover:bg-primary/20"
+                    : "bg-gray-900 border-primary/50 hover:border-primary"
+                }`}
               >
                 <span className="text-primary text-2xl font-bold uppercase tracking-widest">
                   YUP
