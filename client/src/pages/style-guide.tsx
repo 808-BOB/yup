@@ -498,9 +498,59 @@ export default function StyleGuide() {
         </TabsContent>
       </Tabs>
 
-      <div className="mt-8 text-center">
+      <div className="mt-8 flex justify-center gap-4">
         <Button variant="outline" onClick={() => setLocation("/")}>
           Return to Home
+        </Button>
+        <Button 
+          variant="default"
+          onClick={() => {
+            const styleData = {
+              colors: {
+                primary: 'hsl(var(--primary))',
+                primaryForeground: 'hsl(var(--primary-foreground))',
+                background: 'hsl(var(--background))',
+                foreground: 'hsl(var(--foreground))',
+                accent: 'hsl(var(--accent))',
+                muted: 'hsl(var(--muted))',
+              },
+              customClasses: {
+                btnPrimary: 'btn-primary',
+                btnSecondary: 'btn-secondary',
+                btnYup: 'btn-yup',
+                btnNope: 'btn-nope',
+              },
+              typography: {
+                fontFamily: 'Inconsolata',
+                headings: {
+                  h1: 'text-4xl font-bold tracking-tight',
+                  h2: 'text-3xl font-bold tracking-tight',
+                  h3: 'text-2xl font-bold tracking-tight',
+                  h4: 'text-xl font-bold tracking-tight',
+                  h5: 'text-lg font-bold tracking-tight',
+                  h6: 'text-base font-bold tracking-tight',
+                },
+                body: {
+                  large: 'text-lg',
+                  regular: 'text-base',
+                  small: 'text-sm',
+                  extraSmall: 'text-xs',
+                },
+              },
+            };
+
+            const blob = new Blob([JSON.stringify(styleData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'yup-style-guide.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }}
+        >
+          Download Style Guide
         </Button>
       </div>
     </div>
