@@ -129,6 +129,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: user.id,
           username: user.username,
           displayName: user.displayName,
+          isAdmin: user.isAdmin || false,
         });
       } catch (error) {
         res.status(500).json({ message: "Failed to fetch user data" });
@@ -319,6 +320,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: fromZodError(error).message });
       }
       res.status(500).json({ message: "Failed to update event" });
+    }
+  });
+
+  // Set admin route - only accessible once from within this app
+  app.get("/api/admin/set-bob-admin", async (_req: Request, res: Response) => {
+    try {
+      // Set bob as admin
+      const user = await storage.setAdminStatus("bob", true);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({ message: "User bob is now an admin", success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to set admin status" });
     }
   });
 

@@ -374,6 +374,18 @@ export class MemStorage implements IStorage {
 
     return updatedUser;
   }
+  
+  // Helper method to set admin status
+  async setAdminStatus(username: string, isAdmin: boolean): Promise<User | undefined> {
+    // Find user by username
+    const user = await this.getUserByUsername(username);
+    
+    if (!user) {
+      return undefined;
+    }
+    
+    return this.updateUser(user.id, { isAdmin });
+  }
 
   // Event operations
   async createEvent(insertEvent: InsertEvent): Promise<Event> {
