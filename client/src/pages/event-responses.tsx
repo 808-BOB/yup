@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useRoute, useLocation, Link } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import Header from "@/components/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,27 +16,22 @@ type ResponseWithUserInfo = Response & {
 };
 
 export default function EventResponses() {
-  // Use the updated route pattern
-  const [match, params] = useRoute("/events/:slug/responses");
+  // Use our new route format
+  const [match, params] = useRoute("/responses/:slug");
   const [, setLocation] = useLocation();
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
-  
-  // Get the event slug from URL if params is undefined (direct navigation case)
-  const eventSlug = params?.slug || window.location.pathname.split('/').slice(-2)[0];
-  
-  console.log("EventResponses Component - Route debugging:", { 
+
+  console.log("EventResponses Component - New Route Format:", { 
     match, 
     params, 
-    eventSlug,
-    manualSlug: window.location.pathname.split('/').slice(-2)[0],
     url: window.location.href, 
     pathName: window.location.pathname 
   });
 
   const { data: event } = useQuery<Event>({
-    queryKey: [`/api/events/slug/${eventSlug}`],
-    enabled: !!eventSlug,
+    queryKey: [`/api/events/slug/${params?.slug}`],
+    enabled: !!params?.slug,
     retry: 1,
   });
 
@@ -80,71 +75,58 @@ export default function EventResponses() {
     );
   }
 
-  // Fetch visibility settings separately to avoid authentication issues
-  const { data: visibilitySettings } = useQuery({
-    queryKey: [`/api/events/${event?.id}/visibility`],
-    enabled: !!event?.id,
-  });
-  
-  // Host can always view responses
-  const isHost = user && visibilitySettings && user.id === visibilitySettings.hostId;
+  // Host can always view responses - make sure we handle user and event values safely
+  const isHost = user && event && user.id === event.hostId;
 
   // Calculate if threshold is reached for showing responses
   const hasYupThresholdReached = 
-    visibilitySettings && visibilitySettings.showRsvpsAfterThreshold && 
-    responseCounts && responseCounts.yupCount >= (visibilitySettings.rsvpVisibilityThreshold || 0);
+    event && event.showRsvpsAfterThreshold && 
+    responseCounts && responseCounts.yupCount >= (event.rsvpVisibilityThreshold || 0);
 
   // Check visibility permissions for guests
   const canViewAsInvitee = 
-    visibilitySettings && (visibilitySettings.showRsvpsToInvitees || hasYupThresholdReached);
+    event && (event.showRsvpsToInvitees || hasYupThresholdReached);
 
   // Check if non-logged user can view based on the threshold
   const canViewAsPublic = 
-    visibilitySettings && visibilitySettings.showRsvpsAfterThreshold && 
-    responseCounts && responseCounts.yupCount >= (visibilitySettings.rsvpVisibilityThreshold || 0);
+    event && event.showRsvpsAfterThreshold && 
+    responseCounts && responseCounts.yupCount >= (event.rsvpVisibilityThreshold || 0);
 
   console.log("RSVP Access Check:", { 
     isHost, 
     user: user?.id, 
-    eventHostId: visibilitySettings?.hostId,
+    eventHostId: event?.hostId,
     hasYupThresholdReached,
     canViewAsInvitee,
-    canViewAsPublic,
-    responseCounts,
-    visibilitySettings
+    canViewAsPublic 
   });
-  
-  // Only check visibility if the settings are loaded
-  if (visibilitySettings) {
-    // If user is not logged in AND cannot view as public, deny access
-    if (!user && !canViewAsPublic) {
-      toast({
-        title: "Access Denied",
-        description: "You must be logged in to view responses.",
-        variant: "destructive",
-      });
-      // Use standard HTML navigation to preserve session
-      window.location.href = `/events/${event.slug}`;
-      return null;
-    }
 
-    // If user is logged in but NOT the host and doesn't have viewing permissions, deny access
-    if (user && !isHost && !canViewAsInvitee && !canViewAsPublic) {
-      let description = "Access to view RSVPs has been restricted by the event host.";
-      if (visibilitySettings.showRsvpsAfterThreshold) {
-        description = `RSVPs will be visible once ${visibilitySettings.rsvpVisibilityThreshold} people respond with "YUP".`;
-      }
-      toast({
-        title: "Access Restricted",
-        description,
-        variant: "destructive",
-      });
-      // Use standard HTML navigation to preserve session
-      window.location.href = `/events/${event.slug}`;
-      return null;
-    }
+  // If user is not logged in AND cannot view as public, deny access
+  if (!user && !canViewAsPublic) {
+    toast({
+      title: "Access Denied",
+      description: "You must be logged in to view responses.",
+      variant: "destructive",
+    });
+    setLocation(`/events/${event.slug}`);
+    return null;
   }
-  
+
+  // If user is logged in but NOT the host and doesn't have viewing permissions, deny access
+  if (user && !isHost && !canViewAsInvitee && !canViewAsPublic) {
+    let description = "Access to view RSVPs has been restricted by the event host.";
+    if (event && event.showRsvpsAfterThreshold) {
+      description = `RSVPs will be visible once ${event.rsvpVisibilityThreshold} people respond with "YUP".`;
+    }
+    toast({
+      title: "Access Restricted",
+      description,
+      variant: "destructive",
+    });
+    setLocation(`/events/${event.slug}`);
+    return null;
+  }
+
   // The host, or users with proper permissions can continue to view responses
 
   return (
