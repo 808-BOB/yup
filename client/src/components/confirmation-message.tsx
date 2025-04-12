@@ -1,4 +1,4 @@
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { type Event } from "@shared/schema";
@@ -46,11 +46,13 @@ export default function ConfirmationMessage({
               {user ? "Back to Events" : "Back to Event"}
             </Button>
             {!user && (
-              <Link href="/login">
-                <Button variant="outline" className="py-3 px-8 rounded-sm font-medium">
-                  Login to Manage RSVPs
-                </Button>
-              </Link>
+              <Button 
+                variant="outline" 
+                className="py-3 px-8 rounded-sm font-medium"
+                onClick={() => handleNavigate("/login")}
+              >
+                Login to Manage RSVPs
+              </Button>
             )}
           </div>
         </div>
@@ -73,11 +75,13 @@ export default function ConfirmationMessage({
               {user ? "Back to Events" : "Back to Event"}
             </Button>
             {!user && (
-              <Link href="/login">
-                <Button variant="outline" className="py-3 px-8 rounded-sm font-medium">
-                  Login to Manage RSVPs
-                </Button>
-              </Link>
+              <Button 
+                variant="outline" 
+                className="py-3 px-8 rounded-sm font-medium"
+                onClick={() => handleNavigate("/login")}
+              >
+                Login to Manage RSVPs
+              </Button>
             )}
           </div>
         </div>
