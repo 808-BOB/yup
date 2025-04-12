@@ -144,12 +144,22 @@ export default function EventPage() {
   }
 
   // Confirmation state
+  // Handle navigation after response confirmation
+  const handleNavigateAfterResponse = (target: string) => {
+    setShowConfirmation(false);
+    setLocation(target);
+  };
+
   if (showConfirmation && userResponse) {
     return (
       <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col bg-gray-950">
         <Header />
         <div className="flex-1 flex items-center justify-center">
-          <ConfirmationMessage response={userResponse} event={event} />
+          <ConfirmationMessage 
+            response={userResponse} 
+            event={event}
+            onNavigate={handleNavigateAfterResponse} 
+          />
         </div>
       </div>
     );

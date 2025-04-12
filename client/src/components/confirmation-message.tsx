@@ -7,14 +7,25 @@ import { useAuth } from "@/contexts/AuthContext";
 interface ConfirmationMessageProps {
   response: "yup" | "nope";
   event: Event;
+  onNavigate?: (target: string) => void;
 }
 
 export default function ConfirmationMessage({
   response,
   event,
+  onNavigate,
 }: ConfirmationMessageProps) {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+  
+  // Function to handle navigation either through prop or fallback to direct location setting
+  const handleNavigate = (target: string) => {
+    if (onNavigate) {
+      onNavigate(target);
+    } else {
+      setLocation(target);
+    }
+  };
 
   return (
     <div className="text-center p-8 animate-fade-in">
@@ -30,7 +41,7 @@ export default function ConfirmationMessage({
           <div className="flex flex-col gap-4">
             <Button 
               className="btn-yup py-3 px-8 rounded-sm font-bold uppercase tracking-wider hover:bg-primary/90 transition"
-              onClick={() => setLocation(user ? "/my-events" : `/events/${event.slug}`)}
+              onClick={() => handleNavigate(user ? "/my-events" : `/events/${event.slug}`)}
             >
               {user ? "Back to Events" : "Back to Event"}
             </Button>
@@ -57,7 +68,7 @@ export default function ConfirmationMessage({
           <div className="flex flex-col gap-4">
             <Button 
               className="btn-nope py-3 px-8 rounded-sm font-bold uppercase tracking-wider"
-              onClick={() => setLocation(user ? "/my-events" : `/events/${event.slug}`)}
+              onClick={() => handleNavigate(user ? "/my-events" : `/events/${event.slug}`)}
             >
               {user ? "Back to Events" : "Back to Event"}
             </Button>
