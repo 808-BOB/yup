@@ -189,19 +189,18 @@ export default function EventPage() {
               </Button>
             )}
             
-            {/* View Responses button top right with wouter Link */}
+            {/* View Responses button top right with wouter routing */}
             {(user && user.id === event.hostId) || 
               (user && event.showRsvpsToInvitees) || 
               (event.showRsvpsAfterThreshold && responseCounts.yupCount >= event.rsvpVisibilityThreshold) ? (
-              <a href={`/events/${event.slug}/responses`} style={{ textDecoration: 'none' }}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
-                >
-                  <Eye className="w-4 h-4" /> View Responses
-                </Button>
-              </a>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
+                onClick={() => setLocation(`/events/${event.slug}/responses`)}
+              >
+                <Eye className="w-4 h-4" /> View Responses
+              </Button>
             ) : null}
           </div>
 
