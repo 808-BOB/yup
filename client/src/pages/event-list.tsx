@@ -23,34 +23,10 @@ export default function EventList() {
     enabled: !!user,
   });
   
-  // Prefetch user responses for all events to avoid multiple API calls
-  const { data: userResponses = {} } = useQuery<Record<number, "yup" | "nope">>({
+  // Prefetch user responses for all events using our new API endpoint
+  const { data: userResponses = {} } = useQuery<Record<string, "yup" | "nope">>({
     queryKey: [`/api/users/${user?.id || 0}/responses`],
-    queryFn: async () => {
-      if (!user || !events.length) return {};
-      
-      // Create a response map by event ID
-      const responseMap: Record<number, "yup" | "nope"> = {};
-      
-      // We'll fetch responses individually for each event
-      // In a real app, this would be a single API call that returns all responses
-      await Promise.all(
-        events.map(async (event) => {
-          try {
-            const response = await fetch(`/api/events/${event.id}/users/${user.id}/response`);
-            const data = await response.json();
-            if (data && data.response) {
-              responseMap[event.id] = data.response;
-            }
-          } catch (err) {
-            console.error(`Failed to fetch response for event ${event.id}:`, err);
-          }
-        })
-      );
-      
-      return responseMap;
-    },
-    enabled: !!user && events.length > 0,
+    enabled: !!user,
   });
 
   // Using useEffect for navigation to avoid React update during render warnings

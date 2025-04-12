@@ -603,6 +603,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
+    // Get all responses for a user (new endpoint)
+  app.get(
+    "/api/users/:userId/responses",
+    async (req: Request, res: Response) => {
+      try {
+        const userId = parseInt(req.params.userId);
+        
+        // Get all events this user has access to
+        const invitedEvents = await storage.getEventsUserInvitedTo(userId);
+        const userEvents = await storage.getUserEvents(userId);
+        
+        // Combine and deduplicate events
+        const allEventIds = Array.from(
+          new Set([
+            ...invitedEvents.map(e => e.id),
+            ...userEvents.map(e => e.id)
+          ])
+        );
+        
+        // Create a map of eventId -> response
+        const responseMap: Record<string, string> = {};
+        
+        // Get all responses for each event
+        await Promise.all(
+          allEventIds.map(async (eventId) => {
+            const response = await storage.getUserEventResponse(eventId, userId);
+            if (response) {
+              responseMap[eventId] = response.response;
+            }
+          })
+        );
+        
+        res.json(responseMap);
+      } catch (error) {
+        console.error("Error fetching user responses:", error);
+        res.status(500).json({ message: "Failed to fetch user responses" });
+      }
+    },
+  );
+  
   const httpServer = createServer(app);
   return httpServer;
 }
