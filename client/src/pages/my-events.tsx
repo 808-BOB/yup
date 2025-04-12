@@ -23,6 +23,12 @@ export default function MyEvents() {
     queryKey: [`/api/users/${user?.id || 0}/events`],
     enabled: !!user,
   });
+  
+  // Fetch all of the user's responses
+  const { data: userResponses = {} } = useQuery<Record<string, "yup" | "nope">>({
+    queryKey: [`/api/users/${user?.id || 0}/responses`],
+    enabled: !!user,
+  });
 
   // Using useEffect for navigation to avoid React update during render warnings
   useEffect(() => {
@@ -80,6 +86,7 @@ export default function MyEvents() {
                     event={event}
                     showStats={true}
                     isOwner={true}
+                    userResponse={userResponses[event.id] || null}
                   />
                 ))}
               </div>
