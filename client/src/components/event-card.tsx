@@ -64,7 +64,7 @@ export default function EventCard({
       className={`w-full bg-gray-900 ${getBorderColor()} hover:border-gray-700 transition-colors relative z-10`}
     >
       <div
-        onClick={() => (window.location.href = `/events/${event.slug}`)}
+        onClick={() => setLocation(`/events/${event.slug}`)}
         className="cursor-pointer"
       >
         {/* Event Image Section */}
@@ -195,7 +195,7 @@ export default function EventCard({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  window.location.href = `/events/${event.slug}/responses`;
+                  setLocation(`/events/${event.slug}/responses`);
                 }}
                 className="text-sm text-primary hover:text-primary/80 font-medium cursor-pointer flex items-center"
               >
