@@ -14,7 +14,7 @@ export default function ConfirmationMessage({
   event,
 }: ConfirmationMessageProps) {
   const { user } = useAuth();
-  
+
   return (
     <div className="text-center p-8 animate-fade-in">
       {response === "yup" ? (
@@ -29,7 +29,7 @@ export default function ConfirmationMessage({
           <div className="flex flex-col gap-4">
             <Button 
               className="btn-yup py-3 px-8 rounded-sm font-bold uppercase tracking-wider hover:bg-primary/90 transition"
-              onClick={() => window.location.href = user ? "/events" : `/events/${event.slug}`}
+              onClick={() => window.location.href = user ? "/my-events" : `/events/${event.slug}`}
             >
               {user ? "Back to Events" : "Back to Event"}
             </Button>
@@ -56,7 +56,7 @@ export default function ConfirmationMessage({
           <div className="flex flex-col gap-4">
             <Button 
               className="btn-nope py-3 px-8 rounded-sm font-bold uppercase tracking-wider"
-              onClick={() => window.location.href = user ? "/events" : `/events/${event.slug}`}
+              onClick={() => window.location.href = user ? "/my-events" : `/events/${event.slug}`}
             >
               {user ? "Back to Events" : "Back to Event"}
             </Button>
