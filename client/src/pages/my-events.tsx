@@ -98,7 +98,7 @@ export default function MyEvents() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto p-8 h-screen flex flex-col bg-gray-950">
+    <div className="w-full max-w-md mx-auto p-8 min-h-screen flex flex-col bg-gray-950">
       <div className="sticky top-0 z-10 bg-gray-950 pb-4">
         <Header />
         <ViewSelector
@@ -113,7 +113,7 @@ export default function MyEvents() {
         />
       </div>
 
-      <main className="flex-1 w-full animate-fade-in pb-32 overflow-auto">
+      <main className="flex-1 w-full animate-fade-in pb-32">
         <Card className="w-full bg-gray-900 border border-gray-800">
           <CardContent className="w-full p-6 flex flex-col gap-6">
             <div className="flex justify-between items-center mb-6">
