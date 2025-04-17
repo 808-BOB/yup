@@ -231,8 +231,8 @@ export default function EventPage() {
 
   // Main UI
   return (
-    <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col bg-gray-950">
-      <div className="sticky top-0 z-50 bg-gray-950 pb-4">
+    <div className="max-w-md mx-auto px-4 pb-6 min-h-screen flex flex-col bg-gray-950">
+      <div className="sticky top-0 z-50 bg-gray-950 pt-6">
         <Header />
         {/* Set page title to event name */}
         {event && <PageTitle title={event.title} />}
