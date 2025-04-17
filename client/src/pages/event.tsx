@@ -390,14 +390,21 @@ export default function EventPage() {
                 onClick={() => handleResponse("nope")}
                 className={`btn-nope w-32 h-32 rounded-sm flex items-center justify-center border transition-colors ${
                   userResponse === "nope"
-                    ? "bg-gray-800 border-gray-600 hover:bg-gray-800"
+                    ? "bg-red-950/30 border-red-700 hover:bg-red-950/30"
                     : "bg-gray-900 border-gray-800 hover:border-gray-700"
                 }`}
               >
                 <span className={`text-2xl font-bold uppercase tracking-widest ${
-                  userResponse === "nope" ? "text-gray-200" : "text-gray-400"
+                  userResponse === "nope" ? "text-red-500" : "text-gray-400"
                 }`}>
-                  NOPE
+                  {userResponse === "nope" ? (
+                    <span className="flex flex-col items-center">
+                      NOPE
+                      <span className="text-xs text-red-500 mt-2">✓ Selected</span>
+                    </span>
+                  ) : (
+                    "NOPE"
+                  )}
                 </span>
               </Button>
 
@@ -410,7 +417,14 @@ export default function EventPage() {
                 }`}
               >
                 <span className="text-primary text-2xl font-bold uppercase tracking-widest">
-                  YUP
+                  {userResponse === "yup" ? (
+                    <span className="flex flex-col items-center">
+                      YUP
+                      <span className="text-xs text-primary mt-2">✓ Selected</span>
+                    </span>
+                  ) : (
+                    "YUP"
+                  )}
                 </span>
               </Button>
             </div>
