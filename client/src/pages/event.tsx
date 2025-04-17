@@ -36,6 +36,11 @@ export default function EventPage() {
   const [pendingResponse, setPendingResponse] = useState<"yup" | "nope" | "maybe" | null>(
     null,
   );
+  
+  // Guest information state
+  const [guestName, setGuestName] = useState<string>("");
+  const [guestEmail, setGuestEmail] = useState<string>("");
+  const [previousResponse, setPreviousResponse] = useState<"yup" | "nope" | "maybe" | null>(null);
 
   // Event data query
   const {
@@ -70,9 +75,14 @@ export default function EventPage() {
   }, [existingResponse]);
 
   // Event handlers
-  const handleGuestSuccess = (response: "yup" | "nope" | "maybe") => {
+  const handleGuestSuccess = (response: "yup" | "nope" | "maybe", guestNameValue: string, guestEmailValue: string) => {
     setUserResponse(response);
     setShowConfirmation(true);
+    
+    // Save guest information for future use
+    setGuestName(guestNameValue);
+    setGuestEmail(guestEmailValue);
+    setPreviousResponse(response);
   };
 
   const handleResponse = async (response: "yup" | "nope" | "maybe") => {
@@ -88,8 +98,43 @@ export default function EventPage() {
 
       // For guest users, show the guest RSVP modal if guest RSVP is allowed
       if (!isLoggedIn && event.allowGuestRsvp) {
+        // Only show the modal if:
+        // 1. This is the first response (no previousResponse)
+        // 2. Changing from "nope" or "maybe" to "yup" (need guest count)
+        // 3. Changing from "yup" to a different response (need confirmation)
+        const needToShowModal = 
+          !previousResponse || 
+          (previousResponse !== "yup" && response === "yup") ||
+          (previousResponse === "yup" && response !== "yup");
+          
         setPendingResponse(response);
-        setShowGuestModal(true);
+        
+        if (needToShowModal) {
+          setShowGuestModal(true);
+        } else {
+          // If we don't need to show the modal, submit the response directly
+          // using the already stored guest information
+          try {
+            await apiRequest("POST", "/api/guest-responses", {
+              eventId: event.id,
+              response,
+              isGuest: true,
+              guestName,
+              guestEmail,
+              guestCount: 0, // Default to 0 when updating responses without showing modal
+            });
+            
+            setUserResponse(userResponse === response ? null : response);
+            setPreviousResponse(userResponse === response ? null : response);
+            setShowConfirmation(true);
+          } catch (error) {
+            toast({
+              title: "Error",
+              description: "Failed to submit your response. Please try again.",
+              variant: "destructive",
+            });
+          }
+        }
         return;
       }
 
@@ -393,6 +438,26 @@ export default function EventPage() {
 
             <div className="flex gap-4 justify-center mb-8">
               <Button
+                onClick={() => handleResponse("yup")}
+                className={`btn-yup w-24 h-24 rounded-sm flex items-center justify-center border transition-colors ${
+                  userResponse === "yup"
+                    ? "bg-primary/20 border-primary hover:bg-primary/20"
+                    : "bg-gray-900 border-primary/50 hover:border-primary"
+                }`}
+              >
+                <span className="text-primary text-xl font-bold uppercase tracking-widest">
+                  {userResponse === "yup" ? (
+                    <span className="flex flex-col items-center">
+                      YUP
+                      <span className="text-xs text-primary mt-1">✓</span>
+                    </span>
+                  ) : (
+                    "YUP"
+                  )}
+                </span>
+              </Button>
+
+              <Button
                 onClick={() => handleResponse("nope")}
                 className={`btn-nope w-24 h-24 rounded-sm flex items-center justify-center border transition-colors ${
                   userResponse === "nope"
@@ -419,26 +484,6 @@ export default function EventPage() {
                   userResponse === "maybe" ? "text-yellow-500" : "text-gray-400"
                 }`}>
                   MAYBE
-                </span>
-              </Button>
-
-              <Button
-                onClick={() => handleResponse("yup")}
-                className={`btn-yup w-24 h-24 rounded-sm flex items-center justify-center border transition-colors ${
-                  userResponse === "yup"
-                    ? "bg-primary/20 border-primary hover:bg-primary/20"
-                    : "bg-gray-900 border-primary/50 hover:border-primary"
-                }`}
-              >
-                <span className="text-primary text-xl font-bold uppercase tracking-widest">
-                  {userResponse === "yup" ? (
-                    <span className="flex flex-col items-center">
-                      YUP
-                      <span className="text-xs text-primary mt-1">✓</span>
-                    </span>
-                  ) : (
-                    "YUP"
-                  )}
                 </span>
               </Button>
             </div>
@@ -479,6 +524,8 @@ export default function EventPage() {
           event={event}
           response={pendingResponse}
           onSuccess={handleGuestSuccess}
+          defaultGuestName={guestName}
+          defaultGuestEmail={guestEmail}
         />
       )}
 
