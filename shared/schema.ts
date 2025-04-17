@@ -21,6 +21,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
   displayName: true,
+  isAdmin: true,
 });
 
 export const events = pgTable("events", {
