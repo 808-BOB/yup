@@ -235,7 +235,7 @@ export default function EventPage() {
       <Header />
       {/* Set page title to event name */}
       {event && <PageTitle title={event.title} />}
-      <main className="flex-1 overflow-auto mb-6">
+      <main className="flex-1 mb-6">
         <div className="flex flex-col animate-fade-in">
           <div className="flex justify-between mb-4">
             {/* Only show Back to Events button if user is logged in */}
