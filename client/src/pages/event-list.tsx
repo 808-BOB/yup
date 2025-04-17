@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import Header from "@/components/header";
@@ -9,9 +9,12 @@ import { type Event } from "@shared/schema";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
+type ResponseFilter = "all" | "yup" | "nope" | "maybe";
+
 export default function EventList() {
   const { user, isLoading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
+  const [responseFilter, setResponseFilter] = useState<ResponseFilter>("all");
 
   // Initialize query (will only fetch if enabled)
   const {
@@ -49,17 +52,32 @@ export default function EventList() {
   }
 
   const isLoading = authLoading || eventsLoading;
+  
+  // Filter events based on response type
+  const filteredEvents = events.filter(event => {
+    const response = userResponses[event.id];
+    
+    if (responseFilter === "all") return true;
+    if (responseFilter === "yup" && response === "yup") return true;
+    if (responseFilter === "nope" && response === "nope") return true;
+    // For now "maybe" doesn't exist in our data, so we can filter for null responses
+    if (responseFilter === "maybe" && !response) return true;
+    
+    return false;
+  });
 
   return (
     <div className="w-full max-w-md mx-auto p-8 h-screen flex flex-col bg-gray-950">
       <Header />
       <ViewSelector
-        activeTab="invited"
-        onTabChange={(tab) => {
-          if (tab === "your-events") {
+        activeMainTab="invited"
+        activeResponseFilter={responseFilter}
+        onMainTabChange={(tab) => {
+          if (tab === "hosting") {
             setLocation("/my-events");
           }
         }}
+        onResponseFilterChange={setResponseFilter}
       />
 
       <main className="flex-1 w-full overflow-auto animate-fade-in pb-32">
@@ -67,6 +85,7 @@ export default function EventList() {
           <CardContent className="w-full p-6 flex flex-col gap-6">
             <h2 className="text-xl font-bold tracking-tight uppercase mb-6">
               Invited Events
+              {responseFilter !== "all" && ` - ${responseFilter.toUpperCase()}`}
             </h2>
             {isLoading ? (
               <div className="flex justify-center items-center py-10">
@@ -76,9 +95,9 @@ export default function EventList() {
               <p className="text-center py-4 text-primary tracking-tight">
                 ERROR LOADING EVENTS. PLEASE TRY AGAIN.
               </p>
-            ) : events && events.length > 0 ? (
+            ) : filteredEvents.length > 0 ? (
               <div className="flex flex-col gap-4">
-                {events.map((event) => (
+                {filteredEvents.map((event) => (
                   <EventCard 
                     key={event.id} 
                     event={event} 
@@ -89,12 +108,20 @@ export default function EventList() {
               </div>
             ) : (
               <div className="text-center py-8">
-                <p className="text-gray-500 font-mono uppercase tracking-wide">
-                  NO EVENTS FOUND
-                </p>
-                <p className="text-gray-600 mt-2 text-sm">
-                  Check back later or create a new event
-                </p>
+                {events.length === 0 ? (
+                  <>
+                    <p className="text-gray-500 font-mono uppercase tracking-wide">
+                      NO EVENTS FOUND
+                    </p>
+                    <p className="text-gray-600 mt-2 text-sm">
+                      Check back later or create a new event
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-gray-400 tracking-tight uppercase font-mono">
+                    NO "{responseFilter.toUpperCase()}" RESPONSES
+                  </p>
+                )}
               </div>
             )}
           </CardContent>

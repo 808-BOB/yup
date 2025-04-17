@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import Header from "@/components/header";
@@ -10,9 +10,12 @@ import { type Event } from "@shared/schema";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
+type ResponseFilter = "all" | "yup" | "nope" | "maybe";
+
 export default function MyEvents() {
   const { user, isLoading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
+  const [responseFilter, setResponseFilter] = useState<ResponseFilter>("all");
 
   // Initialize query (will only fetch if enabled)
   const {
@@ -50,17 +53,32 @@ export default function MyEvents() {
   }
 
   const isLoading = authLoading || eventsLoading;
+  
+  // Filter events based on response type
+  const filteredEvents = events.filter(event => {
+    const response = userResponses[event.id];
+    
+    if (responseFilter === "all") return true;
+    if (responseFilter === "yup" && response === "yup") return true;
+    if (responseFilter === "nope" && response === "nope") return true;
+    // For now "maybe" doesn't exist in our data, so we can filter for null responses
+    if (responseFilter === "maybe" && !response) return true;
+    
+    return false;
+  });
 
   return (
     <div className="w-full max-w-md mx-auto p-8 min-h-screen flex flex-col bg-gray-950">
       <Header />
       <ViewSelector
-        activeTab="your-events"
-        onTabChange={(tab) => {
+        activeMainTab="hosting"
+        activeResponseFilter={responseFilter}
+        onMainTabChange={(tab) => {
           if (tab === "invited") {
             setLocation("/event-list");
           }
         }}
+        onResponseFilterChange={setResponseFilter}
       />
 
       <main className="flex-1 w-full overflow-auto animate-fade-in pb-32 z-0">
@@ -68,6 +86,7 @@ export default function MyEvents() {
           <CardContent className="w-full p-6 flex flex-col gap-6">
             <h2 className="text-xl font-bold tracking-tight uppercase mb-6">
               Your Events
+              {responseFilter !== "all" && ` - ${responseFilter.toUpperCase()}`}
             </h2>
 
             {isLoading ? (
@@ -78,9 +97,9 @@ export default function MyEvents() {
               <p className="text-center py-4 text-primary tracking-tight">
                 ERROR LOADING EVENTS. PLEASE TRY AGAIN.
               </p>
-            ) : events && events.length > 0 ? (
+            ) : filteredEvents.length > 0 ? (
               <div className="flex flex-col gap-4">
-                {events.map((event) => (
+                {filteredEvents.map((event) => (
                   <EventCard
                     key={event.id}
                     event={event}
@@ -92,15 +111,23 @@ export default function MyEvents() {
               </div>
             ) : (
               <div className="text-center py-8">
-                <p className="mb-4 text-gray-400 tracking-tight uppercase font-mono">
-                  NO EVENTS CREATED
-                </p>
-                <Button
-                  className="bg-primary hover:bg-primary/90"
-                  onClick={() => setLocation("/events/create")}
-                >
-                  CREATE YOUR FIRST EVENT
-                </Button>
+                {events.length === 0 ? (
+                  <>
+                    <p className="mb-4 text-gray-400 tracking-tight uppercase font-mono">
+                      NO EVENTS CREATED
+                    </p>
+                    <Button
+                      className="bg-primary hover:bg-primary/90"
+                      onClick={() => setLocation("/events/create")}
+                    >
+                      CREATE YOUR FIRST EVENT
+                    </Button>
+                  </>
+                ) : (
+                  <p className="text-gray-400 tracking-tight uppercase font-mono">
+                    NO "{responseFilter.toUpperCase()}" RESPONSES
+                  </p>
+                )}
               </div>
             )}
           </CardContent>
