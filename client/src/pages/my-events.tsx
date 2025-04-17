@@ -98,20 +98,22 @@ export default function MyEvents() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto p-8 min-h-screen flex flex-col bg-gray-950">
-      <Header />
-      <ViewSelector
-        activeMainTab="hosting"
-        activeResponseFilter={responseFilter}
-        onMainTabChange={(tab) => {
-          if (tab === "invited") {
-            setLocation("/event-list");
-          }
-        }}
-        onResponseFilterChange={setResponseFilter}
-      />
+    <div className="w-full max-w-md mx-auto p-8 h-screen flex flex-col bg-gray-950">
+      <div className="sticky top-0 z-10 bg-gray-950 pb-4">
+        <Header />
+        <ViewSelector
+          activeMainTab="hosting"
+          activeResponseFilter={responseFilter}
+          onMainTabChange={(tab) => {
+            if (tab === "invited") {
+              setLocation("/event-list");
+            }
+          }}
+          onResponseFilterChange={setResponseFilter}
+        />
+      </div>
 
-      <main className="flex-1 w-full overflow-auto animate-fade-in pb-32 z-0">
+      <main className="flex-1 w-full animate-fade-in pb-32 overflow-auto">
         <Card className="w-full bg-gray-900 border border-gray-800">
           <CardContent className="w-full p-6 flex flex-col gap-6">
             <div className="flex justify-between items-center mb-6">
