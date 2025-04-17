@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import Header from "@/components/header";
 import ViewSelector from "@/components/view-selector";
@@ -8,6 +8,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { type Event } from "@shared/schema";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 type ResponseFilter = "all" | "yup" | "nope" | "maybe";
 
@@ -15,6 +18,8 @@ export default function EventList() {
   const { user, isLoading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
   const [responseFilter, setResponseFilter] = useState<ResponseFilter>("all");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Initialize query (will only fetch if enabled)
   const {
@@ -30,6 +35,27 @@ export default function EventList() {
   const { data: userResponses = {} } = useQuery<Record<string, "yup" | "nope">>({
     queryKey: [`/api/users/${user?.id || 0}/responses`],
     enabled: !!user,
+  });
+
+  // Mutation for creating test invites
+  const createTestInvites = useMutation({
+    mutationFn: () => apiRequest<{ success: boolean, message: string, events: Event[] }>("GET", "/api/create-test-invites"),
+    onSuccess: (data) => {
+      toast({
+        title: "Test Invites Created",
+        description: data.message,
+      });
+      // Invalidate queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${user?.id || 0}/invites`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${user?.id || 0}/responses`] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create test invites",
+        variant: "destructive",
+      });
+    }
   });
 
   // Using useEffect for navigation to avoid React update during render warnings
@@ -66,6 +92,10 @@ export default function EventList() {
     return false;
   });
 
+  const handleCreateTestInvites = () => {
+    createTestInvites.mutate();
+  };
+
   return (
     <div className="w-full max-w-md mx-auto p-8 h-screen flex flex-col bg-gray-950">
       <Header />
@@ -83,10 +113,28 @@ export default function EventList() {
       <main className="flex-1 w-full overflow-auto animate-fade-in pb-32">
         <Card className="w-full bg-gray-900 border border-gray-800">
           <CardContent className="w-full p-6 flex flex-col gap-6">
-            <h2 className="text-xl font-bold tracking-tight uppercase mb-6">
-              Invited Events
-              {responseFilter !== "all" && ` - ${responseFilter.toUpperCase()}`}
-            </h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold tracking-tight uppercase">
+                Invited Events
+                {responseFilter !== "all" && ` - ${responseFilter.toUpperCase()}`}
+              </h2>
+              
+              {events.length === 0 && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleCreateTestInvites}
+                  disabled={createTestInvites.isPending}
+                  className="text-xs"
+                >
+                  {createTestInvites.isPending ? (
+                    <Loader2 className="h-3 w-3 animate-spin mr-1" /> 
+                  ) : null}
+                  Create Test Invites
+                </Button>
+              )}
+            </div>
+            
             {isLoading ? (
               <div className="flex justify-center items-center py-10">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -114,7 +162,7 @@ export default function EventList() {
                       NO EVENTS FOUND
                     </p>
                     <p className="text-gray-600 mt-2 text-sm">
-                      Check back later or create a new event
+                      Click "Create Test Invites" to generate sample events
                     </p>
                   </>
                 ) : (
