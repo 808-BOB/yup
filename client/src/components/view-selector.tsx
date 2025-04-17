@@ -1,19 +1,52 @@
 import { useLocation } from "wouter";
 
+type MainTab = "hosting" | "invited";
+type ResponseFilter = "all" | "yup" | "nope" | "maybe";
+
+// Legacy property names for backward compatibility
+type LegacyTab = "your-events" | "invited";
+
 interface ViewSelectorProps {
-  activeTab: "invited" | "your-events";
-  onTabChange: (tab: "invited" | "your-events") => void;
+  // New property names
+  activeMainTab?: MainTab;
+  activeResponseFilter?: ResponseFilter;
+  onMainTabChange?: (tab: MainTab) => void;
+  onResponseFilterChange?: (filter: ResponseFilter) => void;
+  
+  // Legacy property names for backward compatibility
+  activeTab?: LegacyTab;
+  onTabChange?: (tab: LegacyTab) => void;
 }
 
 export default function ViewSelector({
+  // New property names with defaults
+  activeMainTab,
+  activeResponseFilter = "all",
+  onMainTabChange,
+  onResponseFilterChange = () => {},
+  
+  // Legacy property names
   activeTab,
   onTabChange,
 }: ViewSelectorProps) {
   const [, setLocation] = useLocation();
+  
+  // Convert legacy tab names to new tab names
+  const derivedActiveMainTab = activeMainTab || (activeTab === "your-events" ? "hosting" : "invited");
+  
+  // Handle legacy or new tab changes
+  const handleTabChange = (tab: MainTab) => {
+    // Support the new property name if provided
+    if (onMainTabChange) {
+      onMainTabChange(tab);
+    } 
+    // Or fall back to legacy property
+    else if (onTabChange) {
+      const legacyTab: LegacyTab = tab === "hosting" ? "your-events" : "invited";
+      onTabChange(legacyTab);
+    }
 
-  const handleTabChange = (tab: "invited" | "your-events") => {
-    onTabChange(tab);
-
+    // Handle navigation regardless of which prop was used
     if (tab === "invited") {
       setLocation("/event-list");
     } else {
@@ -23,26 +56,71 @@ export default function ViewSelector({
 
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-sm mb-6">
+      {/* Main Tabs */}
       <div className="flex">
         <button
-          onClick={() => handleTabChange("your-events")}
+          onClick={() => handleTabChange("hosting")}
           className={`flex-1 py-2 px-4 rounded-sm font-bold text-center uppercase tracking-wider text-xs ${
-            activeTab === "your-events"
+            derivedActiveMainTab === "hosting"
               ? "text-primary bg-gray-800 border-t-2 border-primary"
               : "text-gray-500"
           }`}
         >
-          Your Events
+          Hosting
         </button>
         <button
           onClick={() => handleTabChange("invited")}
           className={`flex-1 py-2 px-4 rounded-sm font-bold text-center uppercase tracking-wider text-xs ${
-            activeTab === "invited"
+            derivedActiveMainTab === "invited"
               ? "text-primary bg-gray-800 border-t-2 border-primary"
               : "text-gray-500"
           }`}
         >
-          Invited
+          Invited To
+        </button>
+      </div>
+      
+      {/* Response Filter Subtabs */}
+      <div className="flex border-t border-gray-800 bg-gray-800/30">
+        <button
+          onClick={() => onResponseFilterChange("all")}
+          className={`flex-1 py-1 px-2 font-medium text-center uppercase tracking-wider text-xs ${
+            activeResponseFilter === "all"
+              ? "text-primary border-b border-primary"
+              : "text-gray-500"
+          }`}
+        >
+          All
+        </button>
+        <button
+          onClick={() => onResponseFilterChange("yup")}
+          className={`flex-1 py-1 px-2 font-medium text-center uppercase tracking-wider text-xs ${
+            activeResponseFilter === "yup"
+              ? "text-primary border-b border-primary"
+              : "text-gray-500"
+          }`}
+        >
+          Yup
+        </button>
+        <button
+          onClick={() => onResponseFilterChange("nope")}
+          className={`flex-1 py-1 px-2 font-medium text-center uppercase tracking-wider text-xs ${
+            activeResponseFilter === "nope"
+              ? "text-primary border-b border-primary"
+              : "text-gray-500"
+          }`}
+        >
+          Nope
+        </button>
+        <button
+          onClick={() => onResponseFilterChange("maybe")}
+          className={`flex-1 py-1 px-2 font-medium text-center uppercase tracking-wider text-xs ${
+            activeResponseFilter === "maybe"
+              ? "text-primary border-b border-primary"
+              : "text-gray-500"
+          }`}
+        >
+          Maybe
         </button>
       </div>
     </div>
