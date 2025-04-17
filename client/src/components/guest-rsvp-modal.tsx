@@ -37,8 +37,8 @@ interface GuestRsvpModalProps {
   isOpen: boolean;
   onClose: () => void;
   event: Event;
-  response: "yup" | "nope";
-  onSuccess: (response: "yup" | "nope") => void;
+  response: "yup" | "nope" | "maybe";
+  onSuccess: (response: "yup" | "nope" | "maybe") => void;
 }
 
 export default function GuestRsvpModal({

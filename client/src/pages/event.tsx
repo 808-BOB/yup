@@ -29,11 +29,11 @@ export default function EventPage() {
   const { user } = useAuth();
 
   // State management
-  const [userResponse, setUserResponse] = useState<"yup" | "nope" | null>(null);
+  const [userResponse, setUserResponse] = useState<"yup" | "nope" | "maybe" | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [pendingResponse, setPendingResponse] = useState<"yup" | "nope" | null>(
+  const [pendingResponse, setPendingResponse] = useState<"yup" | "nope" | "maybe" | null>(
     null,
   );
 
@@ -70,7 +70,7 @@ export default function EventPage() {
   }, [existingResponse]);
 
   // Event handlers
-  const handleGuestSuccess = (response: "yup" | "nope") => {
+  const handleGuestSuccess = (response: "yup" | "nope" | "maybe") => {
     setUserResponse(response);
     setShowConfirmation(true);
   };
