@@ -55,7 +55,7 @@ export default function ViewSelector({
   };
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-sm mb-6">
+    <div className="bg-gray-900 border border-gray-800 rounded-sm">
       {/* Main Tabs */}
       <div className="flex">
         <button
