@@ -54,7 +54,7 @@ export default function EventResponses() {
   // Loading state
   if (!event) {
     return (
-      <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
+      <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col bg-gray-950">
         <Header />
         <main className="flex-1 flex items-center justify-center">
           <p className="text-gray-400">Event not found</p>
@@ -66,7 +66,7 @@ export default function EventResponses() {
   // Wait for auth to finish loading
   if (authLoading) {
     return (
-      <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
+      <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col bg-gray-950">
         <Header />
         <main className="flex-1 flex items-center justify-center">
           <p className="text-gray-400">Loading...</p>
@@ -150,7 +150,7 @@ export default function EventResponses() {
       <Header />
       {/* Set the page title using event name */}
       {event && <PageTitle title={`${event.title} RSVPs`} />}
-      <main className="flex-1 overflow-auto animate-fade-in">
+      <main className="flex-1 animate-fade-in">
         <div className="flex mb-4 gap-2">
           <Button
             variant="outline"
