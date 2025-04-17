@@ -147,9 +147,11 @@ export default function EventResponses() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col bg-gray-950">
-      <Header />
-      {/* Set the page title using event name */}
-      {event && <PageTitle title={`${event.title} RSVPs`} />}
+      <div className="sticky top-0 z-50 bg-gray-950 pb-4">
+        <Header />
+        {/* Set the page title using event name */}
+        {event && <PageTitle title={`${event.title} RSVPs`} />}
+      </div>
       <main className="flex-1 animate-fade-in">
         <div className="flex mb-4 gap-2">
           <Button
