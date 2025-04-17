@@ -138,7 +138,9 @@ export default function GuestRsvpModal({
             <DialogDescription className="text-gray-400">
               {response === "yup"
                 ? "Great! Please fill in your details to confirm your attendance."
-                : "Please fill in your details to confirm you can't attend."}
+                : response === "nope"
+                ? "Please fill in your details to confirm you can't attend."
+                : "Please fill in your details to mark yourself as unsure."}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-3">

@@ -65,7 +65,7 @@ export default function EventPage() {
   // Update state when existing response is loaded
   useEffect(() => {
     if (existingResponse) {
-      setUserResponse(existingResponse.response as "yup" | "nope");
+      setUserResponse(existingResponse.response as "yup" | "nope" | "maybe");
     }
   }, [existingResponse]);
 
