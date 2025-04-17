@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import Header from "@/components/header";
 import ViewSelector from "@/components/view-selector";
@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { type Event } from "@shared/schema";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2 } from "lucide-react";
+import { Loader2, PlusCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 type ResponseFilter = "all" | "yup" | "nope" | "maybe";
 
@@ -16,6 +18,8 @@ export default function MyEvents() {
   const { user, isLoading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
   const [responseFilter, setResponseFilter] = useState<ResponseFilter>("all");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Initialize query (will only fetch if enabled)
   const {
@@ -31,6 +35,28 @@ export default function MyEvents() {
   const { data: userResponses = {} } = useQuery<Record<string, "yup" | "nope">>({
     queryKey: [`/api/users/${user?.id || 0}/responses`],
     enabled: !!user,
+  });
+
+  // Mutation for creating test events
+  const createTestEvents = useMutation({
+    mutationFn: () => apiRequest<{ success: boolean, message: string, events: Event[] }>("GET", "/api/create-test-invites"),
+    onSuccess: (data) => {
+      toast({
+        title: "Success",
+        description: data.message,
+      });
+      // Invalidate queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${user?.id || 0}/events`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${user?.id || 0}/responses`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${user?.id || 0}/invites`] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create test events",
+        variant: "destructive",
+      });
+    }
   });
 
   // Using useEffect for navigation to avoid React update during render warnings

@@ -358,7 +358,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Update the event with the image
       const updatedEvent = await storage.updateEvent(event.id, {
-        ...event,
         imageUrl: cocktailImageBase64
       });
       
