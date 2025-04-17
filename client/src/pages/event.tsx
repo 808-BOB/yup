@@ -397,14 +397,7 @@ export default function EventPage() {
                 <span className={`text-2xl font-bold uppercase tracking-widest ${
                   userResponse === "nope" ? "text-red-500" : "text-gray-400"
                 }`}>
-                  {userResponse === "nope" ? (
-                    <span className="flex flex-col items-center">
-                      NOPE
-                      <span className="text-xs text-red-500 mt-2">✓ Selected</span>
-                    </span>
-                  ) : (
-                    "NOPE"
-                  )}
+                  NOPE
                 </span>
               </Button>
 

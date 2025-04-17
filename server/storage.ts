@@ -46,7 +46,7 @@ export interface IStorage {
   ): Promise<Response | undefined>;
   getEventResponses(
     eventId: number,
-  ): Promise<{ yupCount: number; nopeCount: number }>;
+  ): Promise<{ yupCount: number; nopeCount: number; maybeCount: number }>;
 }
 
 export class MemStorage implements IStorage {
@@ -592,12 +592,13 @@ export class MemStorage implements IStorage {
 
   async getEventResponses(
     eventId: number,
-  ): Promise<{ yupCount: number; nopeCount: number }> {
+  ): Promise<{ yupCount: number; nopeCount: number; maybeCount: number }> {
     const responses = await this.getResponsesByEvent(eventId);
     const yupCount = responses.filter((r) => r.response === "yup").length;
     const nopeCount = responses.filter((r) => r.response === "nope").length;
+    const maybeCount = responses.filter((r) => r.response === "maybe").length;
 
-    return { yupCount, nopeCount };
+    return { yupCount, nopeCount, maybeCount };
   }
 }
 

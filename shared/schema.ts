@@ -72,7 +72,7 @@ export const responses = pgTable("responses", {
   id: serial("id").primaryKey(),
   eventId: integer("event_id").notNull(),
   userId: integer("user_id"), // Optional for guest responses
-  response: text("response").notNull(), // 'yup' or 'nope'
+  response: text("response").notNull(), // 'yup', 'nope', or 'maybe'
   createdAt: timestamp("created_at").notNull().defaultNow(),
   // Guest information
   isGuest: boolean("is_guest").default(false),
@@ -89,7 +89,7 @@ export const insertResponseSchema = createInsertSchema(responses).omit({
 // Schema for guest responses
 export const guestResponseSchema = z.object({
   eventId: z.number(),
-  response: z.enum(["yup", "nope"]),
+  response: z.enum(["yup", "nope", "maybe"]),
   isGuest: z.literal(true),
   guestName: z.string().min(1, "Name is required"),
   guestEmail: z.string().email("Valid email is required"),
