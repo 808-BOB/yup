@@ -372,6 +372,136 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Create test events from a test user and invite current user
+  app.get("/api/create-test-invites", async (req: Request, res: Response) => {
+    try {
+      if (!req.session || !req.session.userId) {
+        return res.status(401).json({ message: "You must be logged in to create test invites" });
+      }
+      
+      const userId = Number(req.session.userId);
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Create a test user if it doesn't exist
+      let testUser = await storage.getUserByUsername("testhost");
+      if (!testUser) {
+        testUser = await storage.createUser({
+          username: "testhost",
+          displayName: "Test Host",
+          password: "password123",
+          isAdmin: false
+        });
+      }
+      
+      // Create test events
+      const event1 = await storage.createEvent({
+        title: "Summer Party",
+        date: "2025-06-15",
+        startTime: "18:00",
+        endTime: "23:00",
+        location: "Beach Club",
+        address: "123 Shore Dr",
+        description: "Join us for a summer beach party with live music and BBQ!",
+        hostId: testUser.id,
+        status: "open",
+        slug: "summer-beach-party-" + Math.random().toString(36).substring(2, 10),
+        allowGuestRsvp: true,
+        allowPlusOne: true,
+        maxGuestsPerRsvp: 2,
+        imageUrl: "https://picsum.photos/800/400?summer"
+      });
+      
+      const event2 = await storage.createEvent({
+        title: "Tech Workshop",
+        date: "2025-05-20",
+        startTime: "10:00",
+        endTime: "16:00",
+        location: "Innovation Center",
+        address: "456 Tech Blvd",
+        description: "Learn the latest technologies and network with industry professionals",
+        hostId: testUser.id,
+        status: "open",
+        slug: "tech-workshop-" + Math.random().toString(36).substring(2, 10),
+        allowGuestRsvp: false,
+        allowPlusOne: false,
+        maxGuestsPerRsvp: 1,
+        imageUrl: "https://picsum.photos/800/400?tech"
+      });
+      
+      const event3 = await storage.createEvent({
+        title: "Wine Tasting",
+        date: "2025-04-30",
+        startTime: "19:00",
+        endTime: "22:00",
+        location: "Vineyard Estate",
+        address: "789 Grape Lane",
+        description: "An elegant evening sampling premium wines with cheese pairings",
+        hostId: testUser.id,
+        status: "open",
+        slug: "wine-tasting-" + Math.random().toString(36).substring(2, 10),
+        allowGuestRsvp: false,
+        allowPlusOne: true,
+        maxGuestsPerRsvp: 2,
+        imageUrl: "https://picsum.photos/800/400?wine"
+      });
+      
+      const event4 = await storage.createEvent({
+        title: "Art Exhibition",
+        date: "2025-07-10",
+        startTime: "14:00",
+        endTime: "20:00",
+        location: "City Gallery",
+        address: "101 Museum Ave",
+        description: "A showcase of modern art from emerging local artists",
+        hostId: testUser.id,
+        status: "open",
+        slug: "art-exhibition-" + Math.random().toString(36).substring(2, 10),
+        allowGuestRsvp: true,
+        allowPlusOne: false,
+        maxGuestsPerRsvp: 1,
+        imageUrl: "https://picsum.photos/800/400?art"
+      });
+      
+      // Create invitations for the current user
+      await storage.createInvitation(event1.id, userId);
+      await storage.createInvitation(event2.id, userId);
+      await storage.createInvitation(event3.id, userId);
+      await storage.createInvitation(event4.id, userId);
+      
+      // Respond to a couple events to test filtering
+      await storage.createResponse({
+        eventId: event1.id,
+        userId: userId,
+        response: "yup",
+        isGuest: false,
+        guestName: null,
+        guestEmail: null
+      });
+      
+      await storage.createResponse({
+        eventId: event2.id,
+        userId: userId,
+        response: "nope",
+        isGuest: false,
+        guestName: null,
+        guestEmail: null
+      });
+      
+      res.json({
+        message: "Created 4 test events and invitations successfully!",
+        events: [event1, event2, event3, event4],
+        success: true
+      });
+    } catch (error) {
+      console.error("Error creating test events:", error);
+      res.status(500).json({ message: "Failed to create test events" });
+    }
+  });
+  
   app.get("/api/events/slug/:slug", async (req: Request, res: Response) => {
     try {
       const { slug } = req.params;
