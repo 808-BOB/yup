@@ -38,7 +38,9 @@ interface GuestRsvpModalProps {
   onClose: () => void;
   event: Event;
   response: "yup" | "nope" | "maybe";
-  onSuccess: (response: "yup" | "nope" | "maybe") => void;
+  onSuccess: (response: "yup" | "nope" | "maybe", guestName: string, guestEmail: string) => void;
+  defaultGuestName?: string;
+  defaultGuestEmail?: string;
 }
 
 export default function GuestRsvpModal({
@@ -47,6 +49,8 @@ export default function GuestRsvpModal({
   event,
   response,
   onSuccess,
+  defaultGuestName = "",
+  defaultGuestEmail = "",
 }: GuestRsvpModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
