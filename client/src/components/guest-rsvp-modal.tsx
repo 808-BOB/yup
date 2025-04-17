@@ -86,8 +86,8 @@ export default function GuestRsvpModal({
   const form = useForm<FormData>({
     resolver: zodResolver(guestFormSchema),
     defaultValues: {
-      guestName: "",
-      guestEmail: "",
+      guestName: defaultGuestName,
+      guestEmail: defaultGuestEmail,
       guestCount: 0,
     },
   });
@@ -104,7 +104,7 @@ export default function GuestRsvpModal({
         guestCount,
       });
 
-      onSuccess(response);
+      onSuccess(response, data.guestName, data.guestEmail);
       onClose();
     } catch (error) {
       toast({
