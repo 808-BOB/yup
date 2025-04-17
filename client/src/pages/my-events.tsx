@@ -92,6 +92,10 @@ export default function MyEvents() {
     
     return false;
   });
+  
+  const handleCreateTestEvents = () => {
+    createTestEvents.mutate();
+  };
 
   return (
     <div className="w-full max-w-md mx-auto p-8 min-h-screen flex flex-col bg-gray-950">
@@ -110,10 +114,39 @@ export default function MyEvents() {
       <main className="flex-1 w-full overflow-auto animate-fade-in pb-32 z-0">
         <Card className="w-full bg-gray-900 border border-gray-800">
           <CardContent className="w-full p-6 flex flex-col gap-6">
-            <h2 className="text-xl font-bold tracking-tight uppercase mb-6">
-              Your Events
-              {responseFilter !== "all" && ` - ${responseFilter.toUpperCase()}`}
-            </h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold tracking-tight uppercase">
+                Your Events
+                {responseFilter !== "all" && ` - ${responseFilter.toUpperCase()}`}
+              </h2>
+              
+              <div className="flex space-x-2">
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCreateTestEvents}
+                  disabled={createTestEvents.isPending}
+                  className="text-xs"
+                >
+                  {createTestEvents.isPending ? (
+                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                  ) : (
+                    <PlusCircle className="h-3 w-3 mr-1" />
+                  )}
+                  Test Events
+                </Button>
+                
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => setLocation("/events/create")}
+                  className="text-xs"
+                >
+                  <PlusCircle className="h-3 w-3 mr-1" />
+                  New Event
+                </Button>
+              </div>
+            </div>
 
             {isLoading ? (
               <div className="flex justify-center items-center py-10">
@@ -138,17 +171,31 @@ export default function MyEvents() {
             ) : (
               <div className="text-center py-8">
                 {events.length === 0 ? (
-                  <>
+                  <div className="flex flex-col items-center">
                     <p className="mb-4 text-gray-400 tracking-tight uppercase font-mono">
                       NO EVENTS CREATED
                     </p>
-                    <Button
-                      className="bg-primary hover:bg-primary/90"
-                      onClick={() => setLocation("/events/create")}
-                    >
-                      CREATE YOUR FIRST EVENT
-                    </Button>
-                  </>
+                    <div className="flex space-x-3">
+                      <Button
+                        variant="outline"
+                        onClick={handleCreateTestEvents}
+                        disabled={createTestEvents.isPending}
+                        size="sm"
+                      >
+                        {createTestEvents.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : null}
+                        Create Test Events
+                      </Button>
+                      <Button
+                        variant="default"
+                        onClick={() => setLocation("/events/create")}
+                        size="sm"
+                      >
+                        Create Your First Event
+                      </Button>
+                    </div>
+                  </div>
                 ) : (
                   <p className="text-gray-400 tracking-tight uppercase font-mono">
                     NO "{responseFilter.toUpperCase()}" RESPONSES
