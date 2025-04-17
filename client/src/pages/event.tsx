@@ -75,11 +75,16 @@ export default function EventPage() {
     setShowConfirmation(true);
   };
 
-  const handleResponse = async (response: "yup" | "nope") => {
+  const handleResponse = async (response: "yup" | "nope" | "maybe") => {
     if (!event) return;
 
     try {
       const isLoggedIn = !!user;
+
+      // Handle toggle behavior - if the user clicks the same response, clear it
+      if (userResponse === response) {
+        response = userResponse; // This will be cleared in the API call
+      }
 
       // For guest users, show the guest RSVP modal if guest RSVP is allowed
       if (!isLoggedIn && event.allowGuestRsvp) {
@@ -104,7 +109,8 @@ export default function EventPage() {
         response,
       });
 
-      setUserResponse(response);
+      // Toggle behavior - if clicking the same button, clear the response
+      setUserResponse(userResponse === response ? null : response);
       setShowConfirmation(true);
     } catch (error) {
       toast({
@@ -385,16 +391,16 @@ export default function EventPage() {
               ARE YOU IN?
             </p>
 
-            <div className="flex gap-8 justify-center mb-8">
+            <div className="flex gap-4 justify-center mb-8">
               <Button
                 onClick={() => handleResponse("nope")}
-                className={`btn-nope w-32 h-32 rounded-sm flex items-center justify-center border transition-colors ${
+                className={`btn-nope w-24 h-24 rounded-sm flex items-center justify-center border transition-colors ${
                   userResponse === "nope"
                     ? "bg-red-950/30 border-red-700 hover:bg-red-950/30"
                     : "bg-gray-900 border-gray-800 hover:border-gray-700"
                 }`}
               >
-                <span className={`text-2xl font-bold uppercase tracking-widest ${
+                <span className={`text-xl font-bold uppercase tracking-widest ${
                   userResponse === "nope" ? "text-red-500" : "text-gray-400"
                 }`}>
                   NOPE
@@ -402,18 +408,33 @@ export default function EventPage() {
               </Button>
 
               <Button
+                onClick={() => handleResponse("maybe")}
+                className={`btn-maybe w-24 h-24 rounded-sm flex items-center justify-center border transition-colors ${
+                  userResponse === "maybe"
+                    ? "bg-yellow-900/30 border-yellow-700 hover:bg-yellow-900/30"
+                    : "bg-gray-900 border-gray-800 hover:border-gray-700"
+                }`}
+              >
+                <span className={`text-xl font-bold uppercase tracking-widest ${
+                  userResponse === "maybe" ? "text-yellow-500" : "text-gray-400"
+                }`}>
+                  MAYBE
+                </span>
+              </Button>
+
+              <Button
                 onClick={() => handleResponse("yup")}
-                className={`btn-yup w-32 h-32 rounded-sm flex items-center justify-center border transition-colors ${
+                className={`btn-yup w-24 h-24 rounded-sm flex items-center justify-center border transition-colors ${
                   userResponse === "yup"
                     ? "bg-primary/20 border-primary hover:bg-primary/20"
                     : "bg-gray-900 border-primary/50 hover:border-primary"
                 }`}
               >
-                <span className="text-primary text-2xl font-bold uppercase tracking-widest">
+                <span className="text-primary text-xl font-bold uppercase tracking-widest">
                   {userResponse === "yup" ? (
                     <span className="flex flex-col items-center">
                       YUP
-                      <span className="text-xs text-primary mt-2">✓ Selected</span>
+                      <span className="text-xs text-primary mt-1">✓</span>
                     </span>
                   ) : (
                     "YUP"
