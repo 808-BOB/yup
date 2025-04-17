@@ -98,7 +98,7 @@ export default function EventList() {
 
   return (
     <div className="w-full max-w-md mx-auto p-8 min-h-screen flex flex-col bg-gray-950">
-      <div className="sticky top-0 z-10 bg-gray-950 pb-4">
+      <div className="sticky top-0 z-50 bg-gray-950 pb-4">
         <Header />
         <ViewSelector
           activeMainTab="invited"

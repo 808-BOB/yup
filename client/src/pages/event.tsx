@@ -232,9 +232,11 @@ export default function EventPage() {
   // Main UI
   return (
     <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col bg-gray-950">
-      <Header />
-      {/* Set page title to event name */}
-      {event && <PageTitle title={event.title} />}
+      <div className="sticky top-0 z-50 bg-gray-950 pb-4">
+        <Header />
+        {/* Set page title to event name */}
+        {event && <PageTitle title={event.title} />}
+      </div>
       <main className="flex-1 mb-6">
         <div className="flex flex-col animate-fade-in">
           <div className="flex justify-between mb-4">
