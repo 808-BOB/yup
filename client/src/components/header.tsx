@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Plus, User, LogOut, LogIn, UserPlus, Palette } from "lucide-react";
+import { Plus, User, LogOut, LogIn, UserPlus, Palette, Paintbrush } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,12 +9,14 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBranding, getLogoUrl } from "@/contexts/BrandingContext";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import YupLogo from "@assets/Yup-logo.png";
 
 export default function Header() {
   const { user, logout } = useAuth();
+  const branding = useBranding();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -40,7 +42,7 @@ export default function Header() {
     <header className="flex justify-between items-center mb-6 py-4 border-b border-gray-800 sticky top-0 z-50 bg-gray-950">
       <div className="flex items-center">
         <img
-          src={YupLogo}
+          src={getLogoUrl(branding)}
           alt="Yup.RSVP"
           className="h-8 cursor-pointer"
           onClick={() => setLocation("/")}
@@ -97,6 +99,16 @@ export default function Header() {
                   <User className="mr-2 h-4 w-4" />
                   <span>My Events</span>
                 </DropdownMenuItem>
+                {/* Premium users can access branding settings */}
+                {user.isPremium && (
+                  <DropdownMenuItem
+                    onClick={() => setLocation("/branding")}
+                    className="cursor-pointer"
+                  >
+                    <Paintbrush className="mr-2 h-4 w-4" />
+                    <span>Branding</span>
+                  </DropdownMenuItem>
+                )}
                 {/* Admin-only link to style guide */}
                 {user.isAdmin && (
                   <DropdownMenuItem
