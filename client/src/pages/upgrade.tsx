@@ -98,16 +98,17 @@ export default function Upgrade() {
   const [upgrading, setUpgrading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
-  const handleActionClick = () => {
+  const handleActionClick = (plan: string) => {
     if (!user) {
       setLocation("/login");
       return;
     }
-    return handleUpgrade;
+    handleUpgrade(plan);
   };
 
   // Determine current plan
   const getCurrentPlan = () => {
+    if (!user) return "free";
     if (user.isPremium) return "premium";
     if (user.isPro) return "pro";
     return "free";
