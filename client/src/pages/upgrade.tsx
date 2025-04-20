@@ -155,16 +155,15 @@ export default function Upgrade() {
 
       if (result.success) {
         toast({
-          title: "Plan Updated",
-          description: `You are now on the ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan.`,
+          title: "✨ Upgrade Successful!",
+          description: result.message || `You are now on the ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan!`,
           variant: "default",
         });
 
-        // In a real app, we would update the user context here
-        // For now, we'll just redirect to the home page
+        // Refresh the page after a short delay to update the UI
         setTimeout(() => {
           window.location.reload();
-        }, 1500);
+        }, 2000);
       } else {
         throw new Error(result.message || "Failed to upgrade plan");
       }
