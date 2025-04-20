@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import InviteModal from "@/components/invite-modal";
 import { useRoute, useLocation, Link } from "wouter";
-import { Calendar, MapPin, User, Users, ArrowLeft, Eye, Edit } from "lucide-react";
+import { Calendar, MapPin, User, Users, ArrowLeft, Eye, Edit, Plus } from "lucide-react";
 import { formatDate, formatTime } from "@/lib/utils/date-formatter";
 import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/header";
@@ -36,7 +36,7 @@ export default function EventPage() {
   const [pendingResponse, setPendingResponse] = useState<"yup" | "nope" | "maybe" | null>(
     null,
   );
-  
+
   // Guest information state
   const [guestName, setGuestName] = useState<string>("");
   const [guestEmail, setGuestEmail] = useState<string>("");
@@ -57,7 +57,7 @@ export default function EventPage() {
     queryKey: [`/api/events/${event?.id}/users/${user?.id}/response`],
     enabled: !!event && !!user,
   });
-  
+
   // Get response counts to determine if threshold is reached for visibility
   const { data: responseCounts = { yupCount: 0, nopeCount: 0 } } = useQuery<{
     yupCount: number;
@@ -78,7 +78,7 @@ export default function EventPage() {
   const handleGuestSuccess = (response: "yup" | "nope" | "maybe", guestNameValue: string, guestEmailValue: string) => {
     setUserResponse(response);
     setShowConfirmation(true);
-    
+
     // Save guest information for future use
     setGuestName(guestNameValue);
     setGuestEmail(guestEmailValue);
@@ -106,9 +106,9 @@ export default function EventPage() {
           !previousResponse || 
           (previousResponse !== "yup" && response === "yup") ||
           (previousResponse === "yup" && response !== "yup");
-          
+
         setPendingResponse(response);
-        
+
         if (needToShowModal) {
           setShowGuestModal(true);
         } else {
@@ -123,7 +123,7 @@ export default function EventPage() {
               guestEmail,
               guestCount: 0, // Default to 0 when updating responses without showing modal
             });
-            
+
             setUserResponse(userResponse === response ? null : response);
             setPreviousResponse(userResponse === response ? null : response);
             setShowConfirmation(true);
@@ -251,7 +251,7 @@ export default function EventPage() {
                 <ArrowLeft className="w-4 h-4" /> Back to Events
               </Button>
             )}
-            
+
             {/* View Responses button top right with wouter routing */}
             {(user && user.id === event.hostId) || 
               (user && event.showRsvpsToInvitees) || 
@@ -302,7 +302,7 @@ export default function EventPage() {
                     {event.title}
                   </h2>
                 </div>
-                
+
                 {/* Edit button in top right */}
                 {user?.id === event.hostId && (
                   <button
@@ -337,14 +337,14 @@ export default function EventPage() {
                   >
                     Your Event
                   </Badge>
-                  
+
                   <Badge
                     variant="outline" 
                     className="text-xs bg-gray-800 border-gray-700 text-primary font-mono uppercase"
                   >
                     {event.status === "open" ? "Public" : event.status}
                   </Badge>
-                  
+
                   {/* RSVP visibility badges */}
                   {!event.showRsvpsToInvitees && (
                     <Badge variant="outline" className="text-xs bg-gray-800 border-gray-700 text-gray-400">
@@ -419,14 +419,36 @@ export default function EventPage() {
                     </div>
                   </div>
                 )}
-                
+
 
 
                 {event.description && (
                   <div className="border-t border-gray-800 pt-3 mt-4">
-                    <p className="text-gray-400 tracking-tight">
-                      {event.description}
-                    </p>
+                    <div className="space-y-4">
+                      <div className="flex flex-col gap-2">
+                        <div className="text-sm text-gray-400">Description</div>
+                        <div className="text-sm">{event.description}</div>
+                        {user && (user.isPro || user.isPremium) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const startDate = new Date(event.date);
+                              const endDate = new Date(startDate);
+                              endDate.setHours(endDate.getHours() + 2); // Default 2-hour duration
+
+                              const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${startDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z/${endDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z&details=${encodeURIComponent(event.description || '')}&location=${encodeURIComponent(event.location || '')}`;
+
+                              window.open(googleUrl, '_blank');
+                            }}
+                            className="w-full mt-4"
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add to Google Calendar
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
