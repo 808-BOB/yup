@@ -24,6 +24,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, userData: Partial<User>): Promise<User | undefined>;
+  updateUserBranding(id: number, brandData: { brandTheme?: string, logoUrl?: string }): Promise<User | undefined>;
 
   // Event operations
   createEvent(event: InsertEvent): Promise<Event>;
