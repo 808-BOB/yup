@@ -216,10 +216,10 @@ export default function MyEvents() {
 
         {responseFilter !== "past" && (
           <button
-            onClick={() => setResponseFilter("past")}
+            onClick={() => setResponseFilter("completed")}
             className="w-full mt-4 py-2 text-sm text-gray-400 hover:text-white transition-colors"
           >
-            View Past Events
+            View Completed Events
           </button>
         )}
       </main>

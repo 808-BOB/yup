@@ -104,6 +104,14 @@ export default function EventCard({
                     Your Event
                   </Badge>
                 )}
+                {new Date(event.date) < new Date().setHours(0,0,0,0) && (
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-gray-800 border-gray-700 text-gray-400"
+                  >
+                    Completed
+                  </Badge>
+                )}
                 {!isOwner && actualUserResponse === "yup" && (
                   <Badge
                     variant="outline"

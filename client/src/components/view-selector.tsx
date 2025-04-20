@@ -1,7 +1,7 @@
 import { useLocation } from "wouter";
 
 type MainTab = "hosting" | "invited";
-type ResponseFilter = "all" | "yup" | "nope" | "maybe" | "past";
+type ResponseFilter = "all" | "yup" | "nope" | "maybe" | "completed";
 
 // Legacy property names for backward compatibility
 type LegacyTab = "your-events" | "invited";
@@ -12,7 +12,7 @@ interface ViewSelectorProps {
   activeResponseFilter?: ResponseFilter;
   onMainTabChange?: (tab: MainTab) => void;
   onResponseFilterChange?: (filter: ResponseFilter) => void;
-  
+
   // Legacy property names for backward compatibility
   activeTab?: LegacyTab;
   onTabChange?: (tab: LegacyTab) => void;
@@ -24,16 +24,16 @@ export default function ViewSelector({
   activeResponseFilter = "all",
   onMainTabChange,
   onResponseFilterChange = () => {},
-  
+
   // Legacy property names
   activeTab,
   onTabChange,
 }: ViewSelectorProps) {
   const [, setLocation] = useLocation();
-  
+
   // Convert legacy tab names to new tab names
   const derivedActiveMainTab = activeMainTab || (activeTab === "your-events" ? "hosting" : "invited");
-  
+
   // Handle legacy or new tab changes
   const handleTabChange = (tab: MainTab) => {
     // Support the new property name if provided
@@ -79,7 +79,7 @@ export default function ViewSelector({
           Invited To
         </button>
       </div>
-      
+
       {/* Response Filter Subtabs */}
       <div className="flex border-t border-gray-800 bg-gray-800/30">
         <button
@@ -121,6 +121,16 @@ export default function ViewSelector({
           }`}
         >
           Maybe
+        </button>
+        <button
+          onClick={() => onResponseFilterChange("completed")}
+          className={`flex-1 py-1 px-2 font-medium text-center uppercase tracking-wider text-xs ${
+            activeResponseFilter === "completed"
+              ? "text-primary border-b border-primary"
+              : "text-gray-500"
+          }`}
+        >
+          Completed
         </button>
       </div>
     </div>
