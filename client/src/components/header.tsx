@@ -104,7 +104,7 @@ export default function Header() {
                   className="cursor-pointer"
                 >
                   <CreditCard className="mr-2 h-4 w-4" />
-                  <span>Upgrade Plan</span>
+                  <span>Plans</span>
                 </DropdownMenuItem>
                 {/* Premium users can access branding settings */}
                 {user.isPremium && (

@@ -98,29 +98,13 @@ export default function Upgrade() {
   const [upgrading, setUpgrading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
-  if (!user) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <Header />
-        <PageTitle title="Upgrade Your Plan" />
-        <div className="flex flex-col items-center justify-center mt-12">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>Please Log In</CardTitle>
-              <CardDescription>
-                You need to be logged in to upgrade your account.
-              </CardDescription>
-            </CardHeader>
-            <CardFooter>
-              <Button onClick={() => setLocation("/login")} className="w-full">
-                Log In
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+  const handleActionClick = () => {
+    if (!user) {
+      setLocation("/login");
+      return;
+    }
+    return handleUpgrade;
+  };
 
   // Determine current plan
   const getCurrentPlan = () => {
@@ -182,7 +166,7 @@ export default function Upgrade() {
   return (
     <div className="container mx-auto px-4 py-8">
       <Header />
-      <PageTitle title="Upgrade Your Plan" />
+      <PageTitle title="Plans" />
 
       <div className="max-w-5xl mx-auto mt-8 mb-12">
         <div className="text-center mb-12">
