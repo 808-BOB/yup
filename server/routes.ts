@@ -467,11 +467,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   import { createCheckoutSession, createCustomerPortalSession } from './stripe';
 
 // Stripe webhook handler
+import Stripe from 'stripe';
+
 app.post("/api/webhooks/stripe", async (req: Request, res: Response) => {
   const sig = req.headers['stripe-signature'];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   try {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: '2023-10-16'
+    });
+    
     const event = stripe.webhooks.constructEvent(
       req.body,
       sig as string,
@@ -504,7 +510,7 @@ app.post("/api/webhooks/stripe", async (req: Request, res: Response) => {
     }
 
     res.json({ received: true });
-  } catch (err) {
+  } catch (err: any) {
     res.status(400).send(`Webhook Error: ${err.message}`);
   }
 });
