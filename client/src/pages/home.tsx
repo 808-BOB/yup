@@ -19,8 +19,8 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center bg-gray-950 px-4">
-      <img src={YupLogo} alt="Yup.RSVP" className="h-16 mb-12" />
+    <div className="min-h-screen flex flex-col items-center pt-20 sm:pt-24 bg-gray-950 px-4">
+      <img src={YupLogo} alt="Yup.RSVP" className="h-12 sm:h-16 mb-12" />
       
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold mb-8 text-white">{question}</h1>
@@ -41,7 +41,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="fixed bottom-8 flex gap-4 text-sm text-gray-400">
+      <div className="mt-auto mb-8 flex gap-4 text-sm text-gray-400">
         <button 
           onClick={() => setLocation("/upgrade")} 
           className="hover:text-white transition-colors"
