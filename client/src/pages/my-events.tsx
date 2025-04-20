@@ -12,7 +12,7 @@ import { Loader2, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
-type ResponseFilter = "all" | "yup" | "nope" | "maybe";
+type ResponseFilter = "all" | "yup" | "nope" | "maybe" | "past";
 
 export default function MyEvents() {
   const { user, isLoading: authLoading } = useAuth();
@@ -30,7 +30,7 @@ export default function MyEvents() {
     queryKey: [`/api/users/${user?.id || 0}/events`],
     enabled: !!user,
   });
-  
+
   // Fetch all of the user's responses
   const { data: userResponses = {} } = useQuery<Record<string, "yup" | "nope">>({
     queryKey: [`/api/users/${user?.id || 0}/responses`],
@@ -79,20 +79,26 @@ export default function MyEvents() {
   }
 
   const isLoading = authLoading || eventsLoading;
-  
-  // Filter events based on response type
+
+  // Filter events based on response type and date
   const filteredEvents = events.filter(event => {
     const response = userResponses[event.id];
-    
+    const eventDate = new Date(event.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const isPastEvent = eventDate < today;
+
+    if (responseFilter === "past") return isPastEvent;
+    if (isPastEvent) return false;
+
     if (responseFilter === "all") return true;
     if (responseFilter === "yup" && response === "yup") return true;
     if (responseFilter === "nope" && response === "nope") return true;
-    // For now "maybe" doesn't exist in our data, so we can filter for null responses
     if (responseFilter === "maybe" && !response) return true;
-    
+
     return false;
   });
-  
+
   const handleCreateTestEvents = () => {
     createTestEvents.mutate();
   };
@@ -121,7 +127,7 @@ export default function MyEvents() {
                 Your Events
                 {responseFilter !== "all" && ` - ${responseFilter.toUpperCase()}`}
               </h2>
-              
+
               <div className="flex space-x-2">
                 <Button 
                   variant="outline"
@@ -137,7 +143,7 @@ export default function MyEvents() {
                   )}
                   Test Events
                 </Button>
-                
+
                 <Button
                   variant="default"
                   size="sm"
@@ -207,6 +213,15 @@ export default function MyEvents() {
             )}
           </CardContent>
         </Card>
+
+        {responseFilter !== "past" && (
+          <button
+            onClick={() => setResponseFilter("past")}
+            className="w-full mt-4 py-2 text-sm text-gray-400 hover:text-white transition-colors"
+          >
+            View Past Events
+          </button>
+        )}
       </main>
     </div>
   );
