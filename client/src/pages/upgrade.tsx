@@ -50,10 +50,10 @@ const tierFeatures = {
       { name: "Basic analytics", included: true },
       { name: "Custom branding", included: false },
     ],
-    priceId: "price_pro", // Replace with your actual Stripe price ID
+    priceId: process.env.STRIPE_PRO_PRICE_ID,
   },
   premium: {
-    name: "Premium",
+    name: "Premium", 
     price: "19.99",
     description: "For businesses and organizations",
     icon: <Crown className="w-5 h-5" />,
