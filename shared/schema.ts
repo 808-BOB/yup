@@ -15,6 +15,9 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   displayName: text("display_name").notNull(),
   isAdmin: boolean("is_admin").notNull().default(false),
+  isPremium: boolean("is_premium").notNull().default(false),
+  brandTheme: text("brand_theme").default("{}"), // JSON string containing theme preferences
+  logoUrl: text("logo_url"), // Custom logo URL for premium users
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -22,6 +25,9 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
   displayName: true,
   isAdmin: true,
+  isPremium: true,
+  brandTheme: true,
+  logoUrl: true,
 });
 
 export const events = pgTable("events", {

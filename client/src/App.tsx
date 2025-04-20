@@ -15,6 +15,7 @@ import Signup from "@/pages/signup";
 import Profile from "@/pages/profile";
 import StyleGuide from "@/pages/style-guide";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { BrandingProvider } from "@/contexts/BrandingContext";
 
 function Router() {
   return (
@@ -41,13 +42,15 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <div className="min-h-screen flex flex-col bg-gray-950">
-          <div className="flex-1">
-            <Router />
+        <BrandingProvider>
+          <div className="min-h-screen flex flex-col bg-gray-950">
+            <div className="flex-1">
+              <Router />
+            </div>
+            <Footer />
+            <Toaster />
           </div>
-          <Footer />
-          <Toaster />
-        </div>
+        </BrandingProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
