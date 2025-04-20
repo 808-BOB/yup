@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
-type ResponseFilter = "all" | "yup" | "nope" | "maybe";
+type ResponseFilter = "all" | "yup" | "nope" | "maybe" | "past";
 
 export default function EventList() {
   const { user, isLoading: authLoading } = useAuth();
@@ -30,7 +30,7 @@ export default function EventList() {
     queryKey: [`/api/users/${user?.id || 0}/invites`],
     enabled: !!user,
   });
-  
+
   // Prefetch user responses for all events using our new API endpoint
   const { data: userResponses = {} } = useQuery<Record<string, "yup" | "nope">>({
     queryKey: [`/api/users/${user?.id || 0}/responses`],
@@ -78,17 +78,23 @@ export default function EventList() {
   }
 
   const isLoading = authLoading || eventsLoading;
-  
+
   // Filter events based on response type
   const filteredEvents = events.filter(event => {
     const response = userResponses[event.id];
-    
+    const eventDate = new Date(event.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const isPastEvent = eventDate < today;
+
+    if (responseFilter === "past") return isPastEvent;
+    if (isPastEvent) return false;
+
     if (responseFilter === "all") return true;
     if (responseFilter === "yup" && response === "yup") return true;
     if (responseFilter === "nope" && response === "nope") return true;
-    // For now "maybe" doesn't exist in our data, so we can filter for null responses
     if (responseFilter === "maybe" && !response) return true;
-    
+
     return false;
   });
 
@@ -120,7 +126,7 @@ export default function EventList() {
                 Invited Events
                 {responseFilter !== "all" && ` - ${responseFilter.toUpperCase()}`}
               </h2>
-              
+
               {events.length === 0 && (
                 <Button 
                   variant="outline" 
@@ -136,7 +142,7 @@ export default function EventList() {
                 </Button>
               )}
             </div>
-            
+
             {isLoading ? (
               <div className="flex justify-center items-center py-10">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -176,6 +182,15 @@ export default function EventList() {
             )}
           </CardContent>
         </Card>
+
+        {responseFilter !== "past" && (
+          <button
+            onClick={() => setResponseFilter("past")}
+            className="w-full mt-4 py-2 text-sm text-gray-400 hover:text-white transition-colors"
+          >
+            View Past Events
+          </button>
+        )}
       </main>
     </div>
   );

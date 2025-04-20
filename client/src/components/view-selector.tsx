@@ -1,7 +1,7 @@
 import { useLocation } from "wouter";
 
 type MainTab = "hosting" | "invited";
-type ResponseFilter = "all" | "yup" | "nope" | "maybe";
+type ResponseFilter = "all" | "yup" | "nope" | "maybe" | "past";
 
 // Legacy property names for backward compatibility
 type LegacyTab = "your-events" | "invited";
