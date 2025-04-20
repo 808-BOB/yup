@@ -47,8 +47,8 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BrandingProvider>
-          <div className="flex flex-col min-h-screen bg-gray-950">
-            <main className="flex-grow">
+          <div className="flex flex-col min-h-[100dvh] bg-gray-950">
+            <main className="flex-1">
               <Router />
             </main>
             <Footer />
