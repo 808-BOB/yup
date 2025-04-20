@@ -196,7 +196,7 @@ export default function Upgrade() {
           {Object.entries(tierFeatures).map(([key, tier]) => {
             const isCurrent = currentPlan === key;
             const isDisabled = isCurrent || upgrading;
-            
+
             return (
               <Card 
                 key={key} 
@@ -230,7 +230,7 @@ export default function Upgrade() {
                     </span>
                   </div>
                 </CardHeader>
-                
+
                 <CardContent className="flex-grow">
                   <Separator className="mb-4" />
                   <ul className="space-y-3">
@@ -249,8 +249,13 @@ export default function Upgrade() {
                       </li>
                     ))}
                   </ul>
+                  {currentPlan !== key && currentPlan !== 'free' && key === 'free' && (
+                    <div className="mt-4 text-sm text-muted-foreground">
+                      Taking a break? No worries! Your premium features will be waiting when you're ready to upgrade again.
+                    </div>
+                  )}
                 </CardContent>
-                
+
                 <CardFooter className="pt-4">
                   <Button
                     onClick={() => handleUpgrade(key)}
