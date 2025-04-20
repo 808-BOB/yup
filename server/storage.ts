@@ -388,6 +388,31 @@ export class MemStorage implements IStorage {
     return this.updateUser(user.id, { isAdmin });
   }
 
+  // Update user branding settings (for premium users)
+  async updateUserBranding(id: number, brandData: { brandTheme?: string, logoUrl?: string }): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+
+    // Only allow branding updates for premium users
+    if (!user.isPremium) {
+      return user;
+    }
+
+    // Create an updated user with branding data
+    const updatedUser: User = {
+      ...user,
+      ...brandData,
+      // Keep the original id
+      id: user.id,
+    };
+
+    // Update the user in the map
+    this.users.set(id, updatedUser);
+    this.saveToFile(); // Save after updating the user
+
+    return updatedUser;
+  }
+
   // Event operations
   async createEvent(insertEvent: InsertEvent): Promise<Event> {
     const id = this.eventIdCounter++;

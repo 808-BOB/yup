@@ -245,6 +245,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
+  // API route for updating user branding settings (premium users only)
+  app.put(
+    "/api/users/:id/branding", 
+    isAuthenticated, 
+    async (req: Request, res: Response) => {
+      try {
+        // Only allow users to update their own branding
+        const userId = parseInt(req.params.id);
+        if (req.session!.userId !== userId) {
+          return res.status(403).json({ message: "Forbidden" });
+        }
+
+        // Get the user to check if they are premium
+        const user = await storage.getUser(userId);
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
+
+        if (!user.isPremium) {
+          return res.status(403).json({ 
+            message: "Premium feature", 
+            details: "Branding customization is only available for premium users."
+          });
+        }
+
+        // Validate the request body
+        const { brandTheme, logoUrl } = req.body;
+        if (!brandTheme && !logoUrl) {
+          return res.status(400).json({ 
+            message: "Bad request", 
+            details: "At least one of brandTheme or logoUrl must be provided" 
+          });
+        }
+
+        // Update branding settings
+        const brandingData: { brandTheme?: string, logoUrl?: string } = {};
+        if (brandTheme) brandingData.brandTheme = brandTheme;
+        if (logoUrl) brandingData.logoUrl = logoUrl;
+
+        const updatedUser = await storage.updateUserBranding(userId, brandingData);
+        if (!updatedUser) {
+          return res.status(404).json({ message: "User not found" });
+        }
+
+        // Return the updated user without the password
+        const { password: _, ...userWithoutPassword } = updatedUser;
+        res.json(userWithoutPassword);
+      } catch (error) {
+        console.error("Error updating branding:", error);
+        res.status(500).json({ message: "Failed to update branding settings" });
+      }
+    }
+  );
+
   // Event routes
   app.post("/api/events", async (req: Request, res: Response) => {
     try {
@@ -340,6 +394,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "User bob is now an admin", success: true });
     } catch (error) {
       res.status(500).json({ message: "Failed to set admin status" });
+    }
+  });
+
+  // Set premium status for testing purposes
+  app.get("/api/make-premium/:username", async (req: Request, res: Response) => {
+    try {
+      const username = req.params.username;
+      // Get the user
+      const user = await storage.getUserByUsername(username);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Update to make user premium
+      const updatedUser = await storage.updateUser(user.id, { isPremium: true });
+      
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Failed to update user" });
+      }
+      
+      res.json({ 
+        message: `User ${username} is now a premium member`, 
+        success: true,
+        user: {
+          id: updatedUser.id,
+          username: updatedUser.username,
+          displayName: updatedUser.displayName,
+          isPremium: updatedUser.isPremium
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to set premium status" });
     }
   });
 
