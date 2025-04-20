@@ -401,14 +401,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/make-premium/:username", async (req: Request, res: Response) => {
     try {
       const username = req.params.username;
-      // Get the user
       const user = await storage.getUserByUsername(username);
       
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Update to make user premium
+      // Instantly upgrade to premium for testing
       const updatedUser = await storage.updateUser(user.id, { isPremium: true, isPro: true });
       
       if (!updatedUser) {
@@ -416,14 +415,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json({ 
-        message: `User ${username} is now a premium member`, 
+        message: "Successfully upgraded to Premium! 🎉", 
         success: true,
         user: {
           id: updatedUser.id,
           username: updatedUser.username,
           displayName: updatedUser.displayName,
-          isPro: updatedUser.isPro,
-          isPremium: updatedUser.isPremium
+          isPro: true,
+          isPremium: true
         }
       });
     } catch (error) {
@@ -435,14 +434,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/make-pro/:username", async (req: Request, res: Response) => {
     try {
       const username = req.params.username;
-      // Get the user
       const user = await storage.getUserByUsername(username);
       
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Update to make user pro
+      // Instantly upgrade to pro for testing
       const updatedUser = await storage.updateUser(user.id, { isPro: true, isPremium: false });
       
       if (!updatedUser) {
@@ -450,14 +448,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json({ 
-        message: `User ${username} is now a pro member`, 
+        message: "Successfully upgraded to Pro! 🚀", 
         success: true,
         user: {
           id: updatedUser.id,
           username: updatedUser.username,
           displayName: updatedUser.displayName,
-          isPro: updatedUser.isPro,
-          isPremium: updatedUser.isPremium
+          isPro: true,
+          isPremium: false
         }
       });
     } catch (error) {
