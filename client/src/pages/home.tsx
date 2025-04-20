@@ -1,30 +1,61 @@
-import { useEffect } from "react";
+
+import { useState } from "react";
 import { useLocation } from "wouter";
-import Header from "@/components/header";
-import ViewSelector from "@/components/view-selector";
+import { Button } from "@/components/ui/button";
+import YupLogo from "@assets/Yup-logo.png";
 
 export default function Home() {
   const [, setLocation] = useLocation();
+  const [question, setQuestion] = useState("Do you party?");
+  const [showSecondary, setShowSecondary] = useState(false);
 
-  useEffect(() => {
-    // Redirect to the my-events page as the default view
-    setLocation("/my-events");
-  }, [setLocation]);
+  const handleResponse = () => {
+    if (!showSecondary) {
+      setQuestion("Want to?");
+      setShowSecondary(true);
+    } else {
+      setLocation("/signup");
+    }
+  };
 
   return (
-    <div className="max-w-md mx-auto px-4 py-6 h-screen flex flex-col bg-gray-950">
-      <Header />
-      <ViewSelector
-        activeTab="your-events"
-        onTabChange={(tab) => {
-          if (tab === "invited") {
-            setLocation("/event-list");
-          } else {
-            setLocation("/my-events");
-          }
-        }}
-      />
-      {/* Content will be replaced by redirect */}
+    <div className="h-screen flex flex-col items-center justify-center bg-gray-950 px-4">
+      <img src={YupLogo} alt="Yup.RSVP" className="h-16 mb-12" />
+      
+      <div className="text-center mb-8">
+        <h1 className="text-4xl font-bold mb-8 text-white">{question}</h1>
+        <div className="space-x-4">
+          <Button
+            onClick={handleResponse}
+            className="bg-primary hover:bg-primary/90 text-xl px-8 py-6 h-auto"
+          >
+            Yup
+          </Button>
+          <Button
+            onClick={handleResponse}
+            variant="outline"
+            className="text-xl px-8 py-6 h-auto"
+          >
+            Nope
+          </Button>
+        </div>
+      </div>
+
+      <div className="fixed bottom-8 flex gap-4 text-sm text-gray-400">
+        <button 
+          onClick={() => setLocation("/upgrade")} 
+          className="hover:text-white transition-colors"
+        >
+          Plans
+        </button>
+        <span>•</span>
+        <button 
+          onClick={() => setLocation("/login")} 
+          className="hover:text-white transition-colors"
+        >
+          Login
+        </button>
+      </div>
     </div>
   );
 }
