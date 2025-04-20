@@ -41,7 +41,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="mt-auto mb-8 flex gap-4 text-sm text-gray-400">
+      <div className="mt-14 flex gap-4 text-sm text-gray-400">
         <button 
           onClick={() => setLocation("/upgrade")} 
           className="hover:text-white transition-colors"
