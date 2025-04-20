@@ -48,7 +48,7 @@ function App() {
       <AuthProvider>
         <BrandingProvider>
           <div className="flex flex-col min-h-screen bg-gray-950">
-            <main className="flex-grow min-h-[90vh]">
+            <main className="flex-grow">
               <Router />
             </main>
             <Footer />
