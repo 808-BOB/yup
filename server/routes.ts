@@ -464,7 +464,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Reset to free tier for testing purposes
-  app.get("/api/make-free/:username", async (req: Request, res: Response) => {
+  import { createCheckoutSession, createCustomerPortalSession } from './stripe';
+
+// Stripe webhook handler
+app.post("/api/webhooks/stripe", async (req: Request, res: Response) => {
+  const sig = req.headers['stripe-signature'];
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  try {
+    const event = stripe.webhooks.constructEvent(
+      req.body,
+      sig as string,
+      webhookSecret as string
+    );
+
+    switch (event.type) {
+      case 'checkout.session.completed':
+        const session = event.data.object;
+        const userId = parseInt(session.client_reference_id as string);
+        const customerId = session.customer as string;
+        
+        // Update user with subscription status and customer ID
+        await storage.updateUser(userId, {
+          stripeCustomerId: customerId,
+          isPro: true,
+        });
+        break;
+        
+      case 'customer.subscription.deleted':
+        const subscription = event.data.object;
+        const customer = await storage.getUserByStripeCustomerId(subscription.customer as string);
+        if (customer) {
+          await storage.updateUser(customer.id, {
+            isPro: false,
+            isPremium: false,
+          });
+        }
+        break;
+    }
+
+    res.json({ received: true });
+  } catch (err) {
+    res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+});
+
+// Create checkout session
+app.post("/api/create-checkout-session", isAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const { priceId } = req.body;
+    const userId = req.session!.userId;
+    
+    const session = await createCheckoutSession(priceId, userId);
+    res.json({ sessionId: session.id });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create customer portal session
+app.post("/api/create-customer-portal", isAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const user = await storage.getUser(req.session!.userId);
+    if (!user?.stripeCustomerId) {
+      return res.status(400).json({ message: "No subscription found" });
+    }
+    
+    const session = await createCustomerPortalSession(user.stripeCustomerId);
+    res.json({ url: session.url });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/make-free/:username", async (req: Request, res: Response) => {
     try {
       const username = req.params.username;
       // Get the user
