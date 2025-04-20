@@ -15,6 +15,7 @@ import Signup from "@/pages/signup";
 import Profile from "@/pages/profile";
 import StyleGuide from "@/pages/style-guide";
 import Branding from "@/pages/branding";
+import Upgrade from "@/pages/upgrade";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/signup" component={Signup} />
       <Route path="/style-guide" component={StyleGuide} />
       <Route path="/branding" component={Branding} />
+      <Route path="/upgrade" component={Upgrade} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -409,7 +409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Update to make user premium
-      const updatedUser = await storage.updateUser(user.id, { isPremium: true });
+      const updatedUser = await storage.updateUser(user.id, { isPremium: true, isPro: true });
       
       if (!updatedUser) {
         return res.status(500).json({ message: "Failed to update user" });
@@ -422,11 +422,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: updatedUser.id,
           username: updatedUser.username,
           displayName: updatedUser.displayName,
+          isPro: updatedUser.isPro,
           isPremium: updatedUser.isPremium
         }
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to set premium status" });
+    }
+  });
+  
+  // Set pro status for testing purposes
+  app.get("/api/make-pro/:username", async (req: Request, res: Response) => {
+    try {
+      const username = req.params.username;
+      // Get the user
+      const user = await storage.getUserByUsername(username);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Update to make user pro
+      const updatedUser = await storage.updateUser(user.id, { isPro: true, isPremium: false });
+      
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Failed to update user" });
+      }
+      
+      res.json({ 
+        message: `User ${username} is now a pro member`, 
+        success: true,
+        user: {
+          id: updatedUser.id,
+          username: updatedUser.username,
+          displayName: updatedUser.displayName,
+          isPro: updatedUser.isPro,
+          isPremium: updatedUser.isPremium
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to set pro status" });
+    }
+  });
+  
+  // Reset to free tier for testing purposes
+  app.get("/api/make-free/:username", async (req: Request, res: Response) => {
+    try {
+      const username = req.params.username;
+      // Get the user
+      const user = await storage.getUserByUsername(username);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Update to make user free
+      const updatedUser = await storage.updateUser(user.id, { isPro: false, isPremium: false });
+      
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Failed to update user" });
+      }
+      
+      res.json({ 
+        message: `User ${username} is now a free user`, 
+        success: true,
+        user: {
+          id: updatedUser.id,
+          username: updatedUser.username,
+          displayName: updatedUser.displayName,
+          isPro: updatedUser.isPro,
+          isPremium: updatedUser.isPremium
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to set free status" });
     }
   });
 
