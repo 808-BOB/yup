@@ -104,7 +104,12 @@ export default function EventCard({
                     Your Event
                   </Badge>
                 )}
-                {new Date(event.date) < new Date().setHours(0,0,0,0) && (
+                {(() => {
+                  const eventDate = new Date(event.date);
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  return eventDate < today;
+                })() && (
                   <Badge
                     variant="outline"
                     className="text-xs bg-gray-800 border-gray-700 text-gray-400"
