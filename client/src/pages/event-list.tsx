@@ -114,7 +114,7 @@ export default function EventList() {
               setLocation("/my-events");
             }
           }}
-          onResponseFilterChange={setResponseFilter}
+          onResponseFilterChange={(filter) => setResponseFilter(filter)}
         />
       </div>
 
