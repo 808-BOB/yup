@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
-type ResponseFilter = "all" | "yup" | "nope" | "maybe" | "past";
+type ResponseFilter = "all" | "yup" | "nope" | "maybe" | "archives";
 
 export default function EventList() {
   const { user, isLoading: authLoading } = useAuth();
@@ -87,7 +87,7 @@ export default function EventList() {
     today.setHours(0, 0, 0, 0);
     const isPastEvent = eventDate < today;
 
-    if (responseFilter === "past") return isPastEvent;
+    if (responseFilter === "archives") return isPastEvent;
     if (isPastEvent) return false;
 
     if (responseFilter === "all") return true;
@@ -183,12 +183,12 @@ export default function EventList() {
           </CardContent>
         </Card>
 
-        {responseFilter !== "past" && (
+        {responseFilter !== "archives" && (
           <button
-            onClick={() => setResponseFilter("completed")}
+            onClick={() => setResponseFilter("archives")}
             className="w-full mt-4 py-2 text-sm text-gray-400 hover:text-white transition-colors"
           >
-            View Completed Events
+            View Archives
           </button>
         )}
       </main>

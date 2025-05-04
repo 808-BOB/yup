@@ -1,7 +1,7 @@
 import { useLocation } from "wouter";
 
 type MainTab = "hosting" | "invited";
-type ResponseFilter = "all" | "yup" | "nope" | "maybe" | "completed";
+type ResponseFilter = "all" | "yup" | "nope" | "maybe" | "archives";
 
 // Legacy property names for backward compatibility
 type LegacyTab = "your-events" | "invited";
@@ -121,16 +121,6 @@ export default function ViewSelector({
           }`}
         >
           Maybe
-        </button>
-        <button
-          onClick={() => onResponseFilterChange("completed")}
-          className={`flex-1 py-1 px-2 font-medium text-center uppercase tracking-wider text-xs ${
-            activeResponseFilter === "completed"
-              ? "text-primary border-b border-primary"
-              : "text-gray-500"
-          }`}
-        >
-          Completed
         </button>
       </div>
     </div>
