@@ -99,7 +99,8 @@ export default function Upgrade() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
   const getCurrentPlan = () => {
-    if (!user) return "free";
+    // For non-logged in users, we don't show any "current plan" indicators
+    if (!user) return "";
     if (user.isPremium) return "premium";
     if (user.isPro) return "pro";
     return "free";
@@ -108,7 +109,13 @@ export default function Upgrade() {
   const currentPlan = getCurrentPlan();
 
   const handleUpgrade = async (plan: string) => {
+    // Redirect to login if user is not logged in
     if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to upgrade your plan.",
+        variant: "default",
+      });
       setLocation("/login");
       return;
     }
@@ -161,29 +168,7 @@ export default function Upgrade() {
     }
   };
 
-  if (!user) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <Header />
-        <PageTitle title="Upgrade Your Plan" />
-        <div className="flex flex-col items-center justify-center mt-12">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>Please Log In</CardTitle>
-              <CardDescription>
-                You need to be logged in to upgrade your account.
-              </CardDescription>
-            </CardHeader>
-            <CardFooter>
-              <Button onClick={() => setLocation("/login")} className="w-full">
-                Log In
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+  // We allow viewing plans even when not logged in
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -277,6 +262,17 @@ export default function Upgrade() {
                       <span className="flex items-center gap-2">
                         <Check className="h-4 w-4" />
                         Current Plan
+                      </span>
+                    ) : !user ? (
+                      <span className="flex items-center gap-2">
+                        {key === "premium" ? (
+                          <Crown className="h-4 w-4" />
+                        ) : key === "pro" ? (
+                          <Zap className="h-4 w-4" />
+                        ) : (
+                          <ArrowRight className="h-4 w-4" />
+                        )}
+                        Sign Up Now
                       </span>
                     ) : (
                       <span className="flex items-center gap-2">
