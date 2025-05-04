@@ -109,7 +109,7 @@ export default function EventCard({
                     variant="outline"
                     className="text-xs bg-gray-800 border-gray-700 text-gray-400"
                   >
-                    Completed
+                    Archived
                   </Badge>
                 )}
                 {!isOwner && actualUserResponse === "yup" && (
