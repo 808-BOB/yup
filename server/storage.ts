@@ -25,6 +25,15 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, userData: Partial<User>): Promise<User | undefined>;
   updateUserBranding(id: number, brandData: { brandTheme?: string, logoUrl?: string }): Promise<User | undefined>;
+  
+  // Stripe-related operations
+  updateStripeCustomerId(userId: number, customerId: string): Promise<User | undefined>;
+  updateStripeSubscriptionId(userId: number, subscriptionId: string): Promise<User | undefined>;
+  updateUserStripeInfo(userId: number, stripeData: { 
+    stripeCustomerId?: string, 
+    stripeSubscriptionId?: string 
+  }): Promise<User | undefined>;
+  getUserByStripeCustomerId(customerId: string): Promise<User | undefined>;
 
   // Event operations
   createEvent(event: InsertEvent): Promise<Event>;
@@ -411,6 +420,59 @@ export class MemStorage implements IStorage {
     this.saveToFile(); // Save after updating the user
 
     return updatedUser;
+  }
+  
+  // Stripe-related operations
+  async updateStripeCustomerId(userId: number, customerId: string): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    const updatedUser: User = {
+      ...user,
+      stripeCustomerId: customerId
+    };
+    
+    this.users.set(userId, updatedUser);
+    this.saveToFile();
+    return updatedUser;
+  }
+  
+  async updateStripeSubscriptionId(userId: number, subscriptionId: string): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    const updatedUser: User = {
+      ...user,
+      stripeSubscriptionId: subscriptionId
+    };
+    
+    this.users.set(userId, updatedUser);
+    this.saveToFile();
+    return updatedUser;
+  }
+  
+  async updateUserStripeInfo(userId: number, stripeData: { 
+    stripeCustomerId?: string, 
+    stripeSubscriptionId?: string 
+  }): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    const updatedUser: User = {
+      ...user,
+      stripeCustomerId: stripeData.stripeCustomerId !== undefined ? stripeData.stripeCustomerId : user.stripeCustomerId,
+      stripeSubscriptionId: stripeData.stripeSubscriptionId !== undefined ? stripeData.stripeSubscriptionId : user.stripeSubscriptionId
+    };
+    
+    this.users.set(userId, updatedUser);
+    this.saveToFile();
+    return updatedUser;
+  }
+  
+  async getUserByStripeCustomerId(customerId: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.stripeCustomerId === customerId
+    );
   }
 
   // Event operations
