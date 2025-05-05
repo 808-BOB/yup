@@ -45,7 +45,7 @@ export default function Header() {
           src={getLogoUrl(branding)}
           alt="Yup.RSVP"
           className="h-8 cursor-pointer"
-          onClick={() => setLocation("/")}
+          onClick={() => setLocation(user ? "/my-events" : "/")}
         />
       </div>
       <div className="flex items-center space-x-4">
