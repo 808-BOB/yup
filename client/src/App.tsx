@@ -25,10 +25,10 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/event-list" component={EventList} />
       <Route path="/events/create" component={CreateEvent} />
-      <Route path="/events/:slug/edit" component={CreateEvent} />{" "}
-      {/* Reuse CreateEvent component for editing */}
-      {/* Using original route pattern for responses */}
+      <Route path="/events/:slug/edit" component={CreateEvent} />
+      {/* Support both slug and ID routes for responses */}
       <Route path="/events/:slug/responses" component={EventResponses} />
+      <Route path="/events/:id/responses" component={EventResponses} />
       <Route path="/events/:slug" component={Event} />
       <Route path="/my-events" component={MyEvents} />
       <Route path="/profile" component={Profile} />

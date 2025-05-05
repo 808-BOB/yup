@@ -16,24 +16,40 @@ type ResponseWithUserInfo = Response & {
 };
 
 export default function EventResponses() {
-  // Use our new route format
-  const [match, params] = useRoute("/events/:slug/responses");
+  // Use multiple route patterns to support both slug and ID
+  const [matchBySlug, paramsBySlug] = useRoute("/events/:slug/responses");
+  const [matchById, paramsById] = useRoute("/events/:id/responses");
   const [, setLocation] = useLocation();
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
 
-  console.log("EventResponses Component - New Route Format:", { 
-    match, 
-    params, 
+  console.log("EventResponses Component - Route Info:", { 
+    matchBySlug, paramsBySlug,
+    matchById, paramsById,
     url: window.location.href, 
     pathName: window.location.pathname 
   });
 
-  const { data: event } = useQuery<Event>({
-    queryKey: [`/api/events/slug/${params?.slug}`],
-    enabled: !!params?.slug,
+  // Get event identifier (slug or id) from the appropriate route match
+  const isIdRoute = matchById && paramsById?.id;
+  const isSlugRoute = matchBySlug && paramsBySlug?.slug;
+  
+  // Try to fetch event by slug if that route matched
+  const { data: eventBySlug } = useQuery<Event>({
+    queryKey: [`/api/events/slug/${paramsBySlug?.slug}`],
+    enabled: !!isSlugRoute && !!paramsBySlug?.slug,
     retry: 1,
   });
+  
+  // Try to fetch event by ID if that route matched
+  const { data: eventById } = useQuery<Event>({
+    queryKey: [`/api/events/${paramsById?.id}`],
+    enabled: !!isIdRoute && !!paramsById?.id,
+    retry: 1,
+  });
+  
+  // Use whichever event was found
+  const event = eventBySlug || eventById;
 
   // Get the eventId to prevent dependency issue
   const eventId = event?.id;

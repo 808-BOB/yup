@@ -208,7 +208,12 @@ export default function EventCard({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  setLocation(`/events/${event.slug}/responses`);
+                  // Check if slug exists, otherwise use the ID
+                  const linkTarget = event.slug 
+                    ? `/events/${event.slug}/responses`
+                    : `/events/${event.id}/responses`;
+                  console.log("Navigating to:", linkTarget, "Event:", event);
+                  setLocation(linkTarget);
                 }}
                 className="text-sm text-primary hover:text-primary/80 font-medium cursor-pointer flex items-center"
               >
