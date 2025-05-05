@@ -4,8 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check, X, Calendar, Clock, MapPin } from "lucide-react";
 import { formatDate, formatTime } from "@/lib/utils/date-formatter";
 import { type Event, type Response } from "@shared/schema";
-import { useBranding } from "@/contexts/BrandingContext";
-// Use the branding context directly instead of importing getLogoUrl
+import { useBranding, getLogoUrl } from "@/contexts/BrandingContext";
 
 interface ShareableEventCardProps {
   event: Event;
@@ -21,10 +20,9 @@ export default function ShareableEventCard({
   className = "",
 }: ShareableEventCardProps) {
   const branding = useBranding();
-  const { isPremium, logoUrl } = branding;
+  const { isPremium } = branding;
   const formattedTime = formatTime(event.startTime);
-  // Use the logo URL directly from the branding context
-  const eventLogo = logoUrl;
+  const eventLogo = getLogoUrl(branding);
   
   // Get response status text and styling
   const getResponseStatus = () => {

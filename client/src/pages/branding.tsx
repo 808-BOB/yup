@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useBranding, BrandTheme } from "@/contexts/BrandingContext";
+import { useBranding } from "@/contexts/BrandingContext";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -29,12 +29,9 @@ import PageTitle from "@/components/page-title";
 import { Paintbrush, Upload, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-// Schema for theme form
+// Schema for theme form - simplified to only include primary color
 const themeFormSchema = z.object({
   primary: z.string().min(1, "Primary color is required"),
-  variant: z.enum(["professional", "tint", "vibrant"]),
-  appearance: z.enum(["light", "dark", "system"]),
-  radius: z.number().min(0).max(2),
 });
 
 type ThemeFormValues = z.infer<typeof themeFormSchema>;
@@ -46,14 +43,11 @@ export default function Branding() {
   const [logoPreview, setLogoPreview] = useState<string | null>(branding.logoUrl);
   const [activeTab, setActiveTab] = useState("theme");
 
-  // Initialize form with current theme values
+  // Initialize form with current theme values - simplified to just primary color
   const form = useForm<ThemeFormValues>({
     resolver: zodResolver(themeFormSchema),
     defaultValues: {
       primary: branding.theme.primary,
-      variant: branding.theme.variant,
-      appearance: branding.theme.appearance,
-      radius: branding.theme.radius,
     },
   });
 
@@ -153,9 +147,6 @@ export default function Branding() {
     setLogoPreview(null);
     form.reset({
       primary: "hsl(308, 100%, 66%)",
-      variant: "vibrant",
-      appearance: "dark",
-      radius: 0,
     });
     
     toast({
@@ -210,7 +201,7 @@ export default function Branding() {
                 >
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="primary">Primary Color</Label>
+                      <Label htmlFor="primary">Primary Accent Color</Label>
                       <div className="flex gap-2 items-center mt-1">
                         <Input
                           type="color"
@@ -232,69 +223,10 @@ export default function Branding() {
                           {form.formState.errors.primary.message}
                         </p>
                       )}
-                    </div>
-
-                    <div>
-                      <Label htmlFor="variant">Color Variant</Label>
-                      <Select
-                        value={form.watch("variant")}
-                        onValueChange={(value: "professional" | "tint" | "vibrant") =>
-                          form.setValue("variant", value)
-                        }
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="Select a variant" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="professional">Professional</SelectItem>
-                          <SelectItem value="tint">Tint</SelectItem>
-                          <SelectItem value="vibrant">Vibrant</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="appearance">Appearance</Label>
-                      <RadioGroup
-                        value={form.watch("appearance")}
-                        onValueChange={(value: "light" | "dark" | "system") =>
-                          form.setValue("appearance", value)
-                        }
-                        className="flex gap-4 mt-1"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="light" id="light" />
-                          <Label htmlFor="light">Light</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="dark" id="dark" />
-                          <Label htmlFor="dark">Dark</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="system" id="system" />
-                          <Label htmlFor="system">System</Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="radius">Corner Radius</Label>
-                      <div className="flex items-center gap-4 mt-1">
-                        <Input
-                          type="range"
-                          min="0"
-                          max="2"
-                          step="0.1"
-                          value={form.watch("radius")}
-                          onChange={(e) =>
-                            form.setValue("radius", parseFloat(e.target.value))
-                          }
-                          className="flex-1"
-                        />
-                        <span className="w-10 text-center">
-                          {form.watch("radius")}
-                        </span>
-                      </div>
+                      <p className="text-sm text-gray-500 mt-2">
+                        This color will be used as the accent color throughout your RSVP pages.
+                        The default color is magenta (hsl(308, 100%, 66%)).
+                      </p>
                     </div>
                   </div>
 
