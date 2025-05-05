@@ -1,13 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import defaultLogo from '@assets/Yup-logo.png';
+// Make sure the import path is correct for the assets
 
-// Define the structure of our theme
+// Define the structure of our theme - simplified to only use primary accent color
 export interface BrandTheme {
   primary: string;
-  variant: 'professional' | 'tint' | 'vibrant';
-  appearance: 'light' | 'dark' | 'system';
-  radius: number;
 }
 
 export interface BrandingContextType {
@@ -19,12 +17,9 @@ export interface BrandingContextType {
   resetToDefault: () => void;
 }
 
-// Default theme values
+// Default theme values - simplified to only include primary accent color
 const defaultTheme: BrandTheme = {
-  primary: 'hsl(308, 100%, 66%)',
-  variant: 'vibrant',
-  appearance: 'dark',
-  radius: 0
+  primary: 'hsl(308, 100%, 66%)' // Magenta
 };
 
 const BrandingContext = createContext<BrandingContextType | undefined>(undefined);
@@ -71,20 +66,15 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
 
   // Apply theme to CSS variables when theme changes
   useEffect(() => {
-    document.documentElement.style.setProperty('--primary', theme.primary.replace('hsl(', '').replace(')', ''));
-    
-    // Set other theme properties if needed
-    if (theme.appearance === 'light') {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
-    } else {
-      document.documentElement.classList.remove('light');
-      document.documentElement.classList.add('dark');
+    // Only update the primary color for premium users
+    if (isPremium) {
+      // Extract the primary color and set it as CSS variable
+      document.documentElement.style.setProperty('--primary', theme.primary.replace('hsl(', '').replace(')', ''));
+      
+      // We're only setting the primary accent color as per requirements
+      // Appearance mode and other properties are controlled by the system theme
     }
-    
-    // Update theme.json
-    // Note: In a real application, this would be done server-side
-  }, [theme]);
+  }, [theme, isPremium]);
 
   // Update theme values
   const updateTheme = async (newTheme: Partial<BrandTheme>) => {
@@ -194,6 +184,14 @@ export function useBranding() {
   return context;
 }
 
+// This function returns the logo URL or the default logo if none is set
 export function getLogoUrl(branding: BrandingContextType) {
-  return branding.isPremium && branding.logoUrl ? branding.logoUrl : defaultLogo;
+  if (branding.isPremium && branding.logoUrl) {
+    // For absolute URLs or attached assets
+    if (branding.logoUrl.startsWith('http') || branding.logoUrl.startsWith('attached_assets/')) {
+      return branding.logoUrl;
+    }
+  }
+  // Return the default logo as fallback
+  return defaultLogo;
 }
