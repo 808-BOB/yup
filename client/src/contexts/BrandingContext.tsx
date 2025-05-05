@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
+import { apiRequest } from '@/lib/queryClient';
 import defaultLogo from '@assets/Yup-logo.png';
 // Make sure the import path is correct for the assets
 
@@ -68,11 +69,31 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Only update the primary color for premium users
     if (isPremium) {
-      // Extract the primary color and set it as CSS variable
-      document.documentElement.style.setProperty('--primary', theme.primary.replace('hsl(', '').replace(')', ''));
+      // Parse the HSL color to get its components
+      let primaryColor = theme.primary;
       
-      // We're only setting the primary accent color as per requirements
-      // Appearance mode and other properties are controlled by the system theme
+      // If it's in HSL format, extract the components
+      if (primaryColor.startsWith('hsl')) {
+        const hslMatch = primaryColor.match(/hsl\(([^,]+),\s*([^,]+),\s*([^)]+)\)/);
+        if (hslMatch) {
+          const [_, h, s, l] = hslMatch;
+          // Set the primary variable (for certain components) in the format Tailwind expects 
+          document.documentElement.style.setProperty('--primary', `${h} ${s} ${l}`);
+          
+          // Set the actual CSS color variables for all instances
+          document.documentElement.style.setProperty('--primary-color', primaryColor);
+          document.documentElement.style.setProperty('--primary-hue', h.trim());
+          document.documentElement.style.setProperty('--primary-saturation', s.trim());
+          document.documentElement.style.setProperty('--primary-lightness', l.trim());
+        }
+      } else {
+        // For hex or other color formats, use as is
+        document.documentElement.style.setProperty('--primary-color', primaryColor);
+      }
+      
+      // Also add individual CSS custom properties for any components that need them
+      document.documentElement.style.setProperty('--color-primary', primaryColor);
+      document.documentElement.style.setProperty('--color-primary-hover', primaryColor);
     }
   }, [theme, isPremium]);
 
@@ -86,19 +107,10 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
     if (user) {
       // Save to user preferences on the server
       try {
-        const response = await fetch(`/api/users/${user.id}/branding`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            brandTheme: JSON.stringify(updatedTheme),
-          }),
+        await apiRequest('PUT', `/api/users/${user.id}/branding`, {
+          brandTheme: JSON.stringify(updatedTheme),
         });
-        
-        if (!response.ok) {
-          console.error('Failed to save theme');
-        }
+        console.log('Theme saved successfully');
       } catch (e) {
         console.error('Error saving theme:', e);
       }
@@ -114,19 +126,10 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
     if (user) {
       // Save to user preferences on the server
       try {
-        const response = await fetch(`/api/users/${user.id}/branding`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            logoUrl: newLogoUrl,
-          }),
+        await apiRequest('PUT', `/api/users/${user.id}/branding`, {
+          logoUrl: newLogoUrl,
         });
-        
-        if (!response.ok) {
-          console.error('Failed to save logo');
-        }
+        console.log('Logo saved successfully');
       } catch (e) {
         console.error('Error saving logo:', e);
       }
@@ -140,20 +143,11 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
     
     if (user) {
       try {
-        const response = await fetch(`/api/users/${user.id}/branding`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            brandTheme: JSON.stringify(defaultTheme),
-            logoUrl: null,
-          }),
+        await apiRequest('PUT', `/api/users/${user.id}/branding`, {
+          brandTheme: JSON.stringify(defaultTheme),
+          logoUrl: null,
         });
-        
-        if (!response.ok) {
-          console.error('Failed to reset branding');
-        }
+        console.log('Branding reset successfully');
       } catch (e) {
         console.error('Error resetting branding:', e);
       }
