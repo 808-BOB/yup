@@ -77,23 +77,66 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
         const hslMatch = primaryColor.match(/hsl\(([^,]+),\s*([^,]+),\s*([^)]+)\)/);
         if (hslMatch) {
           const [_, h, s, l] = hslMatch;
-          // Set the primary variable (for certain components) in the format Tailwind expects 
+          
+          // Set the primary variable in proper format for Tailwind/shadcn components
           document.documentElement.style.setProperty('--primary', `${h} ${s} ${l}`);
           
-          // Set the actual CSS color variables for all instances
+          // For buttons and other components that might use different formats
           document.documentElement.style.setProperty('--primary-color', primaryColor);
           document.documentElement.style.setProperty('--primary-hue', h.trim());
           document.documentElement.style.setProperty('--primary-saturation', s.trim());
           document.documentElement.style.setProperty('--primary-lightness', l.trim());
+          
+          // Apply color to other CSS variables that might be using the primary color
+          document.documentElement.style.setProperty('--ring', `${h} ${s} ${l}`);
+          document.documentElement.style.setProperty('--card-foreground', `0 0% 100%`);
+          document.documentElement.style.setProperty('--border', `${h} ${s} 20%`); // Darker version
+          
+          // For custom components using CSS variables
+          document.documentElement.style.setProperty('--color-primary', primaryColor);
+          document.documentElement.style.setProperty('--color-primary-hover', `hsl(${h}, ${s}, ${parseInt(l)}%)`);
         }
-      } else {
-        // For hex or other color formats, use as is
+      } else if (primaryColor.startsWith('#')) {
+        // For hex colors, convert to HSL
+        // This is a simplified conversion that might not be 100% accurate
+        const r = parseInt(primaryColor.substring(1, 3), 16) / 255;
+        const g = parseInt(primaryColor.substring(3, 5), 16) / 255;
+        const b = parseInt(primaryColor.substring(5, 7), 16) / 255;
+        
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+        
+        if (max === min) {
+          h = s = 0; // achromatic
+        } else {
+          const d = max - min;
+          s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+          switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+            default: h = 0;
+          }
+          h /= 6;
+        }
+        
+        const hDeg = Math.round(h * 360);
+        const sPercent = Math.round(s * 100);
+        const lPercent = Math.round(l * 100);
+        
+        document.documentElement.style.setProperty('--primary', `${hDeg} ${sPercent}% ${lPercent}%`);
         document.documentElement.style.setProperty('--primary-color', primaryColor);
+        document.documentElement.style.setProperty('--ring', `${hDeg} ${sPercent}% ${lPercent}%`);
+        document.documentElement.style.setProperty('--card-foreground', `0 0% 100%`);
+        document.documentElement.style.setProperty('--border', `${hDeg} ${sPercent}% ${Math.max(20, lPercent - 20)}%`);
+        document.documentElement.style.setProperty('--color-primary', primaryColor);
+        document.documentElement.style.setProperty('--color-primary-hover', `hsl(${hDeg}, ${sPercent}%, ${lPercent}%)`);
+      } else {
+        // For other color formats, use as is
+        document.documentElement.style.setProperty('--primary-color', primaryColor);
+        document.documentElement.style.setProperty('--color-primary', primaryColor);
       }
-      
-      // Also add individual CSS custom properties for any components that need them
-      document.documentElement.style.setProperty('--color-primary', primaryColor);
-      document.documentElement.style.setProperty('--color-primary-hover', primaryColor);
     }
   }, [theme, isPremium]);
 
