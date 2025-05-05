@@ -1,43 +1,49 @@
+/**
+ * Formats a date string to a readable format
+ * @param dateString A date string in any valid format (ISO, etc.)
+ * @returns Formatted date string (e.g., "Monday, January 1, 2023")
+ */
 export function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-
-  // Check if the date is valid
-  if (isNaN(date.getTime())) {
-    return dateString;
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return dateString; // Return original if invalid
   }
-
-  const options: Intl.DateTimeFormatOptions = {
-    month: "short",
-    day: "numeric",
-  };
-
-  return date.toLocaleDateString("en-US", options);
 }
 
 /**
- * Formats a 24-hour time string (HH:MM) to a 12-hour time string with AM/PM (h:MM AM/PM)
- * @param timeString Time string in 24-hour format (HH:MM)
- * @returns Formatted time string in 12-hour format with AM/PM (h:MM AM/PM)
+ * Formats a time string to a readable format
+ * @param timeString A time string (e.g., "14:30" or ISO datetime)
+ * @returns Formatted time string (e.g., "2:30 PM")
  */
-export function formatTime(timeString: string): string {
-  // Return original if not in expected format
-  if (!timeString || !timeString.includes(':')) {
-    return timeString;
+export function formatTime(timeString: string | undefined): string {
+  if (!timeString) return '';
+  
+  try {
+    // If it's just a time (HH:MM)
+    if (timeString.includes(':') && timeString.length <= 8) {
+      const [hours, minutes] = timeString.split(':').map(Number);
+      const period = hours >= 12 ? 'PM' : 'AM';
+      const displayHours = hours % 12 || 12; // Convert 0 to 12 for 12 AM
+      return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+    }
+    
+    // If it's a full date-time string
+    const date = new Date(timeString);
+    return date.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  } catch (error) {
+    console.error('Error formatting time:', error);
+    return timeString; // Return original if invalid
   }
-
-  // Extract hours and minutes
-  const [hourStr, minuteStr] = timeString.split(':');
-  const hour = parseInt(hourStr, 10);
-  
-  if (isNaN(hour) || hour < 0 || hour > 23) {
-    return timeString;
-  }
-  
-  // Determine if it's AM or PM
-  const period = hour >= 12 ? 'PM' : 'AM';
-  
-  // Convert to 12-hour format
-  const hour12 = hour % 12 || 12; // 0 should be displayed as 12 in 12-hour format
-  
-  return `${hour12}:${minuteStr} ${period}`;
 }
