@@ -19,6 +19,7 @@ interface AuthContextType {
     password: string,
   ) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -100,6 +101,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     }
   };
+  
+  // Method to refresh user data from the server
+  const refreshUser = async () => {
+    setIsLoading(true);
+    
+    try {
+      const userData = await apiRequest<User>("GET", "/api/auth/me", undefined, { credentials: 'include' });
+      setUser(userData);
+    } catch (err) {
+      // If we can't get the user data, they might be logged out
+      setUser(null);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <AuthContext.Provider
@@ -110,6 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         signup,
         logout,
+        refreshUser,
       }}
     >
       {children}

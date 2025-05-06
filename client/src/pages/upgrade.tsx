@@ -121,49 +121,59 @@ export default function Upgrade() {
     }
 
     if (plan === currentPlan) return;
-
+    
+    // For downgrading to free, we'll continue to use the test endpoint
+    if (plan === "free") {
+      setSelectedPlan(plan);
+      setUpgrading(true);
+      
+      try {
+        const endpoint = `/api/make-free/${user.username}`;
+        const response = await apiRequest("GET", endpoint);
+        const result = await response.json();
+  
+        if (result.success) {
+          toast({
+            title: "Plan Updated",
+            description: `You've been downgraded to the Free plan.`,
+            variant: "default",
+          });
+  
+          // Reload to refresh user status
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+        } else {
+          throw new Error(result.message || "Failed to downgrade plan");
+        }
+      } catch (error: any) {
+        console.error("Error downgrading plan:", error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to downgrade plan. Please try again later.",
+          variant: "destructive",
+        });
+      } finally {
+        setUpgrading(false);
+      }
+      
+      return;
+    }
+    
+    // For upgrading to paid plans, redirect to the subscription page
     setSelectedPlan(plan);
     setUpgrading(true);
-
+    
     try {
-      // This is just for demonstration, in a real app this would connect to a payment processor
-      // We're using our test endpoints for now
-      let endpoint = "";
-
-      if (plan === "premium") {
-        endpoint = `/api/make-premium/${user.username}`;
-      } else if (plan === "pro") {
-        endpoint = `/api/make-pro/${user.username}`;
-      } else {
-        endpoint = `/api/make-free/${user.username}`;
-      }
-
-      const response = await apiRequest("GET", endpoint);
-      const result = await response.json();
-
-      if (result.success) {
-        toast({
-          title: "Plan Updated",
-          description: `You are now on the ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan.`,
-          variant: "default",
-        });
-
-        // In a real app, we would update the user context here
-        // For now, we'll just reload the page
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
-      } else {
-        throw new Error(result.message || "Failed to upgrade plan");
-      }
+      // Redirect to the subscription page with the selected plan
+      setLocation(`/subscribe?plan=${plan}`);
     } catch (error: any) {
-      console.error("Error upgrading plan:", error);
+      console.error("Error navigating to subscription page:", error);
       toast({
-        title: "Upgrade Failed",
-        description: error.message || "There was an error upgrading your plan. Please try again.",
+        title: "Error",
+        description: "Failed to load subscription page. Please try again later.",
         variant: "destructive",
       });
-    } finally {
       setUpgrading(false);
     }
   };
