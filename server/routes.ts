@@ -9,6 +9,26 @@ const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
   return res.status(401).json({ message: "Unauthorized" });
 };
 
+import Stripe from "stripe";
+import { createCheckoutSession, createCustomerPortalSession } from "./stripe";
+
+// Debug Stripe environment variables
+console.log('Stripe environment variables check:');
+console.log('- STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY ? 'Set' : 'Not set');
+console.log('- STRIPE_WEBHOOK_SECRET:', process.env.STRIPE_WEBHOOK_SECRET ? 'Set' : 'Not set');
+console.log('- STRIPE_PRO_PRICE_ID:', process.env.STRIPE_PRO_PRICE_ID ? 'Set' : 'Not set');
+console.log('- STRIPE_PREMIUM_PRICE_ID:', process.env.STRIPE_PREMIUM_PRICE_ID ? 'Set' : 'Not set');
+console.log('- APP_URL:', process.env.APP_URL ? process.env.APP_URL : 'Not set');
+
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.warn('Missing Stripe secret key. Stripe features will be disabled.');
+}
+
+const stripe = process.env.STRIPE_SECRET_KEY ? 
+  new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2023-10-16" as any, // Type assertion to avoid version mismatch in typings
+  }) : null;
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // User authentication & session
   app.post("/api/auth/signup", async (req: Request, res: Response) => {
@@ -95,7 +115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     isAuthenticated,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.session.userId;
+        const userId = req.session.userId!; // Non-null assertion (we know it exists because of isAuthenticated)
         const user = await storage.getUser(userId);
 
         if (!user) {
@@ -569,6 +589,179 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   );
+
+  // Stripe subscription management
+  if (stripe) {
+    // Create a Stripe Checkout session for subscription
+    app.post('/api/create-checkout-session', isAuthenticated, async (req: Request, res: Response) => {
+      try {
+        const { priceId } = req.body;
+        
+        if (!priceId) {
+          return res.status(400).json({ message: 'Price ID is required' });
+        }
+        
+        const userId = req.session.userId!; // Non-null assertion (we know it exists because of isAuthenticated)
+        const user = await storage.getUser(userId);
+        
+        if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+        
+        const session = await createCheckoutSession(priceId, userId);
+        res.json({ url: session.url });
+      } catch (error) {
+        console.error('Error creating checkout session:', error);
+        res.status(500).json({ message: 'Failed to create checkout session' });
+      }
+    });
+    
+    // Create a customer portal session for subscription management
+    app.post('/api/create-customer-portal', isAuthenticated, async (req: Request, res: Response) => {
+      try {
+        const userId = req.session.userId!; // Non-null assertion (we know it exists because of isAuthenticated)
+        const user = await storage.getUser(userId);
+        
+        if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+        
+        if (!user.stripeCustomerId) {
+          return res.status(400).json({ message: 'No Stripe customer ID found for this user' });
+        }
+        
+        const session = await createCustomerPortalSession(user.stripeCustomerId);
+        res.json({ url: session.url });
+      } catch (error) {
+        console.error('Error creating customer portal session:', error);
+        res.status(500).json({ message: 'Failed to create customer portal session' });
+      }
+    });
+    
+    // Webhook for Stripe events
+    app.post('/api/stripe-webhook', async (req: Request, res: Response) => {
+      const sig = req.headers['stripe-signature'] as string;
+      
+      if (!process.env.STRIPE_WEBHOOK_SECRET) {
+        return res.status(400).json({ message: 'Webhook secret is not configured' });
+      }
+      
+      let event;
+      
+      try {
+        event = stripe.webhooks.constructEvent(
+          req.body,
+          sig,
+          process.env.STRIPE_WEBHOOK_SECRET
+        );
+      } catch (err: any) {
+        console.error(`Webhook Error: ${err.message}`);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+      }
+      
+      // Handle the event
+      switch (event.type) {
+        case 'checkout.session.completed': {
+          const session = event.data.object;
+          // Find user from client_reference_id
+          if (session.client_reference_id) {
+            const userId = parseInt(session.client_reference_id);
+            const user = await storage.getUser(userId);
+            
+            if (user) {
+              // Update user with Stripe customer ID
+              await storage.updateStripeCustomerId(user.id, session.customer as string);
+              
+              // Check subscription level and update user status
+              const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+              
+              if (subscription) {
+                await storage.updateStripeSubscriptionId(user.id, subscription.id);
+                
+                // Update user tier based on price
+                const item = subscription.items.data[0];
+                const priceId = item.price.id;
+                
+                if (priceId === process.env.STRIPE_PREMIUM_PRICE_ID) {
+                  await storage.updateUser(user.id, { isPremium: true, isPro: true });
+                } else if (priceId === process.env.STRIPE_PRO_PRICE_ID) {
+                  await storage.updateUser(user.id, { isPro: true, isPremium: false });
+                }
+              }
+            }
+          }
+          break;
+        }
+        
+        case 'customer.subscription.updated': {
+          const subscription = event.data.object;
+          // Find user by Stripe customer ID
+          const user = await storage.getUserByStripeCustomerId(subscription.customer as string);
+          
+          if (user) {
+            // Update subscription ID
+            await storage.updateStripeSubscriptionId(user.id, subscription.id);
+            
+            // Update user tier based on price
+            const item = subscription.items.data[0];
+            const priceId = item.price.id;
+            
+            if (priceId === process.env.STRIPE_PREMIUM_PRICE_ID) {
+              await storage.updateUser(user.id, { isPremium: true, isPro: true });
+            } else if (priceId === process.env.STRIPE_PRO_PRICE_ID) {
+              await storage.updateUser(user.id, { isPro: true, isPremium: false });
+            }
+          }
+          break;
+        }
+        
+        case 'customer.subscription.deleted': {
+          const subscription = event.data.object;
+          // Find user by Stripe customer ID
+          const user = await storage.getUserByStripeCustomerId(subscription.customer as string);
+          
+          if (user) {
+            // Downgrade user to free tier
+            await storage.updateUser(user.id, { isPro: false, isPremium: false });
+            // Pass empty string instead of null for TypeScript compatibility
+            await storage.updateStripeSubscriptionId(user.id, "");
+          }
+          break;
+        }
+      }
+      
+      // Return a 200 response to acknowledge receipt of the event
+      res.send({ received: true });
+    });
+  }
+
+  // Payment Intent for one-time payments (if needed)
+  app.post('/api/create-payment-intent', isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      if (!stripe) {
+        return res.status(503).json({ message: 'Stripe is not configured' });
+      }
+      
+      const { amount } = req.body;
+      
+      if (!amount) {
+        return res.status(400).json({ message: 'Amount is required' });
+      }
+      
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100), // Convert to cents
+        currency: 'usd',
+        metadata: {
+          userId: req.session.userId!.toString()
+        }
+      });
+      
+      res.json({ clientSecret: paymentIntent.client_secret });
+    } catch (error) {
+      console.error('Error creating payment intent:', error);
+      res.status(500).json({ message: 'Failed to create payment intent' });
+    }
+  });
 
   const httpServer = createServer(app);
 

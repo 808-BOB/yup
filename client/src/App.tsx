@@ -16,6 +16,8 @@ import Profile from "@/pages/profile";
 import StyleGuide from "@/pages/style-guide";
 import Branding from "@/pages/branding";
 import Upgrade from "@/pages/upgrade";
+import Subscribe from "@/pages/subscribe";
+import SubscriptionSuccess from "@/pages/subscription-success";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 
@@ -37,6 +39,8 @@ function Router() {
       <Route path="/style-guide" component={StyleGuide} />
       <Route path="/branding" component={Branding} />
       <Route path="/upgrade" component={Upgrade} />
+      <Route path="/subscribe" component={Subscribe} />
+      <Route path="/upgrade/success" component={SubscriptionSuccess} />
       <Route component={NotFound} />
     </Switch>
   );
