@@ -354,7 +354,7 @@ export default function Profile() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gray-900 border border-gray-800">
+          <Card className="bg-gray-900 border border-gray-800 mb-6">
             <CardHeader>
               <CardTitle className="text-base">Account Stats</CardTitle>
             </CardHeader>
@@ -371,6 +371,93 @@ export default function Profile() {
                     Responses
                   </p>
                   <p className="text-2xl font-bold">0</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gray-900 border border-gray-800">
+            <CardHeader>
+              <CardTitle className="text-base">Subscription</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-400 mb-1">Current Plan</h3>
+                  {user?.isPremium ? (
+                    <p className="flex items-center">
+                      <span className="flex h-2 w-2 bg-primary rounded-full mr-2"></span>
+                      Premium Plan
+                    </p>
+                  ) : user?.isPro ? (
+                    <p className="flex items-center">
+                      <span className="flex h-2 w-2 bg-primary rounded-full mr-2"></span>
+                      Pro Plan
+                    </p>
+                  ) : (
+                    <p className="flex items-center">
+                      <span className="flex h-2 w-2 bg-gray-400 rounded-full mr-2"></span>
+                      Free Plan
+                    </p>
+                  )}
+                </div>
+                
+                <div>
+                  <h3 className="text-sm font-medium text-gray-400 mb-1">Features</h3>
+                  <ul className="space-y-1 text-sm">
+                    {user?.isPremium ? (
+                      <>
+                        <li>• Unlimited events</li>
+                        <li>• Advanced analytics</li>
+                        <li>• Custom branding</li>
+                        <li>• White-label events</li>
+                      </>
+                    ) : user?.isPro ? (
+                      <>
+                        <li>• Unlimited events</li>
+                        <li>• Advanced analytics</li>
+                        <li className="text-gray-500">• Custom branding (Premium only)</li>
+                        <li className="text-gray-500">• White-label events (Premium only)</li>
+                      </>
+                    ) : (
+                      <>
+                        <li>• Up to 3 events</li>
+                        <li className="text-gray-500">• Advanced analytics (Pro & Premium)</li>
+                        <li className="text-gray-500">• Custom branding (Premium only)</li>
+                        <li className="text-gray-500">• White-label events (Premium only)</li>
+                      </>
+                    )}
+                  </ul>
+                </div>
+                
+                <div className="pt-2">
+                  {(user?.isPro || user?.isPremium) && user?.stripeCustomerId ? (
+                    <Button
+                      onClick={async () => {
+                        try {
+                          const response = await apiRequest("POST", "/api/create-customer-portal", {});
+                          const data = await response.json();
+                          window.location.href = data.url;
+                        } catch (error) {
+                          toast({
+                            title: "Error",
+                            description: "Could not open subscription management portal.",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                      className="w-full bg-gray-800 hover:bg-gray-700 border border-gray-700"
+                    >
+                      Manage Subscription
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => setLocation("/upgrade")}
+                      className="w-full bg-primary hover:bg-primary/90 text-white"
+                    >
+                      Upgrade Your Plan
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardContent>
