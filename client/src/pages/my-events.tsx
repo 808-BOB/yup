@@ -128,32 +128,15 @@ export default function MyEvents() {
                 {responseFilter !== "all" && ` - ${responseFilter.toUpperCase()}`}
               </h2>
 
-              <div className="flex space-x-2">
-                <Button 
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCreateTestEvents}
-                  disabled={createTestEvents.isPending}
-                  className="text-xs"
-                >
-                  {createTestEvents.isPending ? (
-                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                  ) : (
-                    <PlusCircle className="h-3 w-3 mr-1" />
-                  )}
-                  Test Events
-                </Button>
-
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => setLocation("/events/create")}
-                  className="text-xs"
-                >
-                  <PlusCircle className="h-3 w-3 mr-1" />
-                  New Event
-                </Button>
-              </div>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setLocation("/events/create")}
+                className="text-xs"
+              >
+                <PlusCircle className="h-3 w-3 mr-1" />
+                New Event
+              </Button>
             </div>
 
             {isLoading ? (
@@ -183,26 +166,13 @@ export default function MyEvents() {
                     <p className="mb-4 text-gray-400 tracking-tight uppercase font-mono">
                       NO EVENTS CREATED
                     </p>
-                    <div className="flex space-x-3">
-                      <Button
-                        variant="outline"
-                        onClick={handleCreateTestEvents}
-                        disabled={createTestEvents.isPending}
-                        size="sm"
-                      >
-                        {createTestEvents.isPending ? (
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        ) : null}
-                        Create Test Events
-                      </Button>
-                      <Button
-                        variant="default"
-                        onClick={() => setLocation("/events/create")}
-                        size="sm"
-                      >
-                        Create Your First Event
-                      </Button>
-                    </div>
+                    <Button
+                      variant="default"
+                      onClick={() => setLocation("/events/create")}
+                      size="sm"
+                    >
+                      Create Your First Event
+                    </Button>
                   </div>
                 ) : (
                   <p className="text-gray-400 tracking-tight uppercase font-mono">
