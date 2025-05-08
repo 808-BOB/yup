@@ -471,9 +471,13 @@ export default function EventPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              const startDate = new Date(event.date);
-                              const endDate = new Date(startDate);
-                              endDate.setHours(endDate.getHours() + 2); // Default 2-hour duration
+                              // Parse date and time separately to avoid timezone issues
+                              const [year, month, day] = event.date.split('-').map(Number);
+                              const [startHour, startMinute] = event.startTime.split(':').map(Number);
+                              const [endHour, endMinute] = event.endTime.split(':').map(Number);
+                              
+                              const startDate = new Date(year, month - 1, day, startHour, startMinute);
+                              const endDate = new Date(year, month - 1, day, endHour, endMinute);
 
                               const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${startDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z/${endDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z&details=${encodeURIComponent(event.description || '')}&location=${encodeURIComponent(event.location || '')}`;
 
