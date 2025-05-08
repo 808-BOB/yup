@@ -48,6 +48,10 @@ const formSchema = z.object({
   showRsvpsToInvitees: z.boolean().default(true),
   showRsvpsAfterThreshold: z.boolean().default(false),
   rsvpVisibilityThreshold: z.number().min(1).max(20).default(5),
+  // Custom RSVP button text options (for premium users)
+  useCustomRsvpText: z.boolean().default(false),
+  customYesText: z.string().max(10, "Max 10 characters").optional(),
+  customNoText: z.string().max(10, "Max 10 characters").optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -94,6 +98,10 @@ export default function CreateEvent() {
       showRsvpsToInvitees: true,
       showRsvpsAfterThreshold: false,
       rsvpVisibilityThreshold: 5,
+      // Custom RSVP text options
+      useCustomRsvpText: false,
+      customYesText: "Yes",
+      customNoText: "No",
     },
   });
 
@@ -603,6 +611,88 @@ export default function CreateEvent() {
                   );
                 }}
               />
+
+              {/* Premium Customization Section */}
+              {user?.isPremium && (
+                <div className="mt-8 pt-4 border-t border-gray-800">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="w-5 h-5 text-amber-400">✨</span>
+                    <h3 className="text-gray-300 text-sm font-medium">
+                      Premium RSVP Customization
+                    </h3>
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="useCustomRsvpText"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-800 p-4 mb-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">
+                            Custom RSVP Button Text
+                          </FormLabel>
+                          <FormDescription className="text-xs text-gray-500">
+                            Change "YUP/NOPE" to custom text like "YES/NO"
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="data-[state=checked]:bg-primary"
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  {form.watch("useCustomRsvpText") && (
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                      <FormField
+                        control={form.control}
+                        name="customYesText"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-gray-400 text-xs tracking-wider">
+                              "YES" Text (max 10 chars)
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="YES"
+                                className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12"
+                                maxLength={10}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage className="text-primary" />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="customNoText"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-gray-400 text-xs tracking-wider">
+                              "NO" Text (max 10 chars)
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="NO"
+                                className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12"
+                                maxLength={10}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage className="text-primary" />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="mt-8 pt-4 border-t border-gray-800">
                 <div className="flex items-center gap-2 mb-4">

@@ -14,7 +14,7 @@ import {
   invitations
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, sql, desc, asc } from "drizzle-orm";
+import { eq, and, sql, desc, asc, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // Invitation operations
@@ -829,6 +829,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEventsUserInvitedTo(userId: number): Promise<Event[]> {
+    // Get all invitations for this user
     const result = await db
       .select({ eventId: invitations.eventId })
       .from(invitations)
@@ -836,12 +837,17 @@ export class DatabaseStorage implements IStorage {
     
     if (result.length === 0) return [];
     
+    // Get the event IDs from invitations
     const eventIds = result.map(row => row.eventId);
-    return await db
+    
+    // Fetch all events (we'll filter manually since inArray isn't working)
+    const allEvents = await db
       .select()
       .from(events)
-      .where(sql`${events.id} IN (${eventIds.join(',')})`)
       .orderBy(desc(events.date));
+    
+    // Filter to only the events the user is invited to
+    return allEvents.filter(event => eventIds.includes(event.id));
   }
 
   async getAllEvents(): Promise<Event[]> {
