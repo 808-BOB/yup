@@ -123,6 +123,9 @@ export default function Branding() {
           // Then update the logo in the context and backend
           await branding.updateLogo(reader.result);
           
+          // Don't reload the page - this was causing the logo to revert
+          // The BrandingContext already updated the logo in state
+          
           toast({
             title: "Logo updated",
             description: "Your brand logo has been updated successfully.",
@@ -146,6 +149,9 @@ export default function Branding() {
     form.reset({
       primary: "hsl(308, 100%, 66%)",
     });
+    
+    // Update the UI to reflect changes without reloading
+    // The context state has already been updated
     
     toast({
       title: "Branding reset",
