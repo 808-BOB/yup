@@ -445,7 +445,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hostBranding: host?.isPremium ? {
           logoUrl: host.logoUrl,
           brandTheme: host.brandTheme
-        } : null
+        } : null,
+        // Include custom RSVP text fields regardless of premium status
+        // so they're available on the client
+        customYesText: event.customYesText,
+        customNoText: event.customNoText,
+        useCustomRsvpText: event.useCustomRsvpText
       };
       
       res.json(eventWithBranding);
@@ -487,7 +492,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hostBranding: host?.isPremium ? {
           logoUrl: host.logoUrl,
           brandTheme: host.brandTheme
-        } : null
+        } : null,
+        // Include custom RSVP text fields regardless of premium status
+        // so they're available on the client
+        customYesText: event.customYesText,
+        customNoText: event.customNoText,
+        useCustomRsvpText: event.useCustomRsvpText
       };
       
       res.json(eventWithBranding);
