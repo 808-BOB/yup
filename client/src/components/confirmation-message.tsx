@@ -69,7 +69,11 @@ export default function ConfirmationMessage({
             MAYBE NEXT TIME
           </h2>
           <p className="text-gray-400 mb-8 tracking-tight">
-            We've noted that you won't be attending {event.title}
+            We've noted your{' '}
+            {event.useCustomRsvpText && event.customNoText ? 
+              `"${event.customNoText.toUpperCase()}"` : 
+              '"NOPE"'}{' '}
+            to {event.title}
           </p>
           <div className="flex flex-col gap-4">
             <Button 
