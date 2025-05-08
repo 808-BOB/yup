@@ -44,7 +44,7 @@ export default function Header() {
         <img
           src={getLogoUrl(branding)}
           alt="Yup.RSVP"
-          className="h-8 max-w-[144px] cursor-pointer"
+          className="h-8 w-auto max-w-[144px] object-contain cursor-pointer"
           onClick={() => setLocation(user ? "/my-events" : "/")}
         />
       </div>
