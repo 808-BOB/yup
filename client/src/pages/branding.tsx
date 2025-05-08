@@ -1,4 +1,4 @@
-import { useState, useCallback, ChangeEvent } from "react";
+import { useState, ChangeEvent } from "react";
 import { useLocation } from "wouter";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -14,16 +14,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Header from "@/components/header";
 import PageTitle from "@/components/page-title";
 import { Paintbrush, Upload, RefreshCw } from "lucide-react";
@@ -43,7 +35,7 @@ export default function Branding() {
   const [logoPreview, setLogoPreview] = useState<string | null>(branding.logoUrl);
   const [activeTab, setActiveTab] = useState("theme");
 
-  // Initialize form with current theme values - simplified to just primary color
+  // Initialize form with current theme values
   const form = useForm<ThemeFormValues>({
     resolver: zodResolver(themeFormSchema),
     defaultValues: {
@@ -51,7 +43,7 @@ export default function Branding() {
     },
   });
 
-  // Check if user is premium
+  // If user is not premium, show restricted access message
   if (!branding.isPremium) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -76,8 +68,8 @@ export default function Branding() {
     );
   }
 
-  // Handle theme form submission
-  const onThemeSubmit = async (data: ThemeFormValues) => {
+  // Event handlers
+  const handleThemeSubmit = async (data: ThemeFormValues) => {
     try {
       await branding.updateTheme(data);
       
@@ -94,61 +86,59 @@ export default function Branding() {
     }
   };
 
-  // Handle logo upload
-  const handleLogoChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+  const handleLogoUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-      // Check file size (max 2MB)
-      if (file.size > 2 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Logo image must be less than 2MB",
-          variant: "destructive",
-        });
-        return;
-      }
+    // Check file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Logo image must be less than 2MB",
+        variant: "destructive",
+      });
+      return;
+    }
 
-      // Check file type
-      if (!file.type.match(/image\/(png|jpeg|jpg|svg\+xml|gif)/)) {
-        toast({
-          title: "Invalid file type",
-          description: "Logo must be an image (PNG, JPEG, SVG, or GIF)",
-          variant: "destructive",
-        });
-        return;
-      }
+    // Check file type
+    if (!file.type.match(/image\/(png|jpeg|jpg|svg\+xml|gif)/)) {
+      toast({
+        title: "Invalid file type",
+        description: "Logo must be an image (PNG, JPEG, SVG, or GIF)",
+        variant: "destructive",
+      });
+      return;
+    }
 
-      // Create a URL for preview
-      const reader = new FileReader();
-      reader.onload = () => {
-        setLogoPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-
-      // In a real app, you would upload the file to a server here
-      // For this example, we'll just use the data URL
-      reader.onloadend = async () => {
-        if (typeof reader.result === 'string') {
-          // First update the preview to give immediate feedback
-          setLogoPreview(reader.result);
-          
+    // Create a URL for preview
+    const reader = new FileReader();
+    
+    // Only use one event handler to avoid React hook issues
+    reader.onloadend = async () => {
+      if (typeof reader.result === 'string') {
+        // Update the preview to give immediate feedback
+        setLogoPreview(reader.result);
+        
+        try {
           // Then update the logo in the context and backend
           await branding.updateLogo(reader.result);
-          
-          // Force reload to refresh header and other components using the logo
-          window.location.reload();
           
           toast({
             title: "Logo updated",
             description: "Your brand logo has been updated successfully.",
           });
+        } catch (error) {
+          toast({
+            title: "Error updating logo",
+            description: "There was a problem updating your logo. Please try again.",
+            variant: "destructive",
+          });
         }
-      };
-    },
-    [branding, toast]
-  );
+      }
+    };
+    
+    reader.readAsDataURL(file);
+  };
 
   const handleResetBranding = async () => {
     await branding.resetToDefault();
@@ -161,11 +151,9 @@ export default function Branding() {
       title: "Branding reset",
       description: "Your branding has been reset to the default settings.",
     });
-    
-    // Force reload to ensure all components update with default branding
-    window.location.reload();
   };
 
+  // Main premium content - only shown for premium users
   return (
     <div className="container mx-auto px-4 py-8">
       <Header />
@@ -207,7 +195,7 @@ export default function Branding() {
               </CardHeader>
               <CardContent>
                 <form
-                  onSubmit={form.handleSubmit(onThemeSubmit)}
+                  onSubmit={form.handleSubmit(handleThemeSubmit)}
                   className="space-y-6"
                 >
                   <div className="space-y-4">
@@ -284,7 +272,7 @@ export default function Branding() {
                         type="file"
                         accept="image/png,image/jpeg,image/svg+xml,image/gif"
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        onChange={handleLogoChange}
+                        onChange={handleLogoUpload}
                       />
                     </Label>
                   </div>
