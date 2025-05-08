@@ -129,9 +129,17 @@ export default function Branding() {
 
       // In a real app, you would upload the file to a server here
       // For this example, we'll just use the data URL
-      reader.onloadend = () => {
+      reader.onloadend = async () => {
         if (typeof reader.result === 'string') {
-          branding.updateLogo(reader.result);
+          // First update the preview to give immediate feedback
+          setLogoPreview(reader.result);
+          
+          // Then update the logo in the context and backend
+          await branding.updateLogo(reader.result);
+          
+          // Force reload to refresh header and other components using the logo
+          window.location.reload();
+          
           toast({
             title: "Logo updated",
             description: "Your brand logo has been updated successfully.",
@@ -153,6 +161,9 @@ export default function Branding() {
       title: "Branding reset",
       description: "Your branding has been reset to the default settings.",
     });
+    
+    // Force reload to ensure all components update with default branding
+    window.location.reload();
   };
 
   return (
