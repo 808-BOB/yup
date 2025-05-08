@@ -134,8 +134,7 @@ export default function MyEvents() {
                 onClick={() => setLocation("/events/create")}
                 className="text-xs"
               >
-                <PlusCircle className="h-3 w-3 mr-1" />
-                New Event
+                <PlusCircle className="h-4 w-4" />
               </Button>
             </div>
 
