@@ -162,38 +162,52 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
 
   // Update logo URL
   const updateLogo = async (newLogoUrl: string) => {
-    if (!isPremium) return;
+    if (!isPremium || !user) return;
     
+    // Update state immediately for UI feedback
     setLogoUrl(newLogoUrl);
     
-    if (user) {
+    try {
       // Save to user preferences on the server
-      try {
-        await apiRequest('PUT', `/api/users/${user.id}/branding`, {
-          logoUrl: newLogoUrl,
-        });
-        console.log('Logo saved successfully');
-      } catch (e) {
-        console.error('Error saving logo:', e);
-      }
+      const response = await apiRequest('PUT', `/api/users/${user.id}/branding`, {
+        logoUrl: newLogoUrl,
+      });
+      
+      console.log('Logo saved successfully');
+      
+      // Update the user in AuthContext to ensure we're in sync
+      // This would typically be handled by the calling component if needed
+      
+      // No need to refresh the entire page - just ensure the state is consistent
+    } catch (e) {
+      // Revert to previous logo on error
+      console.error('Error saving logo:', e);
+      // Don't revert - keep the local state as the preview
+      // The next auth refresh will restore from server if needed
     }
   };
 
   // Reset to default values
   const resetToDefault = async () => {
+    if (!user) return;
+    
+    // Update state immediately for UI feedback
     setTheme(defaultTheme);
     setLogoUrl(null);
     
-    if (user) {
-      try {
-        await apiRequest('PUT', `/api/users/${user.id}/branding`, {
-          brandTheme: JSON.stringify(defaultTheme),
-          logoUrl: null,
-        });
-        console.log('Branding reset successfully');
-      } catch (e) {
-        console.error('Error resetting branding:', e);
-      }
+    try {
+      // Save to user preferences on the server
+      const response = await apiRequest('PUT', `/api/users/${user.id}/branding`, {
+        brandTheme: JSON.stringify(defaultTheme),
+        logoUrl: null,
+      });
+      
+      console.log('Branding reset successfully');
+      
+      // No need to refresh the entire page - state is already updated
+    } catch (e) {
+      console.error('Error resetting branding:', e);
+      // Don't revert the UI - keep local state consistent with what user sees
     }
   };
 
