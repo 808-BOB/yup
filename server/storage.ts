@@ -11,7 +11,10 @@ import {
   responses,
   type Response,
   type InsertResponse,
+  invitations
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, sql, desc, asc } from "drizzle-orm";
 
 export interface IStorage {
   // Invitation operations
@@ -690,4 +693,227 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(userData)
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser || undefined;
+  }
+
+  async updateUserBranding(id: number, brandData: { brandTheme?: string, logoUrl?: string }): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(brandData)
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser || undefined;
+  }
+  
+  async updateStripeCustomerId(userId: number, customerId: string): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ stripeCustomerId: customerId })
+      .where(eq(users.id, userId))
+      .returning();
+    return updatedUser || undefined;
+  }
+
+  async updateStripeSubscriptionId(userId: number, subscriptionId: string): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ stripeSubscriptionId: subscriptionId })
+      .where(eq(users.id, userId))
+      .returning();
+    return updatedUser || undefined;
+  }
+
+  async updateUserStripeInfo(userId: number, stripeData: { 
+    stripeCustomerId?: string, 
+    stripeSubscriptionId?: string 
+  }): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(stripeData)
+      .where(eq(users.id, userId))
+      .returning();
+    return updatedUser || undefined;
+  }
+
+  async getUserByStripeCustomerId(customerId: string): Promise<User | undefined> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.stripeCustomerId, customerId));
+    return user || undefined;
+  }
+
+  async createEvent(event: InsertEvent): Promise<Event> {
+    // Generate a slug if one isn't provided
+    if (!event.slug) {
+      const slug = event.title
+        .toLowerCase()
+        .replace(/[^\w ]+/g, '')
+        .replace(/ +/g, '-') + '-' + uuidv4().slice(0, 8);
+      event.slug = slug;
+    }
+
+    const [createdEvent] = await db
+      .insert(events)
+      .values(event)
+      .returning();
+    return createdEvent;
+  }
+
+  async updateEvent(id: number, eventUpdate: Partial<InsertEvent>): Promise<Event | undefined> {
+    const [updatedEvent] = await db
+      .update(events)
+      .set(eventUpdate)
+      .where(eq(events.id, id))
+      .returning();
+    return updatedEvent || undefined;
+  }
+
+  async getEvent(id: number): Promise<Event | undefined> {
+    const [event] = await db.select().from(events).where(eq(events.id, id));
+    return event || undefined;
+  }
+
+  async getEventBySlug(slug: string): Promise<Event | undefined> {
+    const [event] = await db.select().from(events).where(eq(events.slug, slug));
+    return event || undefined;
+  }
+
+  async getUserEvents(userId: number): Promise<Event[]> {
+    return await db
+      .select()
+      .from(events)
+      .where(eq(events.hostId, userId))
+      .orderBy(desc(events.date));
+  }
+
+  async createInvitation(eventId: number, userId: number): Promise<void> {
+    await db.insert(invitations).values({
+      eventId,
+      userId
+    });
+  }
+
+  async getEventInvitations(eventId: number): Promise<number[]> {
+    const result = await db
+      .select({ userId: invitations.userId })
+      .from(invitations)
+      .where(eq(invitations.eventId, eventId));
+    
+    return result.map(row => row.userId);
+  }
+
+  async getEventsUserInvitedTo(userId: number): Promise<Event[]> {
+    const result = await db
+      .select({ eventId: invitations.eventId })
+      .from(invitations)
+      .where(eq(invitations.userId, userId));
+    
+    if (result.length === 0) return [];
+    
+    const eventIds = result.map(row => row.eventId);
+    return await db
+      .select()
+      .from(events)
+      .where(sql`${events.id} IN (${eventIds.join(',')})`)
+      .orderBy(desc(events.date));
+  }
+
+  async getAllEvents(): Promise<Event[]> {
+    return await db.select().from(events).orderBy(desc(events.date));
+  }
+
+  async createResponse(response: InsertResponse): Promise<Response> {
+    // Check if there's an existing response
+    if (response.userId) {
+      const [existingResponse] = await db
+        .select()
+        .from(responses)
+        .where(
+          and(
+            eq(responses.eventId, response.eventId),
+            eq(responses.userId, response.userId)
+          )
+        );
+      
+      // If there's an existing response, update it
+      if (existingResponse) {
+        const [updatedResponse] = await db
+          .update(responses)
+          .set(response)
+          .where(eq(responses.id, existingResponse.id))
+          .returning();
+        return updatedResponse;
+      }
+    }
+    
+    // Otherwise create a new response
+    const [createdResponse] = await db
+      .insert(responses)
+      .values(response)
+      .returning();
+    return createdResponse;
+  }
+
+  async getResponsesByEvent(eventId: number): Promise<Response[]> {
+    return await db
+      .select()
+      .from(responses)
+      .where(eq(responses.eventId, eventId))
+      .orderBy(asc(responses.createdAt));
+  }
+
+  async getUserEventResponse(eventId: number, userId: number | null): Promise<Response | undefined> {
+    if (!userId) return undefined;
+    
+    const [response] = await db
+      .select()
+      .from(responses)
+      .where(
+        and(
+          eq(responses.eventId, eventId),
+          eq(responses.userId, userId)
+        )
+      );
+    
+    return response || undefined;
+  }
+
+  async getEventResponses(eventId: number): Promise<{ yupCount: number; nopeCount: number; maybeCount: number }> {
+    const allResponses = await this.getResponsesByEvent(eventId);
+    
+    return {
+      yupCount: allResponses.filter(r => r.response === 'yup').length,
+      nopeCount: allResponses.filter(r => r.response === 'nope').length,
+      maybeCount: allResponses.filter(r => r.response === 'maybe').length,
+    };
+  }
+}
+
+// Change from MemStorage to DatabaseStorage
+export const storage = new DatabaseStorage();
