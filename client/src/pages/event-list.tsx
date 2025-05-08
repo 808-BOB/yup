@@ -129,11 +129,10 @@ export default function EventList() {
 
               <Button 
                 variant="default"
-                size="sm"
+                size="icon"
                 onClick={() => setLocation("/events/create")}
-                className="text-sm font-semibold"
               >
-                Create An Event
+                <PlusCircle className="h-4 w-4" />
               </Button>
             </div>
 
