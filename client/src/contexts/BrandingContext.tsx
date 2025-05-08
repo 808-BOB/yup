@@ -224,10 +224,8 @@ export function useBranding() {
 // This function returns the logo URL or the default logo if none is set
 export function getLogoUrl(branding: BrandingContextType) {
   if (branding.isPremium && branding.logoUrl) {
-    // For absolute URLs or attached assets
-    if (branding.logoUrl.startsWith('http') || branding.logoUrl.startsWith('attached_assets/')) {
-      return branding.logoUrl;
-    }
+    // All valid logo URLs should be returned as-is
+    return branding.logoUrl;
   }
   // Return the default logo as fallback
   return defaultLogo;
