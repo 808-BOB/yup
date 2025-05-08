@@ -67,6 +67,15 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
 
   // Apply theme to CSS variables when theme changes
   useEffect(() => {
+    // Reset theme if not logged in
+    if (!user) {
+      document.documentElement.style.setProperty('--primary', '308 100% 66%');
+      document.documentElement.style.setProperty('--primary-color', 'hsl(308, 100%, 66%)');
+      document.documentElement.style.setProperty('--ring', '308 100% 66%');
+      document.documentElement.style.setProperty('--border', '308 100% 20%');
+      return;
+    }
+    
     // Only update the primary color for premium users
     if (isPremium) {
       // Parse the HSL color to get its components
