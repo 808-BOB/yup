@@ -73,8 +73,11 @@ export default function EventPage() {
   useEffect(() => {
     if (existingResponse) {
       setUserResponse(existingResponse.response as "yup" | "nope" | "maybe");
+    } else if (user) {
+      // Clear response when user is logged in but no response exists
+      setUserResponse(null);
     }
-  }, [existingResponse]);
+  }, [existingResponse, user]);
 
   // Event handlers
   const handleGuestSuccess = (response: "yup" | "nope" | "maybe", guestNameValue: string, guestEmailValue: string) => {
@@ -220,16 +223,8 @@ export default function EventPage() {
 
   const formattedTime = `${formatTime(event.startTime)} - ${formatTime(event.endTime)}`;
 
-  // Enhanced debug for imageUrl
-  console.log("Event image URL:", event.imageUrl ? "exists" : "missing");
-  if (event.imageUrl?.startsWith("data:")) {
-    console.log(
-      "Image is base64 data, first 40 chars:",
-      event.imageUrl.substring(0, 40),
-    );
-    // Print the length of the base64 string for debugging
-    console.log("Image base64 data length:", event.imageUrl.length);
-  }
+  // Safely handle image URL - remove debug logging that could cause issues
+  const eventImageUrl = event.imageUrl || "";
 
   // Main UI
   // Create custom header with host's logo if premium branding is available
@@ -305,33 +300,31 @@ export default function EventPage() {
             ) : null}
           </div>
 
-          {/* Event Image - matching the style from event-card.tsx which we know works */}
-          {event.imageUrl ? (
-            <div className="w-full h-48 mb-6 overflow-hidden rounded-sm bg-gray-800">
-              {event.imageUrl.startsWith("data:") ? (
+          {/* Event Image - with improved error handling */}
+          <div className="w-full h-48 mb-6 overflow-hidden rounded-sm bg-gray-800">
+            {event.imageUrl ? (
+              event.imageUrl.startsWith("data:") ? (
                 <div
                   className="w-full h-full bg-no-repeat bg-center bg-cover"
                   style={{ backgroundImage: `url(${event.imageUrl})` }}
-                >
-                  {/* Image debugging was here */}
-                </div>
+                />
               ) : (
                 <img
                   src={event.imageUrl}
                   alt={event.title}
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    console.error("Image failed to load:", event.imageUrl);
+                    // Just hide the element on error, don't log to console
                     e.currentTarget.style.display = "none";
                   }}
                 />
-              )}
-            </div>
-          ) : (
-            <div className="mb-6">
-              {/* No image */}
-            </div>
-          )}
+              )
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gray-800">
+                <p className="text-gray-500">No image</p>
+              </div>
+            )}
+          </div>
           <Card className="mb-6 animate-slide-up bg-gray-900 border border-gray-800">
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
