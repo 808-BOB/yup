@@ -6,11 +6,16 @@
 export function formatDate(dateString: string): string {
   try {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
+    // Adjust for timezone by adding the offset
+    const tzOffset = date.getTimezoneOffset() * 60000;
+    const adjustedDate = new Date(date.getTime() + tzOffset);
+    
+    return adjustedDate.toLocaleDateString('en-US', { 
       weekday: 'long', 
       year: 'numeric', 
       month: 'long', 
-      day: 'numeric' 
+      day: 'numeric',
+      timeZone: 'UTC'
     });
   } catch (error) {
     console.error('Error formatting date:', error);
