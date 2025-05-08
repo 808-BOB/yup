@@ -56,6 +56,10 @@ export const events = pgTable("events", {
   showRsvpsToInvitees: boolean("show_rsvps_to_invitees").notNull().default(true),
   showRsvpsAfterThreshold: boolean("show_rsvps_after_threshold").notNull().default(false),
   rsvpVisibilityThreshold: integer("rsvp_visibility_threshold").notNull().default(5),
+  // Custom RSVP button text options (for premium users)
+  customYesText: text("custom_yes_text"), // If set, replaces "Yup" with this text
+  customNoText: text("custom_no_text"), // If set, replaces "Nope" with this text
+  useCustomRsvpText: boolean("use_custom_rsvp_text").notNull().default(false),
 });
 
 // Create the insert schema and refine it

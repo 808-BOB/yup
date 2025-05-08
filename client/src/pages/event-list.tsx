@@ -7,7 +7,7 @@ import EventCard from "@/components/event-card";
 import { Card, CardContent } from "@/components/ui/card";
 import { type Event } from "@shared/schema";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2 } from "lucide-react";
+import { Loader2, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
