@@ -438,6 +438,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get the host information to include branding
       const host = await storage.getUser(event.hostId);
       
+      // Add debugging to see what's coming from the database
+      console.log("Event data from DB (by ID):", {
+        id: event.id,
+        title: event.title,
+        customYesText: event.customYesText,
+        customNoText: event.customNoText,
+        useCustomRsvpText: event.useCustomRsvpText
+      });
+      
       // Add host branding information to the response if the host is premium
       const eventWithBranding = {
         ...event,
@@ -448,9 +457,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } : null,
         // Include custom RSVP text fields regardless of premium status
         // so they're available on the client
-        customYesText: event.customYesText,
-        customNoText: event.customNoText,
-        useCustomRsvpText: event.useCustomRsvpText
+        customYesText: event.customYesText || null,
+        customNoText: event.customNoText || null,
+        useCustomRsvpText: event.useCustomRsvpText || false
       };
       
       res.json(eventWithBranding);
@@ -485,6 +494,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get the host information to include branding
       const host = await storage.getUser(event.hostId);
       
+      // Add debugging to see what's coming from the database
+      console.log("Event data from DB:", {
+        id: event.id,
+        title: event.title,
+        customYesText: event.customYesText,
+        customNoText: event.customNoText,
+        useCustomRsvpText: event.useCustomRsvpText
+      });
+      
       // Add host branding information to the response if the host is premium
       const eventWithBranding = {
         ...event,
@@ -495,9 +513,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } : null,
         // Include custom RSVP text fields regardless of premium status
         // so they're available on the client
-        customYesText: event.customYesText,
-        customNoText: event.customNoText,
-        useCustomRsvpText: event.useCustomRsvpText
+        customYesText: event.customYesText || null,
+        customNoText: event.customNoText || null,
+        useCustomRsvpText: event.useCustomRsvpText || false
       };
       
       res.json(eventWithBranding);
