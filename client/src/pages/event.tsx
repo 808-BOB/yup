@@ -559,8 +559,25 @@ export default function EventPage() {
               onClick={() => {
                 // Format the event details for Google Calendar
                 const title = encodeURIComponent(event.title);
-                const startDateTime = encodeURIComponent(`${event.date}T${event.startTime}:00`);
-                const endDateTime = encodeURIComponent(`${event.date}T${event.endTime}:00`);
+                
+                // Format date in the required format (YYYYMMDD)
+                const dateComponents = event.date.split('-');
+                if (dateComponents.length !== 3) {
+                  console.error("Invalid date format:", event.date);
+                  return;
+                }
+                
+                // Create formatted date string (YYYYMMDD)
+                const formattedDate = dateComponents.join('');
+                
+                // Format start and end times (removing any colons)
+                const startTime = event.startTime.replace(':', '') + '00';
+                const endTime = event.endTime.replace(':', '') + '00';
+                
+                // Create formatted datetime strings
+                const startDateTime = formattedDate + 'T' + startTime;
+                const endDateTime = formattedDate + 'T' + endTime;
+                
                 const location = encodeURIComponent(event.location + (event.address ? `, ${event.address}` : ''));
                 const details = encodeURIComponent(event.description || '');
                 
