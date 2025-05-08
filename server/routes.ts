@@ -562,7 +562,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get response counts
   app.get(
-    "/api/events/:id/response-counts",
+    "/api/events/:id/responses/count",
     async (req: Request, res: Response) => {
       try {
         const counts = await storage.getEventResponses(parseInt(req.params.id));
