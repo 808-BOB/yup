@@ -127,20 +127,14 @@ export default function EventList() {
                 {responseFilter !== "all" && ` - ${responseFilter.toUpperCase()}`}
               </h2>
 
-              {events.length === 0 && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleCreateTestInvites}
-                  disabled={createTestInvites.isPending}
-                  className="text-xs"
-                >
-                  {createTestInvites.isPending ? (
-                    <Loader2 className="h-3 w-3 animate-spin mr-1" /> 
-                  ) : null}
-                  Create Test Invites
-                </Button>
-              )}
+              <Button 
+                variant="default"
+                size="sm"
+                onClick={() => setLocation("/events/create")}
+                className="text-sm font-semibold"
+              >
+                Create An Event
+              </Button>
             </div>
 
             {isLoading ? (
@@ -170,7 +164,7 @@ export default function EventList() {
                       NO EVENTS FOUND
                     </p>
                     <p className="text-gray-600 mt-2 text-sm">
-                      Click "Create Test Invites" to generate sample events
+                      Click "Create An Event" to generate sample events
                     </p>
                   </>
                 ) : (
