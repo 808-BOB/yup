@@ -247,7 +247,7 @@ export default function EventPage() {
           <img
             src={getHostLogoUrl(event.hostBranding || null)}
             alt={`${event.title} by ${event.hostDisplayName || 'Event Host'}`}
-            className="h-8 cursor-pointer"
+            className="h-8 max-w-[144px] cursor-pointer"
             onClick={() => setLocation(`/events/${event.slug}`)}
           />
         </div>
