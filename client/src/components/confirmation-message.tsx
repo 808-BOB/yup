@@ -36,7 +36,11 @@ export default function ConfirmationMessage({
           </div>
           <h2 className="text-2xl font-bold mb-2 tracking-tight">YOU'RE IN</h2>
           <p className="text-gray-400 mb-8 tracking-tight">
-            We've confirmed your attendance to {event.title}
+            We've confirmed your{' '}
+            {event.useCustomRsvpText && event.customYesText ? 
+              `"${event.customYesText.toUpperCase()}"` : 
+              '"YUP"'}{' '}
+            to {event.title}
           </p>
           <div className="flex flex-col gap-4">
             <Button 

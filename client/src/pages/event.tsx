@@ -514,11 +514,16 @@ export default function EventPage() {
                 <span className="text-primary text-xl font-bold uppercase tracking-widest">
                   {userResponse === "yup" ? (
                     <span className="flex flex-col items-center">
-                      YUP
+                      {/* Show custom text if event has it enabled */}
+                      {event.useCustomRsvpText && event.customYesText ? 
+                        event.customYesText.toUpperCase() : 
+                        "YUP"}
                       <span className="text-xs text-primary mt-1">✓</span>
                     </span>
                   ) : (
-                    "YUP"
+                    event.useCustomRsvpText && event.customYesText ? 
+                      event.customYesText.toUpperCase() : 
+                      "YUP"
                   )}
                 </span>
               </Button>
@@ -534,7 +539,9 @@ export default function EventPage() {
                 <span className={`text-xl font-bold uppercase tracking-widest ${
                   userResponse === "nope" ? "text-red-500" : "text-gray-400"
                 }`}>
-                  NOPE
+                  {event.useCustomRsvpText && event.customNoText ? 
+                    event.customNoText.toUpperCase() : 
+                    "NOPE"}
                 </span>
               </Button>
 
