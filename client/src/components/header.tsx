@@ -134,14 +134,14 @@ export default function Header() {
             ) : (
               <>
                 <DropdownMenuItem
-                  onClick={() => setLocation("/login")}
+                  onClick={() => setLocation("/auth?mode=login")}
                   className="cursor-pointer"
                 >
                   <LogIn className="mr-2 h-4 w-4" />
                   <span>Log In</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => setLocation("/signup")}
+                  onClick={() => setLocation("/auth?mode=signup")}
                   className="cursor-pointer"
                 >
                   <UserPlus className="mr-2 h-4 w-4" />

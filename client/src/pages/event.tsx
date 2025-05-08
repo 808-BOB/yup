@@ -578,6 +578,32 @@ export default function EventPage() {
                 </Button>
               )}
             </div>
+            
+            {/* Simple login/signup for guests */}
+            {!user && (
+              <div className="mt-4 pt-4 border-t border-gray-800 text-center">
+                <p className="text-sm text-gray-400 mb-3">
+                  Want to manage your RSVPs and create your own events?
+                </p>
+                <div className="flex justify-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setLocation("/auth?mode=login")}
+                    className="border-gray-700 hover:border-gray-600 px-4"
+                  >
+                    Login
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setLocation("/auth?mode=signup")}
+                    className="bg-primary hover:bg-primary/90 px-4"
+                  >
+                    Sign Up
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </main>
