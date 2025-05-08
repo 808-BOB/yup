@@ -3,8 +3,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check, X, Calendar, Clock, MapPin } from "lucide-react";
 import { formatDate, formatTime } from "@/lib/utils/date-formatter";
-import { type Event, type Response } from "@shared/schema";
+import { type Event as BaseEvent, type Response } from "@shared/schema";
 import { useBranding, getLogoUrl } from "@/contexts/BrandingContext";
+import EventBrandingProvider, { getHostLogoUrl, HostBranding } from "@/components/event-branding-provider";
+
+// Extended Event type with host branding
+type Event = BaseEvent & {
+  hostDisplayName?: string;
+  hostBranding?: HostBranding | null;
+};
 
 interface ShareableEventCardProps {
   event: Event;
@@ -22,7 +29,10 @@ export default function ShareableEventCard({
   const branding = useBranding();
   const { isPremium } = branding;
   const formattedTime = formatTime(event.startTime);
-  const eventLogo = getLogoUrl(branding);
+  
+  // Use host's branding if available (premium user), otherwise use the current user's
+  const hasHostBranding = event.hostBranding && (event.hostBranding.logoUrl || event.hostBranding.brandTheme);
+  const eventLogo = hasHostBranding ? getHostLogoUrl(event.hostBranding || null) : getLogoUrl(branding);
   
   // Get response status text and styling
   const getResponseStatus = () => {
@@ -51,21 +61,22 @@ export default function ShareableEventCard({
   const isPastEvent = new Date(event.date).getTime() < new Date().setHours(0,0,0,0);
 
   return (
-    <Card className={`overflow-hidden border border-gray-800 shadow-lg ${className}`}>
-      {/* Header with logo */}
-      <div className="bg-gray-900 p-4 flex justify-between items-center border-b border-gray-800">
-        <div className="flex items-center">
-          <span className="font-bold text-xl tracking-tight">YUP.</span>
-          <span className="text-primary text-xl font-bold">RSVP</span>
+    <EventBrandingProvider hostBranding={event.hostBranding || null} enabled={!!event.hostBranding}>
+      <Card className={`overflow-hidden border border-gray-800 shadow-lg ${className}`}>
+        {/* Header with logo */}
+        <div className="bg-gray-900 p-4 flex justify-between items-center border-b border-gray-800">
+          <div className="flex items-center">
+            <span className="font-bold text-xl tracking-tight">YUP.</span>
+            <span className="text-primary text-xl font-bold">RSVP</span>
+          </div>
+          {(isPremium || hasHostBranding) && eventLogo && (
+            <img 
+              src={eventLogo} 
+              alt="Event Logo"
+              className="h-6 w-auto object-contain" 
+            />
+          )}
         </div>
-        {isPremium && eventLogo && (
-          <img 
-            src={eventLogo} 
-            alt="Event Logo"
-            className="h-6 w-auto object-contain" 
-          />
-        )}
-      </div>
 
       <CardContent className="p-4">
         <div className="mb-4">
@@ -122,5 +133,6 @@ export default function ShareableEventCard({
         View and respond to this event at yup.rsvp
       </div>
     </Card>
+    </EventBrandingProvider>
   );
 }

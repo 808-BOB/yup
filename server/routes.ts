@@ -434,8 +434,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!event) {
         return res.status(404).json({ error: "Event not found" });
       }
-      res.json(event);
+      
+      // Get the host information to include branding
+      const host = await storage.getUser(event.hostId);
+      
+      // Add host branding information to the response if the host is premium
+      const eventWithBranding = {
+        ...event,
+        hostDisplayName: host?.displayName || "Event Host",
+        hostBranding: host?.isPremium ? {
+          logoUrl: host.logoUrl,
+          brandTheme: host.brandTheme
+        } : null
+      };
+      
+      res.json(eventWithBranding);
     } catch (error) {
+      console.error("Error getting event by ID:", error);
       res.status(500).json({ error: "Failed to get event" });
     }
   });
@@ -461,8 +476,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!event) {
         return res.status(404).json({ error: "Event not found" });
       }
-      res.json(event);
+      
+      // Get the host information to include branding
+      const host = await storage.getUser(event.hostId);
+      
+      // Add host branding information to the response if the host is premium
+      const eventWithBranding = {
+        ...event,
+        hostDisplayName: host?.displayName || "Event Host",
+        hostBranding: host?.isPremium ? {
+          logoUrl: host.logoUrl,
+          brandTheme: host.brandTheme
+        } : null
+      };
+      
+      res.json(eventWithBranding);
     } catch (error) {
+      console.error("Error getting event by slug:", error);
       res.status(500).json({ error: "Failed to get event by slug" });
     }
   });

@@ -15,10 +15,12 @@ import PageTitle from "@/components/page-title";
 import { type Event as BaseEvent, type Response } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import EventBrandingProvider, { getHostLogoUrl, HostBranding } from "@/components/event-branding-provider";
 
-// Extended Event type with host display name
+// Extended Event type with host display name and branding
 type Event = BaseEvent & {
   hostDisplayName?: string;
+  hostBranding?: HostBranding | null;
 };
 
 export default function EventPage() {
@@ -230,13 +232,49 @@ export default function EventPage() {
   }
 
   // Main UI
+  // Create custom header with host's logo if premium branding is available
+  const CustomHeader = () => {
+    // Check if the event has premium branding
+    const hasPremiumBranding = event.hostBranding && (event.hostBranding.logoUrl || event.hostBranding.brandTheme);
+    
+    if (!hasPremiumBranding) {
+      return <Header />;
+    }
+    
+    return (
+      <header className="flex justify-between items-center mb-6 py-4 border-b border-gray-800 sticky top-0 z-50 bg-gray-950">
+        <div className="flex items-center">
+          <img
+            src={getHostLogoUrl(event.hostBranding || null)}
+            alt={`${event.title} by ${event.hostDisplayName || 'Event Host'}`}
+            className="h-8 cursor-pointer"
+            onClick={() => setLocation(`/events/${event.slug}`)}
+          />
+        </div>
+        <div className="flex items-center space-x-4">
+          {user && (
+            <Button
+              variant="default"
+              size="icon"
+              onClick={() => setLocation("/events/create")}
+              className="bg-primary text-white hover:bg-primary/90 hover:text-white rounded-sm"
+            >
+              <Plus className="h-5 w-5" />
+            </Button>
+          )}
+        </div>
+      </header>
+    );
+  };
+
   return (
-    <div className="max-w-md mx-auto px-4 pb-6 min-h-screen flex flex-col bg-gray-950">
-      <div className="sticky top-0 z-50 bg-gray-950 pt-6">
-        <Header />
-        {/* Set page title to event name */}
-        {event && <PageTitle title={event.title} />}
-      </div>
+    <EventBrandingProvider hostBranding={event.hostBranding || null} enabled={!!event.hostBranding}>
+      <div className="max-w-md mx-auto px-4 pb-6 min-h-screen flex flex-col bg-gray-950">
+        <div className="sticky top-0 z-50 bg-gray-950 pt-6">
+          <CustomHeader />
+          {/* Set page title to event name */}
+          {event && <PageTitle title={event.title} />}
+        </div>
       <main className="flex-1 mb-6">
         <div className="flex flex-col animate-fade-in">
           <div className="flex justify-between mb-4">
@@ -562,5 +600,6 @@ export default function EventPage() {
         />
       )}
     </div>
+    </EventBrandingProvider>
   );
 }
