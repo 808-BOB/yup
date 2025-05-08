@@ -12,6 +12,7 @@ import EventList from "@/pages/event-list";
 import EventResponses from "@/pages/event-responses";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
+import AuthPage from "@/pages/auth-page";
 import Profile from "@/pages/profile";
 import StyleGuide from "@/pages/style-guide";
 import Branding from "@/pages/branding";
@@ -36,6 +37,7 @@ function Router() {
       <Route path="/profile" component={Profile} />
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
+      <Route path="/auth" component={AuthPage} />
       <Route path="/style-guide" component={StyleGuide} />
       <Route path="/branding" component={Branding} />
       <Route path="/upgrade" component={Upgrade} />
