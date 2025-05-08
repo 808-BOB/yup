@@ -492,7 +492,7 @@ export default function EventPage() {
 
           <div className="mt-auto pb-6">
             <p className="text-center mb-8 text-gray-400 uppercase tracking-wide font-mono">
-              ARE YOU IN?
+              {event.useCustomRsvpText ? 'ARE YOU GOING?' : 'ARE YOU IN?'}
             </p>
 
             <div className="flex gap-4 justify-center mb-8">
@@ -554,6 +554,31 @@ export default function EventPage() {
               </Button>
             </div>
 
+            {/* Google Calendar Button */}
+            <Button
+              onClick={() => {
+                // Format the event details for Google Calendar
+                const title = encodeURIComponent(event.title);
+                const startDateTime = encodeURIComponent(`${event.date}T${event.startTime}:00`);
+                const endDateTime = encodeURIComponent(`${event.date}T${event.endTime}:00`);
+                const location = encodeURIComponent(event.location + (event.address ? `, ${event.address}` : ''));
+                const details = encodeURIComponent(event.description || '');
+                
+                // Create Google Calendar URL
+                const googleCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDateTime}/${endDateTime}&details=${details}&location=${location}`;
+                
+                // Open in a new tab
+                window.open(googleCalUrl, '_blank');
+              }}
+              className="w-full mb-4 bg-gray-900 border border-gray-800 hover:border-gray-700 flex items-center justify-center gap-2"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19.5 3h-15A1.5 1.5 0 003 4.5v15A1.5 1.5 0 004.5 21h15a1.5 1.5 0 001.5-1.5v-15A1.5 1.5 0 0019.5 3z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Add to Google Calendar
+            </Button>
+            
             <div className="flex gap-4">
               <Button
                 onClick={() => {

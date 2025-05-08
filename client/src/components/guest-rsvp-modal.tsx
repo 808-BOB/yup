@@ -141,9 +141,9 @@ export default function GuestRsvpModal({
             <DialogTitle>RSVP to {event.title}</DialogTitle>
             <DialogDescription className="text-gray-400">
               {response === "yup"
-                ? "Great! Please fill in your details to confirm your attendance."
+                ? `Great! Please fill in your details to confirm your ${event.useCustomRsvpText ? "attendance" : "yup"}.`
                 : response === "nope"
-                ? "Please fill in your details to confirm you can't attend."
+                ? `Please fill in your details to confirm you ${event.useCustomRsvpText ? "can't attend" : "nope"}.`
                 : "Please fill in your details to mark yourself as unsure."}
             </DialogDescription>
           </DialogHeader>
