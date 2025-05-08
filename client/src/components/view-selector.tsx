@@ -128,20 +128,6 @@ export default function ViewSelector({
           Maybe
         </button>
       </div>
-      
-      {/* Archives Link - Text based link instead of a tab */}
-      <div className="text-center pt-2 pb-1">
-        <button
-          onClick={handleViewArchives}
-          className={`text-xs font-medium ${
-            activeResponseFilter === "archives"
-              ? "text-primary"
-              : "text-gray-500 hover:text-gray-400"
-          }`}
-        >
-          {activeResponseFilter === "archives" ? "← Back to Active Events" : "View Archives"}
-        </button>
-      </div>
     </div>
   );
 }
