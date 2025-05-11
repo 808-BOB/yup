@@ -124,7 +124,7 @@ export default function MyEvents() {
           <CardContent className="w-full p-6 flex flex-col gap-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold tracking-tight uppercase">
-                Your Events
+                Hosting
                 {responseFilter !== "all" && ` - ${responseFilter.toUpperCase()}`}
               </h2>
 
@@ -170,7 +170,7 @@ export default function MyEvents() {
                       onClick={() => setLocation("/events/create")}
                       size="sm"
                     >
-                      Create Your First Event
+                      Host Your First Event
                     </Button>
                   </div>
                 ) : (
