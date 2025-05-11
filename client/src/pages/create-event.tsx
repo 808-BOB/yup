@@ -3,7 +3,7 @@ import { useLocation, Link, useRoute } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Users, Loader2, Image, Upload, Link as LinkIcon } from "lucide-react";
+import { Users, Loader2, Image, Upload, Link as LinkIcon, ArrowRight, ArrowLeft } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/header";
@@ -65,8 +65,9 @@ export default function CreateEvent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user, isLoading: authLoading } = useAuth();
   const [pageTitle, setPageTitle] = useState<string>("Create Event");
-  const [submitButtonText, setSubmitButtonText] =
-    useState<string>("Create Event");
+  const [submitButtonText, setSubmitButtonText] = useState<string>("Create Event");
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 3;
 
   // Check if we're in edit mode by looking at the URL
   const [, params] = useRoute("/events/:slug/edit");
@@ -273,17 +274,54 @@ export default function CreateEvent() {
     }
   };
 
+  // Function to move to the next step
+  const nextStep = async () => {
+    // Get fields for the current step
+    let fieldsToValidate: string[] = [];
+    
+    if (currentStep === 1) {
+      fieldsToValidate = ['imageUrl', 'title', 'date', 'startTime', 'endTime'];
+    } else if (currentStep === 2) {
+      fieldsToValidate = ['location', 'address', 'description'];
+    }
+    
+    // Validate the fields for the current step
+    const fieldsValid = await form.trigger(fieldsToValidate as any);
+    
+    if (fieldsValid) {
+      setCurrentStep(currentStep + 1);
+      window.scrollTo(0, 0);
+    }
+  };
+
+  // Function to go back to the previous step
+  const prevStep = () => {
+    setCurrentStep(currentStep - 1);
+    window.scrollTo(0, 0);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-950">
-      <head>
-        <title>{isEditMode ? "Edit Event" : "Create Event"} | Yup.RSVP</title>
-      </head>
       <div className="max-w-md mx-auto px-4 w-full">
         <Header />
 
         {/* Main Form Content */}
         <main className="animate-fade-in py-6">
-          <h1 className="text-2xl font-bold mb-6">{pageTitle}</h1>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold">{pageTitle}</h1>
+            <div className="text-sm text-gray-400">
+              Step {currentStep} of {totalSteps}
+            </div>
+          </div>
+          
+          {/* Progress bar */}
+          <div className="w-full bg-gray-800 h-2 mb-6 rounded-full overflow-hidden">
+            <div 
+              className="bg-primary h-full transition-all duration-300 ease-in-out"
+              style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+            ></div>
+          </div>
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               <FormField
