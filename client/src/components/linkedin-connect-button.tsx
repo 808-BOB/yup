@@ -35,7 +35,7 @@ export default function LinkedInConnectButton() {
     setIsConnecting(true);
     try {
       // Open LinkedIn OAuth flow in a new window
-      window.location.href = '/api/auth/linkedin';
+      window.location.href = '/auth/linkedin';
     } catch (error) {
       console.error('LinkedIn connection error:', error);
       toast({
