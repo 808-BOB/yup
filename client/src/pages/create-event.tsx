@@ -324,6 +324,9 @@ export default function CreateEvent() {
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              {/* Step 1: Image through time fields */}
+              {currentStep === 1 && (
+                <div className="space-y-5">
               <FormField
                 control={form.control}
                 name="imageUrl"
@@ -916,27 +919,51 @@ export default function CreateEvent() {
                 )}
               </div>
 
+              {/* Step navigation buttons */}
               <div className="pt-6 flex space-x-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="flex-1 bg-black border-black text-gray-300 hover:text-white uppercase tracking-wider rounded-none h-12"
-                  onClick={handleCancel}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="flex-1 bg-primary hover:bg-primary/90 rounded-none h-12 uppercase tracking-wider"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting
-                    ? isEditMode
-                      ? "Updating..."
-                      : "Creating..."
-                    : submitButtonText}
-                </Button>
+                {currentStep > 1 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1 bg-black border-gray-700 text-gray-300 hover:text-white uppercase tracking-wider rounded-none h-12"
+                    onClick={prevStep}
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" /> Previous
+                  </Button>
+                )}
+                
+                {currentStep < totalSteps ? (
+                  <Button
+                    type="button"
+                    className="flex-1 bg-primary hover:bg-primary/90 rounded-none h-12 uppercase tracking-wider"
+                    onClick={nextStep}
+                  >
+                    Next <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-primary hover:bg-primary/90 rounded-none h-12 uppercase tracking-wider"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting
+                      ? isEditMode
+                        ? "Updating..."
+                        : "Creating..."
+                      : submitButtonText}
+                  </Button>
+                )}
               </div>
+              
+              {/* Cancel button - always available */}
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full mt-4 text-gray-400 hover:text-white"
+                onClick={handleCancel}
+              >
+                Cancel and go back
+              </Button>
             </form>
           </Form>
         </main>

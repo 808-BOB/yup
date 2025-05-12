@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ConfirmationMessage from "@/components/confirmation-message";
 import GuestRsvpModal from "@/components/guest-rsvp-modal";
+import EventConnections from "@/components/event-connections";
 import PageTitle from "@/components/page-title";
 import { type Event as BaseEvent, type Response } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -489,6 +490,11 @@ export default function EventPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Show LinkedIn connections for the event */}
+          {user && (
+            <EventConnections eventId={event.id} />
+          )}
 
           <div className="mt-auto pb-6">
             <p className="text-center mb-8 text-gray-400 uppercase tracking-wide font-mono">

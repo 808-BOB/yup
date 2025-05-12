@@ -22,6 +22,10 @@ export const users = pgTable("users", {
   logoUrl: text("logo_url"), // Custom logo URL for premium users
   stripeCustomerId: text("stripe_customer_id"), // Stripe customer ID for billing
   stripeSubscriptionId: text("stripe_subscription_id"), // Current active subscription ID
+  linkedinId: text("linkedin_id"), // LinkedIn user ID for connecting profiles
+  linkedinAccessToken: text("linkedin_access_token"), // LinkedIn OAuth access token
+  linkedinProfileUrl: text("linkedin_profile_url"), // LinkedIn profile URL
+  linkedinConnections: text("linkedin_connections"), // JSON string containing LinkedIn connections data
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
