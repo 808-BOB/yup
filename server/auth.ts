@@ -30,7 +30,7 @@ export function setupAuth(app: Express) {
       {
         clientID: process.env.LINKEDIN_CLIENT_ID!,
         clientSecret: process.env.LINKEDIN_PRIMARY_CLIENT_SECRET!,
-        callbackURL: process.env.LINKEDIN_REDIRECT_URI || "https://yup.rsvp/api/auth/linkedin/callback",
+        callbackURL: process.env.LINKEDIN_REDIRECT_URI || "https://yup.rsvp/auth/linkedin/callback",
         scope: ["r_emailaddress", "r_liteprofile", "r_network_connections"],
         state: true,
       },
@@ -111,13 +111,13 @@ export function setupAuth(app: Express) {
 
   // Route to initiate LinkedIn OAuth
   app.get(
-    "/api/auth/linkedin",
+    "/auth/linkedin",
     passport.authenticate("linkedin")
   );
 
   // LinkedIn OAuth callback
   app.get(
-    "/api/auth/linkedin/callback",
+    "/auth/linkedin/callback",
     passport.authenticate("linkedin", {
       successRedirect: "/profile",
       failureRedirect: "/login",
