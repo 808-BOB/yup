@@ -1,13 +1,7 @@
 import express, { type Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-
-const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
-  if (req.session && req.session.userId) {
-    return next();
-  }
-  return res.status(401).json({ message: "Unauthorized" });
-};
+import { setupAuth, isAuthenticated } from "./auth";
 
 import Stripe from "stripe";
 import { createCheckoutSession, createCustomerPortalSession } from "./stripe";
@@ -30,6 +24,9 @@ const stripe = process.env.STRIPE_SECRET_KEY ?
   }) : null;
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication (including LinkedIn OAuth)
+  setupAuth(app);
+  
   // User authentication & session
   app.post("/api/auth/signup", async (req: Request, res: Response) => {
     try {
@@ -466,6 +463,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error getting event by ID:", error);
       res.status(500).json({ error: "Failed to get event" });
+    }
+  });
+
+  // Endpoint to get LinkedIn connections for an event
+  app.get("/api/events/:id/connections", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      if (isNaN(eventId)) {
+        return res.status(400).json({ message: "Invalid event ID" });
+      }
+
+      const userId = req.session.userId!;
+      const currentUser = await storage.getUser(userId);
+      
+      if (!currentUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (!currentUser.linkedinId || !currentUser.linkedinAccessToken || !currentUser.linkedinConnections) {
+        return res.status(400).json({ message: "LinkedIn not connected or no connections available" });
+      }
+      
+      // Get all responses to the event
+      const responses = await storage.getResponsesByEvent(eventId);
+      
+      // Get the user IDs of all attendees who have responded "yup"
+      const attendeeIds = responses
+        .filter(response => response.response === "yup")
+        .map(response => response.userId)
+        .filter((id): id is number => id !== null);
+      
+      // Get the users who are attending
+      const attendees = await Promise.all(
+        attendeeIds.map(id => storage.getUser(id))
+      );
+      
+      // Parse the current user's LinkedIn connections
+      const myConnections = JSON.parse(currentUser.linkedinConnections);
+      
+      // Filter for attendees with LinkedIn IDs and check if they're connected
+      const connections = attendees
+        .filter(user => user && user.linkedinId)
+        .map(user => ({
+          id: user!.id,
+          displayName: user!.displayName,
+          linkedinId: user!.linkedinId!,
+          linkedinProfileUrl: user!.linkedinProfileUrl || `https://www.linkedin.com/in/${user!.linkedinId}`,
+          isConnected: myConnections.includes(user!.linkedinId)
+        }));
+      
+      return res.json(connections);
+    } catch (error) {
+      console.error("Error fetching LinkedIn connections:", error);
+      return res.status(500).json({ message: "Failed to fetch LinkedIn connections" });
     }
   });
 

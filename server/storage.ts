@@ -25,9 +25,17 @@ export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByLinkedInId(linkedinId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, userData: Partial<User>): Promise<User | undefined>;
   updateUserBranding(id: number, brandData: { brandTheme?: string, logoUrl?: string }): Promise<User | undefined>;
+  updateUserLinkedIn(id: number, linkedinData: { 
+    linkedinId?: string, 
+    linkedinAccessToken?: string, 
+    linkedinProfileUrl?: string, 
+    linkedinConnections?: string 
+  }): Promise<User | undefined>;
   
   // Stripe-related operations
   updateStripeCustomerId(userId: number, customerId: string): Promise<User | undefined>;
@@ -357,6 +365,18 @@ export class MemStorage implements IStorage {
       (user) => user.username === username,
     );
   }
+  
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.email === email,
+    );
+  }
+  
+  async getUserByLinkedInId(linkedinId: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.linkedinId === linkedinId,
+    );
+  }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userIdCounter++;
@@ -468,6 +488,28 @@ export class MemStorage implements IStorage {
     };
     
     this.users.set(userId, updatedUser);
+    this.saveToFile();
+    return updatedUser;
+  }
+  
+  async updateUserLinkedIn(id: number, linkedinData: { 
+    linkedinId?: string, 
+    linkedinAccessToken?: string, 
+    linkedinProfileUrl?: string, 
+    linkedinConnections?: string 
+  }): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+    
+    const updatedUser: User = {
+      ...user,
+      linkedinId: linkedinData.linkedinId !== undefined ? linkedinData.linkedinId : user.linkedinId,
+      linkedinAccessToken: linkedinData.linkedinAccessToken !== undefined ? linkedinData.linkedinAccessToken : user.linkedinAccessToken,
+      linkedinProfileUrl: linkedinData.linkedinProfileUrl !== undefined ? linkedinData.linkedinProfileUrl : user.linkedinProfileUrl,
+      linkedinConnections: linkedinData.linkedinConnections !== undefined ? linkedinData.linkedinConnections : user.linkedinConnections
+    };
+    
+    this.users.set(id, updatedUser);
     this.saveToFile();
     return updatedUser;
   }
@@ -704,6 +746,16 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async getUserByLinkedInId(linkedinId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.linkedinId, linkedinId));
+    return user || undefined;
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
@@ -766,6 +818,20 @@ export class DatabaseStorage implements IStorage {
       .from(users)
       .where(eq(users.stripeCustomerId, customerId));
     return user || undefined;
+  }
+  
+  async updateUserLinkedIn(id: number, linkedinData: { 
+    linkedinId?: string, 
+    linkedinAccessToken?: string, 
+    linkedinProfileUrl?: string, 
+    linkedinConnections?: string 
+  }): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(linkedinData)
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser || undefined;
   }
 
   async createEvent(event: InsertEvent): Promise<Event> {

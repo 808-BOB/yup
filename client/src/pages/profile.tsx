@@ -10,6 +10,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import Header from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import LinkedInConnectButton from "@/components/linkedin-connect-button";
 import {
   Form,
   FormControl,
@@ -458,6 +459,23 @@ export default function Profile() {
                       Upgrade Your Plan
                     </Button>
                   )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gray-900 border border-gray-800 mt-6">
+            <CardHeader>
+              <CardTitle className="text-base">LinkedIn Connection</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-sm text-gray-400">
+                  Connect your LinkedIn profile to see your connections at events you attend.
+                </p>
+                
+                <div className="pt-2">
+                  <LinkedInConnectButton />
                 </div>
               </div>
             </CardContent>
