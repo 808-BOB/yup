@@ -30,8 +30,8 @@ export function setupAuth(app: Express) {
       {
         clientID: process.env.LINKEDIN_CLIENT_ID!,
         clientSecret: process.env.LINKEDIN_PRIMARY_CLIENT_SECRET!,
-        callbackURL: process.env.LINKEDIN_REDIRECT_URI || "https://yup.rsvp/auth/linkedin/callback",
-        scope: ["r_emailaddress", "r_liteprofile", "r_network_connections"],
+        callbackURL: "https://yup-rsvp.localhost/auth/linkedin/callback",
+        scope: ["r_emailaddress", "r_liteprofile"],
         state: true,
       },
       async (accessToken: string, refreshToken: string, profile: any, done: any) => {
@@ -112,16 +112,109 @@ export function setupAuth(app: Express) {
   // Route to initiate LinkedIn OAuth
   app.get(
     "/auth/linkedin",
+    (req, res, next) => {
+      console.log("LinkedIn auth initiated");
+      
+      // Get base URL for the current environment
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+      const host = req.headers['x-forwarded-host'] || req.headers.host;
+      const baseUrl = `${protocol}://${host}`;
+      
+      console.log("Current base URL:", baseUrl);
+      console.log("LinkedIn env vars:", {
+        client_id_exists: !!process.env.LINKEDIN_CLIENT_ID,
+        client_secret_exists: !!process.env.LINKEDIN_PRIMARY_CLIENT_SECRET,
+        redirect_uri_exists: !!process.env.LINKEDIN_REDIRECT_URI,
+        redirect_uri_length: process.env.LINKEDIN_REDIRECT_URI?.length || 0
+      });
+      
+      // Dynamically update the LinkedIn callback URL based on the current environment
+      passport.use(
+        new LinkedInStrategy(
+          {
+            clientID: process.env.LINKEDIN_CLIENT_ID!,
+            clientSecret: process.env.LINKEDIN_PRIMARY_CLIENT_SECRET!,
+            callbackURL: `${baseUrl}/auth/linkedin/callback`,
+            scope: ["r_emailaddress", "r_liteprofile"],
+            state: true,
+          },
+          async (accessToken: string, refreshToken: string, profile: any, done: any) => {
+            // The same user lookup/creation logic as before
+            try {
+              let user = await storage.getUserByLinkedInId(profile.id);
+
+              if (!user && profile.emails && profile.emails.length > 0) {
+                const email = profile.emails[0].value;
+                user = await storage.getUserByEmail(email);
+
+                if (user) {
+                  user = await storage.updateUserLinkedIn(
+                    user.id,
+                    {
+                      linkedinId: profile.id,
+                      linkedinAccessToken: accessToken,
+                      linkedinProfileUrl: profile._json.publicProfileUrl || profile.profileUrl,
+                    }
+                  );
+                }
+              }
+
+              if (!user) {
+                if (!profile.emails || profile.emails.length === 0) {
+                  return done(null, false, { message: "Email not provided by LinkedIn" });
+                }
+                
+                const email = profile.emails[0].value;
+                const username = email.split("@")[0] + "_" + Math.floor(Math.random() * 10000);
+                const password = Math.random().toString(36).slice(-12); // Random password
+
+                user = await storage.createUser({
+                  username,
+                  password,
+                  displayName: profile.displayName || `${profile.name.givenName} ${profile.name.familyName}`,
+                  email,
+                  linkedinId: profile.id,
+                  linkedinAccessToken: accessToken,
+                  linkedinProfileUrl: profile._json.publicProfileUrl || profile.profileUrl,
+                });
+              } else if (user.linkedinAccessToken !== accessToken) {
+                user = await storage.updateUserLinkedIn(
+                  user.id,
+                  {
+                    linkedinAccessToken: accessToken,
+                  }
+                );
+              }
+
+              return done(null, user);
+            } catch (err) {
+              return done(err);
+            }
+          }
+        )
+      );
+      
+      next();
+    },
     passport.authenticate("linkedin")
   );
 
   // LinkedIn OAuth callback
   app.get(
     "/auth/linkedin/callback",
+    (req, res, next) => {
+      console.log("LinkedIn callback received");
+      next();
+    },
     passport.authenticate("linkedin", {
       successRedirect: "/profile",
       failureRedirect: "/login",
-    })
+      failWithError: true,
+    }),
+    (err: any, req: Request, res: Response, next: NextFunction) => {
+      console.error("LinkedIn authentication error:", err);
+      res.redirect('/login');
+    }
   );
   
   // API endpoint to fetch user's LinkedIn connections for an event
@@ -218,6 +311,37 @@ export function setupAuth(app: Express) {
         console.error("LinkedIn sync error:", error);
         return res.status(500).json({ message: "Failed to sync connections" });
       }
+    }
+  );
+
+  // Expose LinkedIn config information (safely)
+  app.get(
+    "/api/auth/linkedin/config",
+    (req: Request, res: Response) => {
+      // Get base URL for the current environment
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+      const host = req.headers['x-forwarded-host'] || req.headers.host;
+      const baseUrl = `${protocol}://${host}`;
+      
+      // Create LinkedIn OAuth URL manually
+      const clientId = process.env.LINKEDIN_CLIENT_ID;
+      const redirectUri = `${baseUrl}/auth/linkedin/callback`;
+      const scope = "r_emailaddress,r_liteprofile";
+      const state = Math.random().toString(36).substring(2);
+      
+      // Store state in session for verification
+      req.session.linkedInState = state;
+      
+      const authorizeUrl = clientId ? 
+        `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${scope}` : 
+        null;
+      
+      res.json({
+        baseUrl,
+        authorizeUrl,
+        clientId: !!process.env.LINKEDIN_CLIENT_ID,
+        redirectUri
+      });
     }
   );
 
