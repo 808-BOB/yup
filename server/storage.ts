@@ -19,19 +19,20 @@ import { eq, and, sql, desc, asc, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // Invitation operations
-  createInvitation(eventId: number, userId: number): Promise<void>;
-  getEventInvitations(eventId: number): Promise<number[]>;
-  getEventsUserInvitedTo(userId: number): Promise<Event[]>;
+  createInvitation(eventId: number, userId: string): Promise<void>;
+  getEventInvitations(eventId: number): Promise<string[]>;
+  getEventsUserInvitedTo(userId: string): Promise<Event[]>;
 
   // User operations
-  getUser(id: number): Promise<User | undefined>;
+  getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByLinkedInId(linkedinId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  updateUser(id: number, userData: Partial<User>): Promise<User | undefined>;
-  updateUserBranding(id: number, brandData: { brandTheme?: string, logoUrl?: string }): Promise<User | undefined>;
-  updateUserLinkedIn(id: number, linkedinData: { 
+  upsertUser(user: UpsertUser): Promise<User>;
+  updateUser(id: string, userData: Partial<User>): Promise<User | undefined>;
+  updateUserBranding(id: string, brandData: { brandTheme?: string, logoUrl?: string }): Promise<User | undefined>;
+  updateUserLinkedIn(id: string, linkedinData: { 
     linkedinId?: string, 
     linkedinAccessToken?: string, 
     linkedinProfileUrl?: string, 
@@ -39,9 +40,9 @@ export interface IStorage {
   }): Promise<User | undefined>;
   
   // Stripe-related operations
-  updateStripeCustomerId(userId: number, customerId: string): Promise<User | undefined>;
-  updateStripeSubscriptionId(userId: number, subscriptionId: string): Promise<User | undefined>;
-  updateUserStripeInfo(userId: number, stripeData: { 
+  updateStripeCustomerId(userId: string, customerId: string): Promise<User | undefined>;
+  updateStripeSubscriptionId(userId: string, subscriptionId: string): Promise<User | undefined>;
+  updateUserStripeInfo(userId: string, stripeData: { 
     stripeCustomerId?: string, 
     stripeSubscriptionId?: string 
   }): Promise<User | undefined>;
@@ -761,6 +762,21 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db
       .insert(users)
       .values(insertUser)
+      .returning();
+    return user;
+  }
+  
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
       .returning();
     return user;
   }
