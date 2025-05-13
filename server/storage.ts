@@ -5,6 +5,7 @@ import {
   users,
   type User,
   type InsertUser,
+  type UpsertUser,
   events,
   type Event,
   type InsertEvent,

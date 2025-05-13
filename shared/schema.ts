@@ -5,16 +5,22 @@ import {
   integer,
   boolean,
   timestamp,
+  varchar,
+  jsonb,
+  index,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+  id: text("id").primaryKey().notNull(), // Change to text for Replit Auth sub
   username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+  password: text("password"), // Optional now as Replit Auth users don't need password
   displayName: text("display_name").notNull(),
   email: text("email"),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  profileImageUrl: text("profile_image_url"),
   isAdmin: boolean("is_admin").notNull().default(false),
   isPro: boolean("is_pro").notNull().default(false),
   isPremium: boolean("is_premium").notNull().default(false),
@@ -26,18 +32,34 @@ export const users = pgTable("users", {
   linkedinAccessToken: text("linkedin_access_token"), // LinkedIn OAuth access token
   linkedinProfileUrl: text("linkedin_profile_url"), // LinkedIn profile URL
   linkedinConnections: text("linkedin_connections"), // JSON string containing LinkedIn connections data
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-  displayName: true,
-  isAdmin: true,
-  isPro: true,
-  isPremium: true,
-  brandTheme: true,
-  logoUrl: true,
+export const insertUserSchema = createInsertSchema(users, {
+  id: z.string(), // Explicitly mark id as string
+}).omit({
+  createdAt: true,
+  updatedAt: true,
 });
+
+export const upsertUserSchema = createInsertSchema(users, {
+  id: z.string(), // Explicitly mark id as string
+}).omit({
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Session storage table for Replit Auth
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
 
 export const events = pgTable("events", {
   id: serial("id").primaryKey(),
@@ -117,6 +139,7 @@ export const guestResponseSchema = z.object({
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UpsertUser = z.infer<typeof upsertUserSchema>;
 
 export type Event = typeof events.$inferSelect;
 export type InsertEvent = z.infer<typeof insertEventSchema>;
