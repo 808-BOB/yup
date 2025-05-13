@@ -7,7 +7,6 @@ import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
-import { pool } from "./db";
 
 if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
@@ -33,7 +32,7 @@ export function getSession() {
     tableName: "sessions",
   });
   return session({
-    secret: process.env.SESSION_SECRET || "yup-rsvp-secret-key",
+    secret: process.env.SESSION_SECRET!,
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
@@ -58,16 +57,14 @@ function updateUserSession(
 async function upsertUser(
   claims: any,
 ) {
-  return await storage.upsertUser({
+  await storage.upsertUser({
     id: claims["sub"],
-    username: `user_${claims["sub"]}`, // Generate a unique username based on sub
-    displayName: claims["first_name"] && claims["last_name"] 
-      ? `${claims["first_name"]} ${claims["last_name"]}` 
-      : `User ${claims["sub"].slice(0, 6)}`,
     email: claims["email"],
     firstName: claims["first_name"],
     lastName: claims["last_name"],
     profileImageUrl: claims["profile_image_url"],
+    displayName: claims["first_name"] ? `${claims["first_name"]} ${claims["last_name"] || ""}`.trim() : "Replit User",
+    username: claims["email"] ? claims["email"].split("@")[0] : `user_${claims["sub"]}`,
   });
 }
 
@@ -130,7 +127,8 @@ export async function setupAuth(app: Express) {
       );
     });
   });
-  
+
+  // Add route to get the current logged-in user
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
