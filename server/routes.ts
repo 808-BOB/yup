@@ -1,9 +1,12 @@
 import express, { type Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-// Import both auth systems, but we'll use Replit Auth by default
-import { setupAuth as setupLinkedInAuth, isAuthenticated as isLinkedInAuthenticated } from "./auth";
-import { setupAuth as setupReplitAuth, isAuthenticated } from "./replitAuth";
+// Import auth systems
+import { setupAuth as setupLinkedInAuth } from "./auth";
+import { verifyFirebaseToken } from "./firebaseAdmin";
+import session from "express-session";
+import passport from "passport";
+import { generateUsername } from "@shared/utils";
 
 import Stripe from "stripe";
 import { createCheckoutSession, createCustomerPortalSession } from "./stripe";
@@ -25,10 +28,102 @@ const stripe = process.env.STRIPE_SECRET_KEY ?
     apiVersion: "2023-10-16" as any, // Type assertion to avoid version mismatch in typings
   }) : null;
 
+// Middleware to check if user is authenticated
+export const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
+  if (req.isAuthenticated() && req.user) {
+    return next();
+  }
+  return res.status(401).json({ message: "Unauthorized" });
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup authentication with Replit Auth (LinkedIn OAuth temporarily hidden)
-  // setupLinkedInAuth(app); // LinkedIn auth is temporarily hidden
-  await setupReplitAuth(app); // Using Replit Auth instead
+  // Set up session and passport
+  app.use(session({
+    secret: process.env.SESSION_SECRET || 'yup-rsvp-secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
+    }
+  }));
+  
+  app.use(passport.initialize());
+  app.use(passport.session());
+  
+  passport.serializeUser((user: any, done) => {
+    done(null, user.id);
+  });
+  
+  passport.deserializeUser(async (id: string, done) => {
+    try {
+      const user = await storage.getUser(id);
+      if (user) {
+        done(null, user);
+      } else {
+        done(new Error("User not found"), null);
+      }
+    } catch (err) {
+      done(err, null);
+    }
+  });
+  
+  // Setup LinkedIn auth (temporarily hidden)
+  // setupLinkedInAuth(app);
+  
+  // Firebase authentication handler
+  app.post("/api/auth/firebase", async (req: Request, res: Response) => {
+    try {
+      const { idToken, displayName, email, photoURL, uid, provider } = req.body;
+      
+      // Verify the Firebase token
+      const decodedToken = await verifyFirebaseToken(idToken);
+      
+      // The UID from the token should match the UID from the client
+      if (decodedToken.uid !== uid) {
+        return res.status(401).json({ message: "Invalid authentication token" });
+      }
+      
+      // Check if user exists
+      let user = await storage.getUserByEmail(email);
+      
+      if (!user) {
+        // Generate a username if the user doesn't exist
+        const username = generateUsername(email, uid);
+        
+        // Create a new user
+        user = await storage.upsertUser({
+          id: uid,
+          username,
+          displayName: displayName || 'User',
+          email,
+          profileImageUrl: photoURL,
+          isAdmin: false,
+          isPro: false,
+          isPremium: false
+        });
+      } else if (user.id !== uid) {
+        // If email exists but with different ID, update the ID
+        user = await storage.updateUser(user.id, {
+          id: uid,
+          profileImageUrl: photoURL || user.profileImageUrl,
+          displayName: displayName || user.displayName
+        });
+      }
+      
+      // Log the user in
+      req.login(user, (err) => {
+        if (err) {
+          return res.status(500).json({ message: "Login failed" });
+        }
+        
+        return res.status(200).json(user);
+      });
+    } catch (error) {
+      console.error("Firebase authentication error:", error);
+      return res.status(401).json({ message: "Authentication failed" });
+    }
+  });
   
   // User authentication & session
   app.post("/api/auth/signup", async (req: Request, res: Response) => {
@@ -40,9 +135,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (existingUser) {
         return res.status(400).json({ message: "Username already exists" });
       }
+      
+      // Generate a unique ID for the user
+      const userId = `local_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
       // Create the new user (password will be hashed by the storage interface)
       const user = await storage.createUser({
+        id: userId,
         username,
         password,
         displayName,
