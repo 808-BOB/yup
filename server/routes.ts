@@ -216,27 +216,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get(
     "/api/auth/me",
-    isAuthenticated,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.session.userId!; // Non-null assertion (we know it exists because of isAuthenticated)
-        const user = await storage.getUser(userId);
+        // Check if user is authenticated via session
+        if (req.session && req.session.userId) {
+          const userId = req.session.userId;
+          const user = await storage.getUser(userId);
 
-        if (!user) {
-          return res.status(404).json({ message: "User not found" });
+          if (user) {
+            return res.json({
+              id: user.id,
+              username: user.username,
+              displayName: user.displayName,
+              isAdmin: user.isAdmin,
+              isPro: user.isPro,
+              isPremium: user.isPremium,
+              brandTheme: user.brandTheme,
+              logoUrl: user.logoUrl,
+            });
+          }
         }
-
-        // Return user info without password
-        return res.json({
-          id: user.id,
-          username: user.username,
-          displayName: user.displayName,
-          isAdmin: user.isAdmin,
-          isPro: user.isPro,
-          isPremium: user.isPremium,
-          brandTheme: user.brandTheme,
-          logoUrl: user.logoUrl,
-        });
+        
+        // If we get here, user is not authenticated or not found
+        return res.status(401).json({ message: "Not authenticated" });
       } catch (error) {
         console.error("Get current user error:", error);
         return res.status(500).json({ message: "Server error" });
