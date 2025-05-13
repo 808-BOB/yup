@@ -175,6 +175,20 @@ export default function Signup() {
           </form>
         </Form>
 
+        <div className="mt-6 text-center">
+          <p className="text-gray-400 mb-4">Or</p>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full border border-gray-700 rounded-none h-12 mb-4 hover:bg-gray-800"
+            onClick={() => {
+              window.location.href = "/api/login";
+            }}
+          >
+            Continue with Replit
+          </Button>
+        </div>
+
         <div className="text-center mt-6">
           <p className="text-gray-400 text-sm">
             Already have an account?{" "}
