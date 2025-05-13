@@ -76,11 +76,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { idToken, displayName, email, photoURL, uid, provider } = req.body;
       
-      // For development, we'll skip proper token verification
-      // In production, this should be properly verified using Firebase Admin SDK
-      console.log("Processing Firebase authentication for user:", { email, uid });
+      // Verify the Firebase token using Admin SDK
+      const decodedToken = await verifyFirebaseToken(idToken);
       
-      // Check if user exists - first by email, then by ID
+      // The UID from the token should match the UID from the client
+      if (decodedToken.uid !== uid) {
+        return res.status(401).json({ message: "Invalid authentication token" });
+      }
+      
+      console.log("Firebase authentication successful for:", { email, uid });
+      
+      // Check if user exists
       let user = email ? await storage.getUserByEmail(email) : null;
       if (!user) {
         user = await storage.getUser(uid);

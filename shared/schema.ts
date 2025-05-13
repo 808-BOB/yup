@@ -104,7 +104,7 @@ export const insertEventSchema = createInsertSchema(events)
 export const invitations = pgTable("invitations", {
   id: serial("id").primaryKey(),
   eventId: integer("event_id").notNull(),
-  userId: integer("user_id").notNull(),
+  userId: text("user_id").notNull(), // Changed to text to match user ID format
   status: text("status").notNull().default("pending"), // pending, accepted, declined
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -112,7 +112,7 @@ export const invitations = pgTable("invitations", {
 export const responses = pgTable("responses", {
   id: serial("id").primaryKey(),
   eventId: integer("event_id").notNull(),
-  userId: integer("user_id"), // Optional for guest responses
+  userId: text("user_id"), // Optional for guest responses, changed to text for Firebase auth
   response: text("response").notNull(), // 'yup', 'nope', or 'maybe'
   createdAt: timestamp("created_at").notNull().defaultNow(),
   // Guest information
