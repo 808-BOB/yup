@@ -30,7 +30,7 @@ export function setupAuth(app: Express) {
       {
         clientID: process.env.LINKEDIN_CLIENT_ID!,
         clientSecret: process.env.LINKEDIN_PRIMARY_CLIENT_SECRET!,
-        callbackURL: "https://yup-rsvp.localhost/auth/linkedin/callback",
+        callbackURL: "https://yup.rsvp/auth/linkedin/callback",
         scope: ["r_emailaddress", "r_liteprofile"],
         state: true,
       },
@@ -134,7 +134,7 @@ export function setupAuth(app: Express) {
           {
             clientID: process.env.LINKEDIN_CLIENT_ID!,
             clientSecret: process.env.LINKEDIN_PRIMARY_CLIENT_SECRET!,
-            callbackURL: `${baseUrl}/auth/linkedin/callback`,
+            callbackURL: "https://yup.rsvp/auth/linkedin/callback",
             scope: ["r_emailaddress", "r_liteprofile"],
             state: true,
           },
@@ -325,12 +325,15 @@ export function setupAuth(app: Express) {
       
       // Create LinkedIn OAuth URL manually
       const clientId = process.env.LINKEDIN_CLIENT_ID;
-      const redirectUri = `${baseUrl}/auth/linkedin/callback`;
+      // Use the production redirect URI that's registered with LinkedIn
+      const redirectUri = "https://yup.rsvp/auth/linkedin/callback";
       const scope = "r_emailaddress,r_liteprofile";
       const state = Math.random().toString(36).substring(2);
       
       // Store state in session for verification
-      req.session.linkedInState = state;
+      if (req.session) {
+        (req.session as any).linkedInState = state;
+      }
       
       const authorizeUrl = clientId ? 
         `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${scope}` : 
