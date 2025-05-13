@@ -33,11 +33,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const userData = await apiRequest<User>("GET", "/api/auth/me", undefined, { credentials: 'include' });
+        // First try Replit Auth
+        const userData = await apiRequest<User>("GET", "/api/auth/user", undefined, { credentials: 'include' });
         setUser(userData);
-      } catch (err) {
-        // User is not logged in, that's okay
-        console.log("Not logged in");
+      } catch (replitAuthErr) {
+        try {
+          // Fall back to legacy auth if Replit Auth fails
+          const userData = await apiRequest<User>("GET", "/api/auth/me", undefined, { credentials: 'include' });
+          setUser(userData);
+        } catch (err) {
+          // User is not logged in, that's okay
+          console.log("Not logged in");
+        }
       } finally {
         setIsLoading(false);
       }
@@ -93,8 +100,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
 
     try {
-      await apiRequest("POST", "/api/auth/logout");
-      setUser(null);
+      // First try Replit Auth
+      try {
+        // Using window.location.href for Replit Auth logout since it redirects
+        window.location.href = "/api/logout";
+        return; // Page will reload after redirect
+      } catch (replitAuthErr) {
+        // Fall back to legacy auth if Replit Auth fails
+        await apiRequest("POST", "/api/auth/logout");
+        setUser(null);
+      }
     } catch (err) {
       setError("Failed to logout");
     } finally {
@@ -107,12 +122,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     
     try {
-      const userData = await apiRequest<User>("GET", "/api/auth/me", undefined, { credentials: 'include' });
+      // First try Replit Auth
+      const userData = await apiRequest<User>("GET", "/api/auth/user", undefined, { credentials: 'include' });
       setUser(userData);
-    } catch (err) {
-      // If we can't get the user data, they might be logged out
-      setUser(null);
-      throw err;
+    } catch (replitAuthErr) {
+      try {
+        // Fall back to legacy auth if Replit Auth fails
+        const userData = await apiRequest<User>("GET", "/api/auth/me", undefined, { credentials: 'include' });
+        setUser(userData);
+      } catch (err) {
+        // If we can't get the user data, they might be logged out
+        setUser(null);
+        throw err;
+      }
     } finally {
       setIsLoading(false);
     }
