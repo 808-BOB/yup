@@ -10,7 +10,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import Header from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import LinkedInConnectButton from "@/components/linkedin-connect-button";
+// LinkedIn integration temporarily hidden
+// import LinkedInConnectButton from "@/components/linkedin-connect-button";
 import {
   Form,
   FormControl,
@@ -464,6 +465,7 @@ export default function Profile() {
             </CardContent>
           </Card>
 
+          {/* LinkedIn section temporarily hidden
           <Card className="bg-gray-900 border border-gray-800 mt-6">
             <CardHeader>
               <CardTitle className="text-base">LinkedIn Connection</CardTitle>
@@ -480,6 +482,7 @@ export default function Profile() {
               </div>
             </CardContent>
           </Card>
+          */}
         </div>
       </main>
     </div>
