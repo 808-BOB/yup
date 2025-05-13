@@ -1,7 +1,9 @@
 import express, { type Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./auth";
+// Import both auth systems, but we'll use Replit Auth by default
+import { setupAuth as setupLinkedInAuth, isAuthenticated as isLinkedInAuthenticated } from "./auth";
+import { setupAuth as setupReplitAuth, isAuthenticated } from "./replitAuth";
 
 import Stripe from "stripe";
 import { createCheckoutSession, createCustomerPortalSession } from "./stripe";
@@ -24,8 +26,9 @@ const stripe = process.env.STRIPE_SECRET_KEY ?
   }) : null;
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup authentication (including LinkedIn OAuth)
-  setupAuth(app);
+  // Setup authentication with Replit Auth (LinkedIn OAuth temporarily hidden)
+  // setupLinkedInAuth(app); // LinkedIn auth is temporarily hidden
+  await setupReplitAuth(app); // Using Replit Auth instead
   
   // User authentication & session
   app.post("/api/auth/signup", async (req: Request, res: Response) => {
