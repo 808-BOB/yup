@@ -7,6 +7,13 @@ import React, {
 } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { type User } from "@shared/schema";
+import { 
+  signInWithGoogle, 
+  signInWithApple, 
+  signOut, 
+  onAuthStateChange
+} from "@/lib/firebase";
+import { User as FirebaseUser } from "firebase/auth";
 
 interface AuthContextType {
   user: User | null;
@@ -18,7 +25,9 @@ interface AuthContextType {
     displayName: string,
     password: string,
   ) => Promise<void>;
-  logout: () => void;
+  loginWithGoogle: () => Promise<void>;
+  loginWithApple: () => Promise<void>;
+  logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
@@ -29,29 +38,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Check if user is already logged in on mount
+  // Listen for Firebase auth state changes
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        // First try Replit Auth
-        const userData = await apiRequest<User>("GET", "/api/auth/user", undefined, { credentials: 'include' });
-        setUser(userData);
-      } catch (replitAuthErr) {
+    const unsubscribe = onAuthStateChange(async (firebaseUser) => {
+      if (firebaseUser) {
+        // User is signed in, sync with our backend
+        await syncUserWithBackend(firebaseUser);
+      } else {
+        // Try to get user from traditional auth
         try {
-          // Fall back to legacy auth if Replit Auth fails
           const userData = await apiRequest<User>("GET", "/api/auth/me", undefined, { credentials: 'include' });
           setUser(userData);
         } catch (err) {
-          // User is not logged in, that's okay
+          // User is not logged in with either method
+          setUser(null);
           console.log("Not logged in");
+        } finally {
+          setIsLoading(false);
         }
-      } finally {
-        setIsLoading(false);
       }
-    };
+    });
 
-    checkAuthStatus();
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, []);
+
+  // Sync Firebase user data with our backend
+  const syncUserWithBackend = async (firebaseUser: FirebaseUser) => {
+    try {
+      setIsLoading(true);
+      // Send Firebase token to backend to verify and create/update user
+      const idToken = await firebaseUser.getIdToken();
+      
+      // Call our backend to handle the Firebase token
+      const userData = await apiRequest<User>("POST", "/api/auth/firebase", {
+        idToken,
+        displayName: firebaseUser.displayName || 'User',
+        email: firebaseUser.email,
+        photoURL: firebaseUser.photoURL,
+        uid: firebaseUser.uid,
+        provider: firebaseUser.providerData[0]?.providerId
+      });
+      
+      setUser(userData);
+    } catch (err) {
+      console.error("Error syncing with backend:", err);
+      setError("Failed to authenticate with server");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const login = async (username: string, password: string) => {
     setIsLoading(true);
@@ -96,22 +132,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const loginWithGoogle = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      await signInWithGoogle();
+      // User state will be updated by the auth state listener
+    } catch (err) {
+      console.error("Google sign-in error:", err);
+      setError("Failed to sign in with Google");
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loginWithApple = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      await signInWithApple();
+      // User state will be updated by the auth state listener
+    } catch (err) {
+      console.error("Apple sign-in error:", err);
+      setError("Failed to sign in with Apple");
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async () => {
     setIsLoading(true);
+    setError(null);
 
     try {
-      // First try Replit Auth
-      try {
-        // Using window.location.href for Replit Auth logout since it redirects
-        window.location.href = "/api/logout";
-        return; // Page will reload after redirect
-      } catch (replitAuthErr) {
-        // Fall back to legacy auth if Replit Auth fails
-        await apiRequest("POST", "/api/auth/logout");
-        setUser(null);
-      }
+      // First try to sign out from Firebase
+      await signOut();
+      
+      // Also sign out from our backend session
+      await apiRequest("POST", "/api/auth/logout");
+      
+      // Clear user state
+      setUser(null);
     } catch (err) {
+      console.error("Logout error:", err);
       setError("Failed to logout");
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -122,19 +191,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     
     try {
-      // First try Replit Auth
-      const userData = await apiRequest<User>("GET", "/api/auth/user", undefined, { credentials: 'include' });
+      const userData = await apiRequest<User>("GET", "/api/auth/me", undefined, { credentials: 'include' });
       setUser(userData);
-    } catch (replitAuthErr) {
-      try {
-        // Fall back to legacy auth if Replit Auth fails
-        const userData = await apiRequest<User>("GET", "/api/auth/me", undefined, { credentials: 'include' });
-        setUser(userData);
-      } catch (err) {
-        // If we can't get the user data, they might be logged out
-        setUser(null);
-        throw err;
-      }
+    } catch (err) {
+      // If we can't get the user data, they might be logged out
+      setUser(null);
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -148,6 +210,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error,
         login,
         signup,
+        loginWithGoogle,
+        loginWithApple,
         logout,
         refreshUser,
       }}

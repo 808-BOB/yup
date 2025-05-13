@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import YupLogo from "@assets/Yup-logo.png";
+import { FcGoogle } from "react-icons/fc";
+import { FaApple } from "react-icons/fa";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -27,9 +29,10 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const [, setLocation] = useLocation();
-  const { login } = useAuth();
+  const { login, loginWithGoogle, loginWithApple } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSocialLoading, setIsSocialLoading] = useState<'google' | 'apple' | null>(null);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -126,17 +129,75 @@ export default function Login() {
         </Form>
 
         <div className="mt-6 text-center">
-          <p className="text-gray-400 mb-4">Or</p>
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full border border-gray-700 rounded-none h-12 mb-4 hover:bg-gray-800"
-            onClick={() => {
-              window.location.href = "/api/login";
-            }}
-          >
-            Continue with Replit
-          </Button>
+          <p className="text-gray-400 mb-4">Or continue with</p>
+          
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="border border-gray-700 rounded-none h-12 hover:bg-gray-800 flex items-center justify-center gap-2"
+              onClick={async () => {
+                try {
+                  setIsSocialLoading('google');
+                  await loginWithGoogle();
+                  setLocation("/my-events");
+                  toast({
+                    title: "Success",
+                    description: "Signed in with Google.",
+                  });
+                } catch (error) {
+                  toast({
+                    title: "Error",
+                    description: "Failed to sign in with Google.",
+                    variant: "destructive",
+                  });
+                } finally {
+                  setIsSocialLoading(null);
+                }
+              }}
+              disabled={isSocialLoading !== null}
+            >
+              {isSocialLoading === 'google' ? (
+                <span className="animate-spin">↻</span>
+              ) : (
+                <FcGoogle className="h-5 w-5" />
+              )}
+              <span>Google</span>
+            </Button>
+            
+            <Button
+              type="button"
+              variant="outline"
+              className="border border-gray-700 rounded-none h-12 hover:bg-gray-800 flex items-center justify-center gap-2"
+              onClick={async () => {
+                try {
+                  setIsSocialLoading('apple');
+                  await loginWithApple();
+                  setLocation("/my-events");
+                  toast({
+                    title: "Success",
+                    description: "Signed in with Apple.",
+                  });
+                } catch (error) {
+                  toast({
+                    title: "Error",
+                    description: "Failed to sign in with Apple.",
+                    variant: "destructive", 
+                  });
+                } finally {
+                  setIsSocialLoading(null);
+                }
+              }}
+              disabled={isSocialLoading !== null}
+            >
+              {isSocialLoading === 'apple' ? (
+                <span className="animate-spin">↻</span>
+              ) : (
+                <FaApple className="h-5 w-5" />
+              )}
+              <span>Apple</span>
+            </Button>
+          </div>
         </div>
         
         <div className="text-center mt-6">
