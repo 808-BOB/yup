@@ -97,6 +97,9 @@ export default function Login() {
                     <Input
                       placeholder="Enter your username"
                       className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12"
+                      required
+                      autoComplete="username"
+                      autoFocus
                       {...field}
                     />
                   </FormControl>
@@ -118,6 +121,8 @@ export default function Login() {
                       type="password"
                       placeholder="Enter your password"
                       className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12"
+                      required
+                      autoComplete="current-password"
                       {...field}
                     />
                   </FormControl>
@@ -128,10 +133,29 @@ export default function Login() {
 
             <Button
               type="submit"
-              className="w-full bg-primary hover:bg-primary/90 rounded-none h-12 uppercase tracking-wider"
+              className="w-full bg-gradient-to-r from-primary to-violet-600 hover:from-primary/90 hover:to-violet-700 rounded-none h-12 uppercase tracking-wider"
               disabled={isSubmitting}
+              onClick={() => {
+                // Auto-fill test credentials if fields are empty
+                if (!form.getValues().username) {
+                  form.setValue('username', 'subourbon');
+                  form.setValue('password', 'events');
+                }
+              }}
             >
-              {isSubmitting ? "Signing In..." : "Sign In"}
+              {isSubmitting ? (
+                <div className="flex items-center justify-center gap-2">
+                  <span className="animate-spin">↻</span>
+                  <span>Signing In...</span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center">
+                  <span>Sign In</span>
+                  <span className="text-xs normal-case tracking-normal font-normal opacity-90 mt-1">
+                    Try subourbon/events for testing
+                  </span>
+                </div>
+              )}
             </Button>
           </form>
         </Form>

@@ -293,9 +293,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/auth/me",
     async (req: Request, res: Response) => {
       try {
-        // Check if user is authenticated via session or Passport
-        if (req.isAuthenticated() && req.user) {
-          // Passport already has the user object, return it
+        console.log("GET /api/auth/me - Auth state:", { 
+          isPassportAuthenticated: req.isAuthenticated(),
+          hasSessionUserId: !!req.session?.userId,
+          sessionID: req.sessionID,
+          userInPassport: !!req.user
+        });
+        
+        // First try session-based auth which should work for traditional login
+        if (req.session && req.session.userId) {
+          console.log("Using session userId:", req.session.userId);
+          const user = await storage.getUser(req.session.userId);
+          
+          if (user) {
+            console.log("Found user from session:", user.username);
+            return res.json({
+              id: user.id,
+              username: user.username,
+              displayName: user.displayName,
+              isAdmin: user.isAdmin,
+              isPro: user.isPro,
+              isPremium: user.isPremium,
+              brandTheme: user.brandTheme,
+              logoUrl: user.logoUrl,
+            });
+          } else {
+            console.log("User not found for session ID:", req.session.userId);
+          }
+        } 
+        // Then check Passport (used by Firebase/OpenID authentication)
+        else if (req.isAuthenticated() && req.user) {
+          console.log("User is authenticated via Passport:", req.user);
           const user = req.user;
           return res.json({
             id: user.id,
@@ -307,26 +335,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             brandTheme: user.brandTheme,
             logoUrl: user.logoUrl,
           });
-        } else if (req.session && req.session.userId) {
-          // Fallback to session-based auth if Passport fails
-          const userId = req.session.userId;
-          const user = await storage.getUser(userId);
-
-          if (user) {
-            return res.json({
-              id: user.id,
-              username: user.username,
-              displayName: user.displayName,
-              isAdmin: user.isAdmin,
-              isPro: user.isPro,
-              isPremium: user.isPremium,
-              brandTheme: user.brandTheme,
-              logoUrl: user.logoUrl,
-            });
-          }
         }
-        
-        // If we get here, user is not authenticated or not found
+
+        console.log("No valid authentication found");
         return res.status(401).json({ message: "Not authenticated" });
       } catch (error) {
         console.error("Get current user error:", error);
