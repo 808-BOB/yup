@@ -1290,9 +1290,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (parseInt(existingUser[0].count) === 0) {
         console.log("Test user doesn't exist, creating...");
         const [newUser] = await db.insert(users).values({
+          id: "testuser-id-123",  // Use a static ID for consistent testing
           username: "testuser",
           password: "password",
-          display_name: "Test User",
+          display_name: "Test User", // Use snake_case to match DB column
+          email: "testuser@example.com",
           is_admin: false,
           is_pro: false,
           is_premium: false
