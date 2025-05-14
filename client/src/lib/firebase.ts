@@ -40,9 +40,17 @@ export const signInWithGoogle = async () => {
   try {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error signing in with Google:", error);
-    throw error;
+    
+    // Provide more specific error messages
+    if (error.code === 'auth/configuration-not-found') {
+      throw new Error("Google sign-in is not properly configured in Firebase. Please ensure Google is enabled in the Firebase Authentication console.");
+    } else if (error.code === 'auth/unauthorized-domain') {
+      throw new Error("This domain is not authorized for Firebase Authentication. Please add it to the authorized domains in the Firebase console.");
+    } else {
+      throw error;
+    }
   }
 };
 
@@ -50,9 +58,17 @@ export const signInWithApple = async () => {
   try {
     const result = await signInWithPopup(auth, appleProvider);
     return result.user;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error signing in with Apple:", error);
-    throw error;
+    
+    // Provide more specific error messages
+    if (error.code === 'auth/configuration-not-found') {
+      throw new Error("Apple sign-in is not properly configured in Firebase. Please ensure Apple is enabled in the Firebase Authentication console.");
+    } else if (error.code === 'auth/unauthorized-domain') {
+      throw new Error("This domain is not authorized for Firebase Authentication. Please add it to the authorized domains in the Firebase console.");
+    } else {
+      throw error;
+    }
   }
 };
 
