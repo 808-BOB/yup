@@ -1232,6 +1232,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Apple Sign In notification endpoint
+  app.post("/api/auth/apple/callback", async (req: Request, res: Response) => {
+    try {
+      console.log("Received Apple server-to-server notification:", req.body);
+      
+      // Handle different notification types
+      const eventType = req.body.type;
+      const subType = req.body.sub_type;
+      const userId = req.body.sub; // Apple User ID
+      
+      switch (eventType) {
+        case 'email-disabled':
+        case 'email-enabled':
+          console.log(`User ${userId} email preferences changed to: ${eventType}`);
+          break;
+          
+        case 'consent-revoked':
+          console.log(`User ${userId} revoked consent`);
+          // You might want to delete the user's data or mark them as inactive
+          break;
+          
+        case 'account-delete':
+          console.log(`User ${userId} deleted their Apple account`);
+          // Delete the user's account or mark it as deleted
+          break;
+          
+        default:
+          console.log(`Unhandled Apple notification type: ${eventType}`);
+      }
+      
+      // Always return 200 to acknowledge receipt
+      return res.status(200).send();
+    } catch (error) {
+      console.error("Error processing Apple notification:", error);
+      // Still return 200 to prevent Apple from retrying
+      return res.status(200).send();
+    }
+  });
+  
   // Debug endpoint to check login credentials
   app.get("/api/debug/check-login/:username/:password", async (req: Request, res: Response) => {
     try {
