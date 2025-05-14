@@ -38,29 +38,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Listen for Firebase auth state changes
+  // Check for traditional session auth on startup
   useEffect(() => {
-    const unsubscribe = onAuthStateChange(async (firebaseUser) => {
-      if (firebaseUser) {
-        // User is signed in, sync with our backend
-        await syncUserWithBackend(firebaseUser);
-      } else {
+    const checkAuth = async () => {
+      try {
         // Try to get user from traditional auth
-        try {
-          const userData = await apiRequest<User>("GET", "/api/auth/me", undefined, { credentials: 'include' });
-          setUser(userData);
-        } catch (err) {
-          // User is not logged in with either method
-          setUser(null);
-          console.log("Not logged in");
-        } finally {
-          setIsLoading(false);
-        }
+        const userData = await apiRequest<User>("GET", "/api/auth/me", undefined, { credentials: 'include' });
+        setUser(userData);
+        console.log("User session found:", userData?.username);
+      } catch (err) {
+        // User is not logged in
+        setUser(null);
+        console.log("Not logged in");
+      } finally {
+        setIsLoading(false);
       }
-    });
-
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
+    };
+    
+    checkAuth();
   }, []);
 
   // Sync Firebase user data with our backend
@@ -95,14 +90,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log("AuthContext: Attempting login with username:", username);
 
     try {
-      // Make sure we're using the correct endpoint with proper credentials
-      const userData = await apiRequest<User>(
-        "POST", 
-        "/api/auth/login", 
-        { username, password },
-        { credentials: 'include' }
-      );
+      // Simple direct endpoint call with debug logging
+      console.log("Sending login request to /api/auth/login");
       
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+        credentials: "include"
+      });
+      
+      console.log("Login response status:", response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Login failed:", response.status, errorText);
+        throw new Error(`${response.status}: ${errorText}`);
+      }
+      
+      const userData = await response.json();
       console.log("AuthContext: Login successful, user data:", userData);
       setUser(userData);
     } catch (err) {

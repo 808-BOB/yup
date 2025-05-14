@@ -44,9 +44,10 @@ export default function Login() {
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsSubmitting(true);
-    console.log("Login attempt with username:", data.username);
+    console.log("Login attempt with username:", data.username, "password:", data.password);
 
     try {
+      console.log("Calling login function...");
       await login(data.username, data.password);
       console.log("Login successful");
       toast({
@@ -56,9 +57,13 @@ export default function Login() {
       setLocation("/my-events");
     } catch (error) {
       console.error("Login error details:", error);
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Unknown error during login";
+      
       toast({
-        title: "Error",
-        description: "Invalid username or password. Please try again.",
+        title: "Login Failed",
+        description: "Invalid username or password. Please try again with 'subourbon' and 'events'.",
         variant: "destructive",
       });
     } finally {
@@ -214,6 +219,19 @@ export default function Login() {
             >
               Sign up
             </span>
+          </p>
+          <p className="text-gray-400 text-sm mt-2">
+            <a 
+              href="/api/debug/users" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-primary hover:text-primary/80 cursor-pointer"
+            >
+              Generate Test User
+            </a>
+          </p>
+          <p className="text-gray-400 text-xs mt-1">
+            Test credentials: username <span className="font-bold">subourbon</span> with password <span className="font-bold">events</span>
           </p>
         </div>
       </div>
