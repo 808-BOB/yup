@@ -738,14 +738,28 @@ export class MemStorage implements IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  async getUser(id: number): Promise<User | undefined> {
+  async getUser(id: string): Promise<User | undefined> {
+    console.log("Looking for user with ID:", id);
     const [user] = await db.select().from(users).where(eq(users.id, id));
+    console.log("User lookup result:", user ? "Found" : "Not found");
     return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user || undefined;
+    console.log("Looking for user with username:", username);
+    try {
+      const [user] = await db.select().from(users).where(eq(users.username, username));
+      console.log("User by username lookup result:", {
+        found: !!user,
+        userId: user?.id,
+        username: user?.username,
+        password: user?.password
+      });
+      return user || undefined;
+    } catch (error) {
+      console.error("Error looking up user by username:", error);
+      throw error;
+    }
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
@@ -781,7 +795,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
+  async updateUser(id: string, userData: Partial<User>): Promise<User | undefined> {
     const [updatedUser] = await db
       .update(users)
       .set(userData)
@@ -790,7 +804,7 @@ export class DatabaseStorage implements IStorage {
     return updatedUser || undefined;
   }
 
-  async updateUserBranding(id: number, brandData: { brandTheme?: string, logoUrl?: string }): Promise<User | undefined> {
+  async updateUserBranding(id: string, brandData: { brandTheme?: string, logoUrl?: string }): Promise<User | undefined> {
     const [updatedUser] = await db
       .update(users)
       .set(brandData)
@@ -799,7 +813,7 @@ export class DatabaseStorage implements IStorage {
     return updatedUser || undefined;
   }
   
-  async updateStripeCustomerId(userId: number, customerId: string): Promise<User | undefined> {
+  async updateStripeCustomerId(userId: string, customerId: string): Promise<User | undefined> {
     const [updatedUser] = await db
       .update(users)
       .set({ stripeCustomerId: customerId })
@@ -808,7 +822,7 @@ export class DatabaseStorage implements IStorage {
     return updatedUser || undefined;
   }
 
-  async updateStripeSubscriptionId(userId: number, subscriptionId: string): Promise<User | undefined> {
+  async updateStripeSubscriptionId(userId: string, subscriptionId: string): Promise<User | undefined> {
     const [updatedUser] = await db
       .update(users)
       .set({ stripeSubscriptionId: subscriptionId })
@@ -817,7 +831,7 @@ export class DatabaseStorage implements IStorage {
     return updatedUser || undefined;
   }
 
-  async updateUserStripeInfo(userId: number, stripeData: { 
+  async updateUserStripeInfo(userId: string, stripeData: { 
     stripeCustomerId?: string, 
     stripeSubscriptionId?: string 
   }): Promise<User | undefined> {
