@@ -145,12 +145,13 @@ export default function Login() {
                     title: "Success",
                     description: "Signed in with Google.",
                   });
-                } catch (error) {
+                } catch (error: any) {
                   toast({
-                    title: "Error",
-                    description: "Failed to sign in with Google.",
+                    title: "Authentication Error",
+                    description: error.message || "Failed to sign in with Google.",
                     variant: "destructive",
                   });
+                  console.error("Google sign-in error details:", error);
                 } finally {
                   setIsSocialLoading(null);
                 }
@@ -178,12 +179,13 @@ export default function Login() {
                     title: "Success",
                     description: "Signed in with Apple.",
                   });
-                } catch (error) {
+                } catch (error: any) {
                   toast({
-                    title: "Error",
-                    description: "Failed to sign in with Apple.",
+                    title: "Authentication Error",
+                    description: error.message || "Failed to sign in with Apple.",
                     variant: "destructive", 
                   });
+                  console.error("Apple sign-in error details:", error);
                 } finally {
                   setIsSocialLoading(null);
                 }
