@@ -2,7 +2,7 @@ import express, { type Express, Request, Response, NextFunction } from "express"
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 // Import auth systems
 import { setupAuth as setupLinkedInAuth } from "./auth";
 import { verifyFirebaseToken } from "./firebaseAdmin";
@@ -1182,10 +1182,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `);
       }
       
-      // Set user ID in session
+      // Print out the user object to see what properties we're getting
+      console.log("User data from DB for debugging:", JSON.stringify(user, null, 2));
+      
+      // Set user ID in session - this is the critical part
       req.session.userId = user.id;
       
-      console.log("Force login successful for:", username);
+      console.log("Force login successful for:", username, "with ID:", user.id);
+      
       return res.send(`
         <html>
           <head>
@@ -1201,8 +1205,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           </head>
           <body>
             <h1>Force Login Successful</h1>
-            <p class="success">You are now logged in as ${user.display_name} (${user.username}).</p>
+            <p class="success">You are now logged in as ${username}.</p>
             <p><a href="/my-events">Go to My Events</a></p>
+            <p><a href="/">Go to Homepage</a></p>
           </body>
         </html>
       `);
@@ -1268,6 +1273,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error processing Apple notification:", error);
       // Still return 200 to prevent Apple from retrying
       return res.status(200).send();
+    }
+  });
+  
+  // Create a test user with known credentials
+  app.get("/api/create-test-user", async (_req: Request, res: Response) => {
+    try {
+      console.log("Creating test user...");
+      
+      // Check if user already exists
+      const existingUser = await db.select({ count: sql`count(*)` })
+        .from(users)
+        .where(eq(users.username, 'testuser'));
+      
+      // If user doesn't exist, create it
+      if (parseInt(existingUser[0].count) === 0) {
+        console.log("Test user doesn't exist, creating...");
+        const [newUser] = await db.insert(users).values({
+          username: "testuser",
+          password: "password",
+          display_name: "Test User",
+          is_admin: false,
+          is_pro: false,
+          is_premium: false
+        }).returning();
+        
+        console.log("Debug - Created test user:", newUser);
+        return res.json({ 
+          message: "Test user created successfully", 
+          user: {
+            id: newUser.id,
+            username: newUser.username
+          }
+        });
+      }
+      
+      return res.json({ message: "Test user already exists" });
+    } catch (error) {
+      console.error("Error creating test user:", error);
+      return res.status(500).json({ error: String(error) });
     }
   });
   
