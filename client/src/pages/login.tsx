@@ -91,7 +91,7 @@ export default function Login() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">
-                    Username
+                    Username <span className="text-primary ml-1">*</span>
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -111,7 +111,7 @@ export default function Login() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">
-                    Password
+                    Password <span className="text-primary ml-1">*</span>
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -222,7 +222,7 @@ export default function Login() {
           </p>
           <p className="text-gray-400 text-sm mt-2">
             <a 
-              href="/api/debug/users" 
+              href="/api/create-test-user" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-primary hover:text-primary/80 cursor-pointer"
