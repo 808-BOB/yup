@@ -200,11 +200,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             id: "subourbon_" + Date.now(),
             username: "subourbon",
             password: "events",
-            displayName: "Sub Ourbon",
+            display_name: "Sub Ourbon", // Use snake_case for database column names
             email: "subourbon@example.com",
-            isAdmin: true,
-            isPro: true,
-            isPremium: true
+            is_admin: true,
+            is_pro: true,
+            is_premium: true
           }).returning();
           
           console.log("Created subourbon user:", bourbon);
@@ -258,19 +258,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Returning user data:", {
         id: user.id,
         username: user.username,
-        displayName: user.displayName,
+        displayName: user.display_name,
       });
       
       // Return user info without password
       return res.json({
         id: user.id,
         username: user.username,
-        displayName: user.displayName,
-        isAdmin: user.isAdmin,
-        isPro: user.isPro,
-        isPremium: user.isPremium,
-        brandTheme: user.brandTheme,
-        logoUrl: user.logoUrl,
+        displayName: user.display_name,
+        isAdmin: user.is_admin,
+        isPro: user.is_pro,
+        isPremium: user.is_premium,
+        brandTheme: user.brand_theme,
+        logoUrl: user.logo_url,
       });
     } catch (error) {
       console.error("Login error:", error);
