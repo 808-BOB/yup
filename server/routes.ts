@@ -2,6 +2,7 @@ import express, { type Express, Request, Response, NextFunction } from "express"
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
+import { eq } from "drizzle-orm";
 // Import auth systems
 import { setupAuth as setupLinkedInAuth } from "./auth";
 import { verifyFirebaseToken } from "./firebaseAdmin";
@@ -1026,6 +1027,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error creating payment intent:', error);
       res.status(500).json({ message: 'Failed to create payment intent' });
+    }
+  });
+
+  // Debug endpoint to check database connection and users
+  app.get("/api/debug/users", async (_req: Request, res: Response) => {
+    try {
+      const allUsers = await db.select().from(users);
+      console.log("Debug - Total users in database:", allUsers.length);
+      
+      if (allUsers.length > 0) {
+        console.log("Debug - First user:", {
+          id: allUsers[0].id,
+          username: allUsers[0].username,
+          password: allUsers[0].password 
+        });
+      } else {
+        console.log("Debug - No users found in database!");
+      }
+      
+      // Create a test user if none exists
+      if (allUsers.length === 0) {
+        console.log("Debug - Creating a test user 'testuser'");
+        const [newUser] = await db.insert(users).values({
+          id: "testuser_" + Date.now(),
+          username: "testuser",
+          password: "password",
+          displayName: "Test User",
+          isAdmin: false,
+          isPro: false,
+          isPremium: false
+        }).returning();
+        
+        console.log("Debug - Created test user:", newUser);
+      }
+      
+      return res.json({
+        userCount: allUsers.length,
+        users: allUsers.map(u => ({
+          id: u.id,
+          username: u.username,
+          displayName: u.displayName,
+          password: u.password // Only showing in debug endpoint
+        }))
+      });
+    } catch (error) {
+      console.error("Debug endpoint error:", error);
+      return res.status(500).json({ error: String(error) });
     }
   });
 
