@@ -92,15 +92,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (username: string, password: string) => {
     setIsLoading(true);
     setError(null);
+    console.log("AuthContext: Attempting login with username:", username);
 
     try {
-      const userData = await apiRequest<User>("POST", "/api/auth/login", {
-        username,
-        password,
-      });
-
+      // Make sure we're using the correct endpoint with proper credentials
+      const userData = await apiRequest<User>(
+        "POST", 
+        "/api/auth/login", 
+        { username, password },
+        { credentials: 'include' }
+      );
+      
+      console.log("AuthContext: Login successful, user data:", userData);
       setUser(userData);
     } catch (err) {
+      console.error("AuthContext: Login error:", err);
       setError("Invalid username or password");
       throw err;
     } finally {

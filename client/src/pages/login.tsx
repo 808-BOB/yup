@@ -44,15 +44,18 @@ export default function Login() {
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsSubmitting(true);
+    console.log("Login attempt with username:", data.username);
 
     try {
       await login(data.username, data.password);
+      console.log("Login successful");
       toast({
         title: "Success",
         description: "You have been logged in successfully.",
       });
       setLocation("/my-events");
     } catch (error) {
+      console.error("Login error details:", error);
       toast({
         title: "Error",
         description: "Invalid username or password. Please try again.",
