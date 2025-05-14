@@ -189,31 +189,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Querying database for user:", username);
       
       // Get all users directly from database to see who is available
-      const allUsers = await db.select().from(users);
+      let allUsers = await db.select().from(users);
       console.log("Total users in database:", allUsers.length);
+      
+      // Always create the subourbon test user if it doesn't exist
+      if (allUsers.length === 0 || !allUsers.find(u => u.username === "subourbon")) {
+        console.log("Creating test user 'subourbon'");
+        try {
+          const [bourbon] = await db.insert(users).values({
+            id: "subourbon_" + Date.now(),
+            username: "subourbon",
+            password: "events",
+            displayName: "Sub Ourbon",
+            email: "subourbon@example.com",
+            isAdmin: true,
+            isPro: true,
+            isPremium: true
+          }).returning();
+          
+          console.log("Created subourbon user:", bourbon);
+          
+          // Refresh the users list after creating test user
+          allUsers = await db.select().from(users);
+        } catch (error) {
+          console.error("Error creating test user:", error);
+        }
+      }
       
       if (allUsers.length > 0) {
         console.log("Database users:", allUsers.map(u => ({ 
+          id: u.id,
           username: u.username, 
           password: u.password
         })));
-      } else {
-        console.log("No users found in database!");
-        
-        // If no users exist, create the subourbon test user
-        console.log("Creating test user 'subourbon'");
-        const [bourbon] = await db.insert(users).values({
-          id: "subourbon_" + Date.now(),
-          username: "subourbon",
-          password: "events",
-          displayName: "Sub Ourbon",
-          email: "subourbon@example.com",
-          isAdmin: true,
-          isPro: true,
-          isPremium: true
-        }).returning();
-        
-        console.log("Created subourbon user:", bourbon);
       }
       
       // Find user by username directly with database query
@@ -242,31 +250,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      // Add user to session
+      // Add user to session - this is the critical part for traditional auth
       req.session.userId = user.id;
-      console.log("User authenticated, session created for:", user.id);
       
-      // Log the user in with Passport's login
-      req.login(user, (err) => {
-        if (err) {
-          console.error("Error during req.login:", err);
-          return res.status(500).json({ message: "Error during login" });
-        }
-        
-        // Continue with returning user info
-        console.log("Passport login successful, returning user data");
-        
-        // Return user info without password
-        return res.json({
-          id: user.id,
-          username: user.username,
-          displayName: user.displayName,
-          isAdmin: user.isAdmin,
-          isPro: user.isPro,
-          isPremium: user.isPremium,
-          brandTheme: user.brandTheme,
-          logoUrl: user.logoUrl,
-        });
+      // Return user info immediately instead of using Passport
+      console.log("User authenticated, session created for:", user.id);
+      console.log("Returning user data:", {
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
+      });
+      
+      // Return user info without password
+      return res.json({
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
+        isAdmin: user.isAdmin,
+        isPro: user.isPro,
+        isPremium: user.isPremium,
+        brandTheme: user.brandTheme,
+        logoUrl: user.logoUrl,
       });
     } catch (error) {
       console.error("Login error:", error);
@@ -289,8 +293,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/auth/me",
     async (req: Request, res: Response) => {
       try {
-        // Check if user is authenticated via session
-        if (req.session && req.session.userId) {
+        // Check if user is authenticated via session or Passport
+        if (req.isAuthenticated() && req.user) {
+          // Passport already has the user object, return it
+          const user = req.user;
+          return res.json({
+            id: user.id,
+            username: user.username,
+            displayName: user.displayName,
+            isAdmin: user.isAdmin,
+            isPro: user.isPro,
+            isPremium: user.isPremium,
+            brandTheme: user.brandTheme,
+            logoUrl: user.logoUrl,
+          });
+        } else if (req.session && req.session.userId) {
+          // Fallback to session-based auth if Passport fails
           const userId = req.session.userId;
           const user = await storage.getUser(userId);
 
