@@ -1138,6 +1138,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ error: String(error) });
     }
   });
+  
+  // Special endpoint just for creating the test user
+  app.get("/api/create-test-user", async (_req: Request, res: Response) => {
+    try {
+      // Check if the test user already exists
+      const [existingUser] = await db.select().from(users).where(eq(users.username, "subourbon"));
+      
+      if (existingUser) {
+        console.log("Test user already exists:", {
+          id: existingUser.id,
+          username: existingUser.username,
+          password: existingUser.password
+        });
+        
+        return res.send(`
+          <html>
+            <head>
+              <title>Test User Already Exists</title>
+              <style>
+                body { font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 2rem; line-height: 1.5; }
+                h1 { color: #4f46e5; }
+                .warning { color: #f59e0b; font-weight: bold; }
+                .code { background: #f1f5f9; padding: 0.5rem; border-radius: 0.25rem; font-family: monospace; }
+                a { color: #4f46e5; text-decoration: none; }
+                a:hover { text-decoration: underline; }
+              </style>
+            </head>
+            <body>
+              <h1>Test User Already Exists</h1>
+              <p class="warning">The test user already exists in the database.</p>
+              <p>You can login with the following credentials:</p>
+              <p><strong>Username:</strong> <span class="code">subourbon</span></p>
+              <p><strong>Password:</strong> <span class="code">events</span></p>
+              <p><a href="/login">Go to login page</a></p>
+            </body>
+          </html>
+        `);
+      }
+      
+      // Create a new test user
+      console.log("Creating test user 'subourbon'");
+      const [bourbon] = await db.insert(users).values({
+        id: "subourbon_" + Date.now(),
+        username: "subourbon",
+        password: "events",
+        displayName: "Sub Ourbon",
+        email: "subourbon@example.com",
+        isAdmin: true,
+        isPro: true,
+        isPremium: true
+      }).returning();
+      
+      console.log("Created test user:", bourbon);
+      
+      return res.send(`
+        <html>
+          <head>
+            <title>Test User Created</title>
+            <style>
+              body { font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 2rem; line-height: 1.5; }
+              h1 { color: #4f46e5; }
+              .success { color: #10b981; font-weight: bold; }
+              .code { background: #f1f5f9; padding: 0.5rem; border-radius: 0.25rem; font-family: monospace; }
+              a { color: #4f46e5; text-decoration: none; }
+              a:hover { text-decoration: underline; }
+            </style>
+          </head>
+          <body>
+            <h1>Test User Created Successfully</h1>
+            <p class="success">The test user has been created and is ready to use.</p>
+            <p>Login with the following credentials:</p>
+            <p><strong>Username:</strong> <span class="code">subourbon</span></p>
+            <p><strong>Password:</strong> <span class="code">events</span></p>
+            <p><a href="/login">Go to login page</a></p>
+          </body>
+        </html>
+      `);
+    } catch (error) {
+      console.error("Error creating test user:", error);
+      return res.status(500).send(`Error creating test user: ${error}`);
+    }
+  });
 
   const httpServer = createServer(app);
 
