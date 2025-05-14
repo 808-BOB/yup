@@ -187,16 +187,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("Querying database for user:", username);
       
-      // First try to find all users to check if database is working
+      // Get all users directly from database to see who is available
       const allUsers = await db.select().from(users);
       console.log("Total users in database:", allUsers.length);
-      console.log("Database users:", allUsers.map(u => u.username));
       
-      // Check if user exists & password matches
-      const user = await storage.getUserByUsername(username);
-      console.log("User lookup result:", { 
+      if (allUsers.length > 0) {
+        console.log("Database users:", allUsers.map(u => ({ 
+          username: u.username, 
+          password: u.password
+        })));
+      } else {
+        console.log("No users found in database!");
+      }
+      
+      // Find user by username directly with database query
+      const [user] = await db.select().from(users).where(eq(users.username, username));
+      
+      console.log("Direct DB user lookup result:", { 
         found: !!user, 
         userId: user?.id,
+        storedUsername: user?.username,
         storedPassword: user?.password
       });
       
