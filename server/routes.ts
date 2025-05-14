@@ -1150,6 +1150,140 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Debug endpoint to force login as a user
+  app.get("/api/debug/force-login/:username", async (req: Request, res: Response) => {
+    try {
+      const { username } = req.params;
+      console.log("Force login as:", username);
+      
+      // Check if user exists
+      const [user] = await db.select().from(users).where(eq(users.username, username));
+      
+      if (!user) {
+        console.log("User not found for force login:", username);
+        return res.status(404).send(`
+          <html>
+            <head>
+              <title>Force Login Failed</title>
+              <style>
+                body { font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 2rem; line-height: 1.5; }
+                h1 { color: #ef4444; }
+                .error { color: #ef4444; font-weight: bold; }
+                a { color: #4f46e5; text-decoration: none; }
+                a:hover { text-decoration: underline; }
+              </style>
+            </head>
+            <body>
+              <h1>Force Login Failed</h1>
+              <p class="error">User "${username}" not found.</p>
+              <p><a href="/login">Return to login page</a></p>
+            </body>
+          </html>
+        `);
+      }
+      
+      // Set user ID in session
+      req.session.userId = user.id;
+      
+      console.log("Force login successful for:", username);
+      return res.send(`
+        <html>
+          <head>
+            <title>Force Login Successful</title>
+            <style>
+              body { font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 2rem; line-height: 1.5; }
+              h1 { color: #10b981; }
+              .success { color: #10b981; font-weight: bold; }
+              .code { background: #f1f5f9; padding: 0.5rem; border-radius: 0.25rem; font-family: monospace; }
+              a { color: #4f46e5; text-decoration: none; }
+              a:hover { text-decoration: underline; }
+            </style>
+          </head>
+          <body>
+            <h1>Force Login Successful</h1>
+            <p class="success">You are now logged in as ${user.displayName} (${user.username}).</p>
+            <p><a href="/my-events">Go to My Events</a></p>
+          </body>
+        </html>
+      `);
+    } catch (error) {
+      console.error("Error in force login:", error);
+      return res.status(500).send(`
+        <html>
+          <head>
+            <title>Force Login Error</title>
+            <style>
+              body { font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 2rem; line-height: 1.5; }
+              h1 { color: #ef4444; }
+              .error { color: #ef4444; font-weight: bold; }
+              pre { background: #f1f5f9; padding: 1rem; border-radius: 0.25rem; overflow: auto; }
+              a { color: #4f46e5; text-decoration: none; }
+              a:hover { text-decoration: underline; }
+            </style>
+          </head>
+          <body>
+            <h1>Force Login Error</h1>
+            <p class="error">An error occurred while trying to force login.</p>
+            <pre>${String(error)}</pre>
+            <p><a href="/login">Return to login page</a></p>
+          </body>
+        </html>
+      `);
+    }
+  });
+  
+  // Debug endpoint to check login credentials
+  app.get("/api/debug/check-login/:username/:password", async (req: Request, res: Response) => {
+    try {
+      const { username, password } = req.params;
+      console.log("Checking credentials for:", username);
+      
+      // Check if user exists
+      const [user] = await db.select().from(users).where(eq(users.username, username));
+      
+      if (!user) {
+        console.log("User not found:", username);
+        return res.json({ 
+          success: false, 
+          message: "User not found",
+          username
+        });
+      }
+      
+      // Check if password matches
+      console.log("Password check:", {
+        storedPassword: user.password,
+        providedPassword: password,
+        matches: user.password === password
+      });
+      
+      if (user.password !== password) {
+        return res.json({ 
+          success: false, 
+          message: "Password incorrect",
+          username
+        });
+      }
+      
+      return res.json({ 
+        success: true, 
+        message: "Login credentials valid",
+        user: {
+          id: user.id,
+          username: user.username,
+          displayName: user.displayName
+        }
+      });
+    } catch (error) {
+      console.error("Error checking credentials:", error);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Server error",
+        error: String(error)
+      });
+    }
+  });
+  
   // Special endpoint just for creating the test user
   app.get("/api/create-test-user", async (_req: Request, res: Response) => {
     try {
