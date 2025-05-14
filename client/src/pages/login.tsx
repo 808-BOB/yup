@@ -254,9 +254,77 @@ export default function Login() {
               Generate Test User
             </a>
           </p>
-          <p className="text-gray-400 text-xs mt-1">
-            Test credentials: username <span className="font-bold">subourbon</span> with password <span className="font-bold">events</span>
-          </p>
+          
+          {/* Debug Tools Section */}
+          <div className="mt-4">
+            <div className="bg-emerald-900/20 border border-emerald-500/20 p-3 rounded-md">
+              <p className="text-emerald-300 text-sm font-medium mb-2">
+                👋 Having trouble logging in?
+              </p>
+              <p className="text-emerald-200/80 text-xs mb-2">
+                Use our instant login feature to bypass the regular login flow. This will create the test account if needed and log you in directly.
+              </p>
+              <p className="text-gray-400 text-xs mb-3">
+                Test credentials: username <span className="font-bold">subourbon</span> with password <span className="font-bold">events</span>
+              </p>
+              <div className="flex gap-2 justify-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="text-xs px-3 py-1 h-auto border-primary/50 text-primary hover:bg-primary/10"
+                  onClick={() => {
+                    form.setValue('username', 'subourbon');
+                    form.setValue('password', 'events');
+                    setTimeout(() => {
+                      form.handleSubmit(onSubmit)();
+                    }, 300);
+                  }}
+                >
+                  Login as Test User
+                </Button>
+                
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs px-3 py-1 h-auto text-amber-400 hover:bg-amber-500/10 hover:text-amber-500"
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(`/api/debug/check-login/subourbon/events`);
+                      const data = await res.json();
+                      
+                      toast({
+                        title: data.success ? "Test Success" : "Test Failed",
+                        description: data.message,
+                        variant: data.success ? "default" : "destructive"
+                      });
+                      
+                      console.log("Credentials check result:", data);
+                    } catch (error) {
+                      toast({
+                        title: "Error",
+                        description: "Could not check credentials",
+                        variant: "destructive"
+                      });
+                      console.error("Error checking credentials:", error);
+                    }
+                  }}
+                >
+                  Check Credentials
+                </Button>
+                
+                <a 
+                  href="/api/debug/force-login/subourbon" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs px-3 py-1 rounded-md bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 hover:text-emerald-300 flex items-center justify-center"
+                >
+                  Force Login
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
