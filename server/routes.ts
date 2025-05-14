@@ -1201,7 +1201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           </head>
           <body>
             <h1>Force Login Successful</h1>
-            <p class="success">You are now logged in as ${user.displayName} (${user.username}).</p>
+            <p class="success">You are now logged in as ${user.display_name} (${user.username}).</p>
             <p><a href="/my-events">Go to My Events</a></p>
           </body>
         </html>
