@@ -1,12 +1,14 @@
 import express, { type Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { db } from "./db";
 // Import auth systems
 import { setupAuth as setupLinkedInAuth } from "./auth";
 import { verifyFirebaseToken } from "./firebaseAdmin";
 import session from "express-session";
 import passport from "passport";
 import { generateUsername } from "@shared/utils";
+import { users } from "@shared/schema";
 
 import Stripe from "stripe";
 import { createCheckoutSession, createCustomerPortalSession } from "./stripe";
@@ -175,7 +177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
-      console.log("Login attempt:", { username: req.body.username });
+      console.log("Login attempt:", { username: req.body.username, password: req.body.password ? "provided" : "missing" });
       const { username, password } = req.body;
 
       if (!username || !password) {
@@ -183,12 +185,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Username and password are required" });
       }
 
+      console.log("Querying database for user:", username);
+      
+      // First try to find all users to check if database is working
+      const allUsers = await db.select().from(users);
+      console.log("Total users in database:", allUsers.length);
+      console.log("Database users:", allUsers.map(u => u.username));
+      
       // Check if user exists & password matches
       const user = await storage.getUserByUsername(username);
-      console.log("User lookup result:", { found: !!user, userId: user?.id });
+      console.log("User lookup result:", { 
+        found: !!user, 
+        userId: user?.id,
+        storedPassword: user?.password
+      });
       
-      if (!user || user.password !== password) {
-        console.log("Invalid credentials");
+      if (!user) {
+        console.log("User not found");
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+      
+      console.log("Password comparison:", {
+        providedPassword: password,
+        storedPassword: user.password,
+        matches: user.password === password
+      });
+      
+      if (user.password !== password) {
+        console.log("Password mismatch");
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
