@@ -199,6 +199,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })));
       } else {
         console.log("No users found in database!");
+        
+        // If no users exist, create the subourbon test user
+        console.log("Creating test user 'subourbon'");
+        const [bourbon] = await db.insert(users).values({
+          id: "subourbon_" + Date.now(),
+          username: "subourbon",
+          password: "events",
+          displayName: "Sub Ourbon",
+          email: "subourbon@example.com",
+          isAdmin: true,
+          isPro: true,
+          isPremium: true
+        }).returning();
+        
+        console.log("Created subourbon user:", bourbon);
       }
       
       // Find user by username directly with database query
@@ -230,17 +245,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add user to session
       req.session.userId = user.id;
       console.log("User authenticated, session created for:", user.id);
-
-      // Return user info without password
-      return res.json({
-        id: user.id,
-        username: user.username,
-        displayName: user.displayName,
-        isAdmin: user.isAdmin,
-        isPro: user.isPro,
-        isPremium: user.isPremium,
-        brandTheme: user.brandTheme,
-        logoUrl: user.logoUrl,
+      
+      // Log the user in with Passport's login
+      req.login(user, (err) => {
+        if (err) {
+          console.error("Error during req.login:", err);
+          return res.status(500).json({ message: "Error during login" });
+        }
+        
+        // Continue with returning user info
+        console.log("Passport login successful, returning user data");
+        
+        // Return user info without password
+        return res.json({
+          id: user.id,
+          username: user.username,
+          displayName: user.displayName,
+          isAdmin: user.isAdmin,
+          isPro: user.isPro,
+          isPremium: user.isPremium,
+          brandTheme: user.brandTheme,
+          logoUrl: user.logoUrl,
+        });
       });
     } catch (error) {
       console.error("Login error:", error);
@@ -1046,9 +1072,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Debug - No users found in database!");
       }
       
-      // Create a test user if none exists
-      if (allUsers.length === 0) {
-        console.log("Debug - Creating a test user 'testuser'");
+      // Create test users if none exist
+      if (allUsers.length === 0 || !allUsers.find(u => u.username === "subourbon")) {
+        // Create subourbon test user
+        console.log("Debug - Creating test user 'subourbon'");
+        const [bourbon] = await db.insert(users).values({
+          id: "subourbon_" + Date.now(),
+          username: "subourbon",
+          password: "events",
+          displayName: "Sub Ourbon",
+          email: "subourbon@example.com",
+          isAdmin: true,
+          isPro: true,
+          isPremium: true
+        }).returning();
+        
+        console.log("Debug - Created subourbon user:", bourbon);
+      }
+      
+      // Always ensure testuser exists
+      if (allUsers.length === 0 || !allUsers.find(u => u.username === "testuser")) {
+        console.log("Debug - Creating test user 'testuser'");
         const [newUser] = await db.insert(users).values({
           id: "testuser_" + Date.now(),
           username: "testuser",

@@ -106,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log("AuthContext: Login successful, user data:", userData);
       setUser(userData);
     } catch (err) {
-      console.error("AuthContext: Login error:", err);
+      console.error("AuthContext: Login error:", err instanceof Error ? err.message : err);
       setError("Invalid username or password");
       throw err;
     } finally {
