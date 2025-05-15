@@ -164,12 +164,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(200).json({
           id: user.id,
           username: user.username,
-          displayName: user.display_name || "",
+          displayName: user.displayName || "",
           email: user.email,
-          profileImageUrl: user.profile_image_url,
-          isAdmin: !!user.is_admin,
-          isPro: !!user.is_pro,
-          isPremium: !!user.is_premium
+          profileImageUrl: user.profileImageUrl,
+          isAdmin: !!user.isAdmin,
+          isPro: !!user.isPro,
+          isPremium: !!user.isPremium
         });
       } catch (sessionErr) {
         console.error("Firebase auth: Session save error:", sessionErr);
@@ -412,17 +412,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         });
         
-        // Map the database fields (snake_case) to client-expected fields (camelCase)
+        // Return user data in the expected format
         return res.json({
           id: user.id,
           username: user.username,
-          displayName: user.display_name || "",
-          isAdmin: !!user.is_admin,
-          isPro: !!user.is_pro,
-          isPremium: !!user.is_premium,
-          profileImageUrl: user.profile_image_url || null,
-          brandTheme: user.brand_theme || "{}",
-          logoUrl: user.logo_url || null
+          displayName: user.displayName || "",
+          isAdmin: !!user.isAdmin,
+          isPro: !!user.isPro,
+          isPremium: !!user.isPremium,
+          profileImageUrl: user.profileImageUrl || null,
+          brandTheme: user.brandTheme || "{}",
+          logoUrl: user.logoUrl || null
         });
       } catch (standardErr) {
         console.error("Error in standard login flow:", standardErr);
