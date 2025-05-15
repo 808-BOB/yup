@@ -382,9 +382,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Using standard login flow");
       
       try {
-        // Find user by username directly with database query
-        const [user] = await db.select().from(users).where(eq(users.username, username));
+        // Find user by username directly using raw SQL to avoid column mapping issues
+        const result = await db.execute(sql`
+          SELECT * FROM users WHERE username = ${username}
+        `);
         
+        const user = result.rows && result.rows.length > 0 ? result.rows[0] : null;
         console.log("User lookup result:", { found: !!user });
         
         if (!user) {
@@ -1494,54 +1497,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Create a test user with known credentials
-  app.get("/api/create-test-user", async (_req: Request, res: Response) => {
-    try {
-      console.log("Creating test user...");
-      
-      // Check if user already exists
-      const existingUser = await db.select({ count: sql`count(*)` })
-        .from(users)
-        .where(eq(users.username, 'testuser'));
-      
-      // If user doesn't exist, create it
-      if (parseInt(existingUser[0].count) === 0) {
-        console.log("Test user doesn't exist, creating...");
-        
-        try {
-          // Use raw SQL to avoid column mapping issues
-          await db.execute(sql`
-            INSERT INTO users (
-              id, username, password, display_name, email,
-              is_admin, is_pro, is_premium
-            ) VALUES (
-              'testuser-id-123', 'testuser', 'password', 'Test User', 'testuser@example.com',
-              false, false, false
-            )
-          `);
-          
-          // Fetch the created user to return
-          const [newUser] = await db.select().from(users).where(eq(users.id, 'testuser-id-123'));
-          
-          console.log("Debug - Created test user:", newUser);
-          return res.json({ 
-            message: "Test user created successfully", 
-            user: {
-              id: newUser.id,
-              username: newUser.username
-            }
-          });
-        } catch (error) {
-          console.error("Error creating test user:", error);
-          return res.status(500).json({ message: "Error creating test user", error: String(error) });
-        }
-      }
-      
-      return res.json({ message: "Test user already exists" });
-    } catch (error) {
-      console.error("Error creating test user:", error);
-      return res.status(500).json({ error: String(error) });
-    }
-  });
+  // Removed duplicate endpoint - using the subourbon one below
   
   // Debug endpoint to check login credentials
   app.get("/api/debug/check-login/:username/:password", async (req: Request, res: Response) => {
@@ -1598,8 +1554,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Special endpoint just for creating the test user
   app.get("/api/create-test-user", async (_req: Request, res: Response) => {
     try {
-      // Check if the test user already exists
-      const [existingUser] = await db.select().from(users).where(eq(users.username, "subourbon"));
+      // Check if the test user already exists - use raw SQL for reliable column names
+      const result = await db.execute(sql`
+        SELECT * FROM users WHERE username = 'subourbon'
+      `);
+      
+      const existingUser = result.rows && result.rows.length > 0 ? result.rows[0] : null;
       
       if (existingUser) {
         console.log("Test user already exists:", {
@@ -1648,8 +1608,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         )
       `);
       
-      // Fetch the created user
-      const [bourbon] = await db.select().from(users).where(eq(users.id, userId));
+      // Fetch the created user with raw SQL
+      const userResult = await db.execute(sql`
+        SELECT * FROM users WHERE id = ${userId}
+      `);
+      
+      const bourbon = userResult.rows && userResult.rows.length > 0 ? userResult.rows[0] : null;
       
       console.log("Created test user:", bourbon);
       
