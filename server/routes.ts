@@ -356,13 +356,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         });
         
+        // Map the database fields (snake_case) to client-expected fields (camelCase)
         return res.json({
           id: user.id,
           username: user.username,
           displayName: user.display_name || "",
           isAdmin: !!user.is_admin,
           isPro: !!user.is_pro,
-          isPremium: !!user.is_premium
+          isPremium: !!user.is_premium,
+          profileImageUrl: user.profile_image_url || null,
+          brandTheme: user.brand_theme || "{}",
+          logoUrl: user.logo_url || null
         });
       } catch (standardErr) {
         console.error("Error in standard login flow:", standardErr);
@@ -400,58 +404,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (req.session && req.session.userId) {
           console.log("Using session userId:", req.session.userId);
           
-          // Get user directly from database to avoid schema mapping issues
-          const [user] = await db.select().from(users).where(eq(users.id, req.session.userId));
-          
-          if (user) {
-            console.log("Found user from session:", user.username);
-            return res.json({
-              id: user.id,
-              username: user.username,
-              displayName: user.display_name || "",
-              isAdmin: !!user.is_admin,
-              isPro: !!user.is_pro,
-              isPremium: !!user.is_premium,
-              brandTheme: user.brand_theme || "{}",
-              logoUrl: user.logo_url || null,
-            });
-          } else {
-            console.log("User not found for session ID:", req.session.userId);
+          try {
+            // Get user directly from database using raw SQL to avoid typing issues
+            const result = await db.execute(sql`SELECT * FROM users WHERE id = ${req.session.userId}`);
+            
+            if (result.rows && result.rows.length > 0) {
+              const user = result.rows[0];
+              console.log("Found user from session:", user.username);
+              return res.json({
+                id: user.id,
+                username: user.username,
+                displayName: user.display_name || "",
+                isAdmin: !!user.is_admin,
+                isPro: !!user.is_pro,
+                isPremium: !!user.is_premium,
+                brandTheme: user.brand_theme || "{}",
+                logoUrl: user.logo_url || null,
+                profileImageUrl: user.profile_image_url || null
+              });
+            } else {
+              console.log("User not found for session ID:", req.session.userId);
+            }
+          } catch (dbError) {
+            console.error("Database error:", dbError);
           }
         } 
         // Then check Passport (used by Firebase/OpenID authentication)
         else if (req.isAuthenticated() && req.user) {
           console.log("User is authenticated via Passport:", req.user);
           
-          // Get the actual database record to ensure correct property names
-          const [dbUser] = await db.select().from(users).where(eq(users.id, req.user.id));
+          const user = req.user as any;
+          const userId = user.id || (user.claims && user.claims.sub);
           
-          if (dbUser) {
-            // Use the database record with snake_case properties
-            return res.json({
-              id: dbUser.id,
-              username: dbUser.username,
-              displayName: dbUser.display_name || "",
-              isAdmin: !!dbUser.is_admin,
-              isPro: !!dbUser.is_pro,
-              isPremium: !!dbUser.is_premium,
-              brandTheme: dbUser.brand_theme || "{}",
-              logoUrl: dbUser.logo_url || null,
-            });
-          } else {
-            // Fall back to Passport user if needed
-            const user = req.user;
-            console.log("Using passport user object directly (not ideal):", user);
-            return res.json({
-              id: user.id,
-              username: user.username,
-              displayName: user.display_name || user.displayName || "",
-              isAdmin: !!(user.is_admin || user.isAdmin),
-              isPro: !!(user.is_pro || user.isPro),
-              isPremium: !!(user.is_premium || user.isPremium),
-              brandTheme: user.brand_theme || user.brandTheme || "{}",
-              logoUrl: user.logo_url || user.logoUrl || null,
-            });
+          if (!userId) {
+            console.error("No user ID found in authenticated user");
+            return res.status(500).json({ message: "Invalid user data" });
+          }
+          
+          try {
+            // Get the actual database record using raw SQL
+            const result = await db.execute(sql`SELECT * FROM users WHERE id = ${userId}`);
+            
+            if (result.rows && result.rows.length > 0) {
+              const dbUser = result.rows[0];
+              console.log("Database user:", dbUser);
+              // Use the database record with snake_case properties
+              return res.json({
+                id: dbUser.id,
+                username: dbUser.username,
+                displayName: dbUser.display_name || "",
+                isAdmin: !!dbUser.is_admin,
+                isPro: !!dbUser.is_pro,
+                isPremium: !!dbUser.is_premium,
+                brandTheme: dbUser.brand_theme || "{}",
+                logoUrl: dbUser.logo_url || null,
+                profileImageUrl: dbUser.profile_image_url || null
+              });
+            } else {
+              // Fall back to Passport user if needed
+              console.log("Using passport user object directly (not ideal):", user);
+              return res.json({
+                id: userId,
+                username: user.username || "",
+                displayName: user.displayName || "",
+                isAdmin: false,
+                isPro: false,
+                isPremium: false,
+                brandTheme: "{}",
+                logoUrl: null,
+                profileImageUrl: user.profileImageUrl || null
+              });
+            }
+          } catch (dbError) {
+            console.error("Database error:", dbError);
+            return res.status(500).json({ message: "Database error" });
           }
         }
 
