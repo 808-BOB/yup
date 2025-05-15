@@ -412,17 +412,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         });
         
-        // Return user data in the expected format
+        // Return user data in the expected format, converting from snake_case db columns to camelCase response
         return res.json({
           id: user.id,
           username: user.username,
-          displayName: user.displayName || "",
-          isAdmin: !!user.isAdmin,
-          isPro: !!user.isPro,
-          isPremium: !!user.isPremium,
-          profileImageUrl: user.profileImageUrl || null,
-          brandTheme: user.brandTheme || "{}",
-          logoUrl: user.logoUrl || null
+          displayName: user.display_name || "",
+          isAdmin: !!user.is_admin,
+          isPro: !!user.is_pro,
+          isPremium: !!user.is_premium,
+          profileImageUrl: user.profile_image_url || null,
+          brandTheme: user.brand_theme || "{}",
+          logoUrl: user.logo_url || null
         });
       } catch (standardErr) {
         console.error("Error in standard login flow:", standardErr);

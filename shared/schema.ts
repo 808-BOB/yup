@@ -13,27 +13,26 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const users = pgTable("users", {
-  id: text("id").primaryKey().notNull(), // Change to text for Replit Auth sub
+  id: text("id").primaryKey().notNull(), // String ID for compatibility with various auth methods
   username: text("username").notNull().unique(),
-  password: text("password"), // Optional now as Replit Auth users don't need password
-  displayName: text("display_name").notNull(),
+  password: text("password"), // Optional for OAuth-based authentication
+  display_name: text("display_name").notNull(),
   email: text("email"),
-  firstName: text("first_name"),
-  lastName: text("last_name"),
-  profileImageUrl: text("profile_image_url"),
-  isAdmin: boolean("is_admin").notNull().default(false),
-  isPro: boolean("is_pro").notNull().default(false),
-  isPremium: boolean("is_premium").notNull().default(false),
-  brandTheme: text("brand_theme").default("{}"), // JSON string containing theme preferences
-  logoUrl: text("logo_url"), // Custom logo URL for premium users
-  stripeCustomerId: text("stripe_customer_id"), // Stripe customer ID for billing
-  stripeSubscriptionId: text("stripe_subscription_id"), // Current active subscription ID
-  linkedinId: text("linkedin_id"), // LinkedIn user ID for connecting profiles
-  linkedinAccessToken: text("linkedin_access_token"), // LinkedIn OAuth access token
-  linkedinProfileUrl: text("linkedin_profile_url"), // LinkedIn profile URL
-  linkedinConnections: text("linkedin_connections"), // JSON string containing LinkedIn connections data
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  // Removing first_name and last_name fields as they're not in the database
+  profile_image_url: text("profile_image_url"),
+  is_admin: boolean("is_admin").notNull().default(false),
+  is_pro: boolean("is_pro").notNull().default(false),
+  is_premium: boolean("is_premium").notNull().default(false),
+  brand_theme: text("brand_theme").default("{}"), // JSON string containing theme preferences
+  logo_url: text("logo_url"), // Custom logo URL for premium users
+  stripe_customer_id: text("stripe_customer_id"), // Stripe customer ID for billing
+  stripe_subscription_id: text("stripe_subscription_id"), // Current active subscription ID
+  linkedin_id: text("linkedin_id"), // LinkedIn user ID for connecting profiles
+  linkedin_access_token: text("linkedin_access_token"), // LinkedIn OAuth access token
+  linkedin_profile_url: text("linkedin_profile_url"), // LinkedIn profile URL
+  linkedin_connections: text("linkedin_connections"), // JSON string containing LinkedIn connections data
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
 });
 
 export const insertUserSchema = createInsertSchema(users, {
