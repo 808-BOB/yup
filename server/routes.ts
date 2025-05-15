@@ -129,8 +129,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await db.execute(sql`
             UPDATE users SET 
               id = ${uid},
-              profile_image_url = ${photoURL || user.profileImageUrl || null},
-              display_name = ${displayName || user.displayName || 'User'}
+              profile_image_url = ${photoURL || user.profile_image_url || null},
+              display_name = ${displayName || user.display_name || 'User'}
             WHERE id = ${user.id}
           `);
           
@@ -1538,7 +1538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user: {
           id: user.id,
           username: user.username,
-          displayName: user.displayName
+          displayName: user.display_name
         }
       });
     } catch (error) {
