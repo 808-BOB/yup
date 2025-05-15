@@ -160,16 +160,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         });
         
-        // Return user data to client
+        // Return user data to client (converting from snake_case DB fields to camelCase response)
         return res.status(200).json({
           id: user.id,
           username: user.username,
-          displayName: user.displayName || "",
+          displayName: user.display_name || "",
           email: user.email,
-          profileImageUrl: user.profileImageUrl,
-          isAdmin: !!user.isAdmin,
-          isPro: !!user.isPro,
-          isPremium: !!user.isPremium
+          profileImageUrl: user.profile_image_url,
+          isAdmin: !!user.is_admin,
+          isPro: !!user.is_pro,
+          isPremium: !!user.is_premium
         });
       } catch (sessionErr) {
         console.error("Firebase auth: Session save error:", sessionErr);
@@ -217,14 +217,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add user to session
       req.session.userId = user.id;
 
-      // Return user info without password
+      // Return user info without password (converting from snake_case DB fields to camelCase response)
       return res.status(201).json({
         id: user.id,
         username: user.username,
-        displayName: user.displayName,
-        isAdmin: user.isAdmin,
-        isPro: user.isPro,
-        isPremium: user.isPremium,
+        displayName: user.display_name,
+        isAdmin: user.is_admin,
+        isPro: user.is_pro,
+        isPremium: user.is_premium,
       });
     } catch (error) {
       console.error("Signup error:", error);
@@ -597,14 +597,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ message: "User not found" });
         }
         
-        // Return user without password
+        // Return user without password (converting from snake_case DB fields to camelCase response)
         return res.json({
           id: updatedUser.id,
           username: updatedUser.username,
-          displayName: updatedUser.displayName,
-          isAdmin: updatedUser.isAdmin,
-          isPro: updatedUser.isPro,
-          isPremium: updatedUser.isPremium,
+          displayName: updatedUser.display_name,
+          isAdmin: updatedUser.is_admin,
+          isPro: updatedUser.is_pro,
+          isPremium: updatedUser.is_premium,
         });
       } catch (error) {
         console.error("Update user error:", error);
@@ -630,18 +630,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Update branding (this method checks for premium status)
         const updatedUser = await storage.updateUserBranding(userId, {
-          brandTheme,
-          logoUrl,
+          brandTheme: brandTheme,
+          logoUrl: logoUrl,
         });
         
         if (!updatedUser) {
           return res.status(404).json({ message: "User not found" });
         }
         
-        // Return updated branding info
+        // Return updated branding info (converting from snake_case DB fields to camelCase response)
         return res.json({
-          brandTheme: updatedUser.brandTheme,
-          logoUrl: updatedUser.logoUrl,
+          brandTheme: updatedUser.brand_theme,
+          logoUrl: updatedUser.logo_url,
         });
       } catch (error) {
         console.error("Update branding error:", error);
