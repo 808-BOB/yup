@@ -720,7 +720,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Update to make user pro
-      const updatedUser = await storage.updateUser(user.id, { isPro: true, isPremium: false });
+      const updatedUser = await storage.updateUser(user.id, { is_pro: true, is_premium: false });
       
       if (!updatedUser) {
         return res.status(500).json({ message: "Failed to update user" });
@@ -754,7 +754,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Update to make user free
-      const updatedUser = await storage.updateUser(user.id, { isPro: false, isPremium: false });
+      const updatedUser = await storage.updateUser(user.id, { is_pro: false, is_premium: false });
       
       if (!updatedUser) {
         return res.status(500).json({ message: "Failed to update user" });
