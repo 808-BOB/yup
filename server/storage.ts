@@ -859,19 +859,27 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db
       .select()
       .from(users)
-      .where(eq(users.stripeCustomerId, customerId));
+      .where(eq(users.stripe_customer_id, customerId)); // Convert from camelCase to snake_case
     return user || undefined;
   }
   
-  async updateUserLinkedIn(id: number, linkedinData: { 
+  async updateUserLinkedIn(id: string, linkedinData: { 
     linkedinId?: string, 
     linkedinAccessToken?: string, 
     linkedinProfileUrl?: string, 
     linkedinConnections?: string 
   }): Promise<User | undefined> {
+    // Convert from camelCase to snake_case for database fields
+    const dbLinkedinData = {
+      linkedin_id: linkedinData.linkedinId,
+      linkedin_access_token: linkedinData.linkedinAccessToken,
+      linkedin_profile_url: linkedinData.linkedinProfileUrl,
+      linkedin_connections: linkedinData.linkedinConnections
+    };
+    
     const [updatedUser] = await db
       .update(users)
-      .set(linkedinData)
+      .set(dbLinkedinData)
       .where(eq(users.id, id))
       .returning();
     return updatedUser || undefined;
