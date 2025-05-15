@@ -186,43 +186,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Username and password are required" });
       }
 
-      console.log("Querying database for user:", username);
-      
-      // Get all users directly from database to see who is available
-      let allUsers = await db.select().from(users);
-      console.log("Total users in database:", allUsers.length);
-      
-      // Always create the subourbon test user if it doesn't exist
-      if (allUsers.length === 0 || !allUsers.find(u => u.username === "subourbon")) {
-        console.log("Creating test user 'subourbon'");
+      // DEBUG - Try to consistently create our test user
+      if (username === "subourbon" && password === "events") {
         try {
-          const [bourbon] = await db.insert(users).values({
-            id: "subourbon_" + Date.now(),
-            username: "subourbon",
-            password: "events",
-            display_name: "Sub Ourbon", // Use snake_case for database column names
-            email: "subourbon@example.com",
-            is_admin: true,
-            is_pro: true,
-            is_premium: true
-          }).returning();
+          console.log("Attempting login with known test user credentials");
           
-          console.log("Created subourbon user:", bourbon);
+          // First create the user if it doesn't exist
+          const existingUser = await db.select({ count: sql`count(*)` })
+            .from(users)
+            .where(eq(users.username, "subourbon"));
           
-          // Refresh the users list after creating test user
-          allUsers = await db.select().from(users);
-        } catch (error) {
-          console.error("Error creating test user:", error);
+          if (parseInt(existingUser[0].count) === 0) {
+            console.log("Test user 'subourbon' doesn't exist, creating it now");
+            
+            const [newUser] = await db.insert(users).values({
+              id: "subourbon-123", // Static ID for consistent sessions
+              username: "subourbon",
+              password: "events", // Never hash this specific test user password
+              display_name: "Sub Ourbon",
+              email: "subourbon@example.com",
+              is_admin: true,
+              is_pro: true,
+              is_premium: true
+            }).returning();
+            
+            console.log("Created test user with ID:", newUser.id);
+          } else {
+            console.log("Test user already exists");
+          }
+        } catch (createError) {
+          console.error("Error creating subourbon test user:", createError);
         }
       }
       
-      if (allUsers.length > 0) {
-        console.log("Database users:", allUsers.map(u => ({ 
-          id: u.id,
-          username: u.username, 
-          password: u.password
-        })));
-      }
+      console.log("Querying database for user:", username);
       
       // Find user by username directly with database query
       const [user] = await db.select().from(users).where(eq(users.username, username));
@@ -250,27 +247,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      // Add user to session - this is the critical part for traditional auth
+      // Essential - save user ID in session 
       req.session.userId = user.id;
       
-      // Return user info immediately instead of using Passport
-      console.log("User authenticated, session created for:", user.id);
-      console.log("Returning user data:", {
-        id: user.id,
-        username: user.username,
-        displayName: user.display_name,
+      // Explicitly save the session to ensure it's stored immediately
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+        } else {
+          console.log("Session saved successfully with userId:", user.id);
+        }
       });
       
-      // Return user info without password
+      console.log("User authenticated, session created for:", user.id);
+      console.log("Session data:", req.session);
+      
+      // Return user info without password, using the exact column names from DB
       return res.json({
         id: user.id,
         username: user.username,
-        displayName: user.display_name,
-        isAdmin: user.is_admin,
-        isPro: user.is_pro,
-        isPremium: user.is_premium,
-        brandTheme: user.brand_theme,
-        logoUrl: user.logo_url,
+        displayName: user.display_name || "",
+        isAdmin: !!user.is_admin,
+        isPro: !!user.is_pro,
+        isPremium: !!user.is_premium,
+        brandTheme: user.brand_theme || "{}",
+        logoUrl: user.logo_url || null,
       });
     } catch (error) {
       console.error("Login error:", error);
@@ -303,19 +304,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // First try session-based auth which should work for traditional login
         if (req.session && req.session.userId) {
           console.log("Using session userId:", req.session.userId);
-          const user = await storage.getUser(req.session.userId);
+          
+          // Get user directly from database to avoid schema mapping issues
+          const [user] = await db.select().from(users).where(eq(users.id, req.session.userId));
           
           if (user) {
             console.log("Found user from session:", user.username);
             return res.json({
               id: user.id,
               username: user.username,
-              displayName: user.displayName,
-              isAdmin: user.isAdmin,
-              isPro: user.isPro,
-              isPremium: user.isPremium,
-              brandTheme: user.brandTheme,
-              logoUrl: user.logoUrl,
+              displayName: user.display_name || "",
+              isAdmin: !!user.is_admin,
+              isPro: !!user.is_pro,
+              isPremium: !!user.is_premium,
+              brandTheme: user.brand_theme || "{}",
+              logoUrl: user.logo_url || null,
             });
           } else {
             console.log("User not found for session ID:", req.session.userId);
@@ -324,17 +327,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Then check Passport (used by Firebase/OpenID authentication)
         else if (req.isAuthenticated() && req.user) {
           console.log("User is authenticated via Passport:", req.user);
-          const user = req.user;
-          return res.json({
-            id: user.id,
-            username: user.username,
-            displayName: user.displayName,
-            isAdmin: user.isAdmin,
-            isPro: user.isPro,
-            isPremium: user.isPremium,
-            brandTheme: user.brandTheme,
-            logoUrl: user.logoUrl,
-          });
+          
+          // Get the actual database record to ensure correct property names
+          const [dbUser] = await db.select().from(users).where(eq(users.id, req.user.id));
+          
+          if (dbUser) {
+            // Use the database record with snake_case properties
+            return res.json({
+              id: dbUser.id,
+              username: dbUser.username,
+              displayName: dbUser.display_name || "",
+              isAdmin: !!dbUser.is_admin,
+              isPro: !!dbUser.is_pro,
+              isPremium: !!dbUser.is_premium,
+              brandTheme: dbUser.brand_theme || "{}",
+              logoUrl: dbUser.logo_url || null,
+            });
+          } else {
+            // Fall back to Passport user if needed
+            const user = req.user;
+            console.log("Using passport user object directly (not ideal):", user);
+            return res.json({
+              id: user.id,
+              username: user.username,
+              displayName: user.display_name || user.displayName || "",
+              isAdmin: !!(user.is_admin || user.isAdmin),
+              isPro: !!(user.is_pro || user.isPro),
+              isPremium: !!(user.is_premium || user.isPremium),
+              brandTheme: user.brand_theme || user.brandTheme || "{}",
+              logoUrl: user.logo_url || user.logoUrl || null,
+            });
+          }
         }
 
         console.log("No valid authentication found");
