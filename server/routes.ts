@@ -467,6 +467,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (result.rows && result.rows.length > 0) {
               const user = result.rows[0];
               console.log("Found user from session:", user.username);
+              // Since we're using raw SQL, we get snake_case column names
+              // that we need to map to camelCase for the client
               return res.json({
                 id: user.id,
                 username: user.username,
