@@ -286,6 +286,55 @@ export default function Login() {
                 
                 <Button
                   type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="text-xs px-3 py-1 h-auto bg-red-600 hover:bg-red-700"
+                  onClick={async () => {
+                    try {
+                      const response = await fetch('/api/direct-login', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          username: 'subourbon',
+                          password: 'events'
+                        }),
+                      });
+                      
+                      const data = await response.json();
+                      
+                      if (response.ok) {
+                        toast({
+                          title: "Direct Login Success",
+                          description: "You've been logged in using the emergency method",
+                        });
+                        console.log("Emergency login successful:", data);
+                        // Redirect to home
+                        window.location.href = "/my-events";
+                      } else {
+                        toast({
+                          title: "Emergency Login Failed",
+                          description: data.message || "Error during emergency login",
+                          variant: "destructive"
+                        });
+                        console.error("Emergency login failed:", data);
+                      }
+                    } catch (error) {
+                      console.error("Error during emergency login:", error);
+                      toast({
+                        title: "Error",
+                        description: "Emergency login failed. See console for details.",
+                        variant: "destructive"
+                      });
+                    }
+                  }}
+                >
+                  EMERGENCY LOGIN
+                </Button>
+                
+                <Button
+                  type="button"
                   variant="ghost"
                   size="sm"
                   className="text-xs px-3 py-1 h-auto text-amber-400 hover:bg-amber-500/10 hover:text-amber-500"
