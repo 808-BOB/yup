@@ -1504,25 +1504,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If user doesn't exist, create it
       if (parseInt(existingUser[0].count) === 0) {
         console.log("Test user doesn't exist, creating...");
-        const [newUser] = await db.insert(users).values({
-          id: "testuser-id-123",  // Use a static ID for consistent testing
-          username: "testuser",
-          password: "password",
-          display_name: "Test User", // Use snake_case to match DB column
-          email: "testuser@example.com",
-          is_admin: false,
-          is_pro: false,
-          is_premium: false
-        }).returning();
         
-        console.log("Debug - Created test user:", newUser);
-        return res.json({ 
-          message: "Test user created successfully", 
-          user: {
-            id: newUser.id,
-            username: newUser.username
-          }
-        });
+        try {
+          // Use raw SQL to avoid column mapping issues
+          await db.execute(sql`
+            INSERT INTO users (
+              id, username, password, display_name, email,
+              is_admin, is_pro, is_premium
+            ) VALUES (
+              'testuser-id-123', 'testuser', 'password', 'Test User', 'testuser@example.com',
+              false, false, false
+            )
+          `);
+          
+          // Fetch the created user to return
+          const [newUser] = await db.select().from(users).where(eq(users.id, 'testuser-id-123'));
+          
+          console.log("Debug - Created test user:", newUser);
+          return res.json({ 
+            message: "Test user created successfully", 
+            user: {
+              id: newUser.id,
+              username: newUser.username
+            }
+          });
+        } catch (error) {
+          console.error("Error creating test user:", error);
+          return res.status(500).json({ message: "Error creating test user", error: String(error) });
+        }
       }
       
       return res.json({ message: "Test user already exists" });
