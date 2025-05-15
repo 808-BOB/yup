@@ -147,16 +147,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate a unique ID for the user
       const userId = `local_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-      // Create the new user (password will be hashed by the storage interface)
-      const user = await storage.createUser({
-        id: userId,
-        username,
-        password,
-        displayName,
-        isAdmin: false,
-        isPro: false,
-        isPremium: false,
-      });
+      // Create the new user using SQL to avoid column mapping issues
+      try {
+        await db.execute(sql`
+          INSERT INTO users (
+            id, username, password, display_name, 
+            is_admin, is_pro, is_premium
+          ) VALUES (
+            ${userId}, ${username}, ${password}, ${displayName}, 
+            false, false, false
+          )
+        `);
+      } catch (sqlError) {
+        console.error("SQL Error creating user:", sqlError);
+        return res.status(500).json({ message: "Database error creating user", error: String(sqlError) });
+      }
+      
+      // Get the user we just created
+      const user = await db.select().from(users).where(eq(users.id, userId)).then(rows => rows[0]);
 
       // Add user to session
       req.session.userId = user.id;
