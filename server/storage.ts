@@ -27,24 +27,24 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
-  getUserByLinkedInId(linkedinId: string): Promise<User | undefined>;
+  getUserByLinkedInId(linkedin_id: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUser(id: string, userData: Partial<User>): Promise<User | undefined>;
-  updateUserBranding(id: string, brandData: { brandTheme?: string, logoUrl?: string }): Promise<User | undefined>;
+  updateUserBranding(id: string, brandData: { brand_theme?: string, logo_url?: string }): Promise<User | undefined>;
   updateUserLinkedIn(id: string, linkedinData: { 
-    linkedinId?: string, 
-    linkedinAccessToken?: string, 
-    linkedinProfileUrl?: string, 
-    linkedinConnections?: string 
+    linkedin_id?: string, 
+    linkedin_access_token?: string, 
+    linkedin_profile_url?: string, 
+    linkedin_connections?: string 
   }): Promise<User | undefined>;
   
   // Stripe-related operations
   updateStripeCustomerId(userId: string, customerId: string): Promise<User | undefined>;
   updateStripeSubscriptionId(userId: string, subscriptionId: string): Promise<User | undefined>;
   updateUserStripeInfo(userId: string, stripeData: { 
-    stripeCustomerId?: string, 
-    stripeSubscriptionId?: string 
+    stripe_customer_id?: string, 
+    stripe_subscription_id?: string 
   }): Promise<User | undefined>;
   getUserByStripeCustomerId(customerId: string): Promise<User | undefined>;
 
@@ -205,7 +205,7 @@ export class MemStorage implements IStorage {
     this.createUser({
       username: "admin",
       password: "password",
-      displayName: "Admin",
+      display_name: "Admin",
     });
 
     // Add sample responses after creating users and events
