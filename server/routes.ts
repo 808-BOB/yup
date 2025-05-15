@@ -359,7 +359,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
             });
             
-            // Return a simplified response
+            // Return a simplified response - using camelCase for response to client
             return res.json({
               id: userId,
               username: "subourbon",
