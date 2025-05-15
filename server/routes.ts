@@ -1303,36 +1303,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create test users if none exist
       if (allUsers.length === 0 || !allUsers.find(u => u.username === "subourbon")) {
-        // Create subourbon test user
+        // Create subourbon test user with SQL to avoid column mapping issues
         console.log("Debug - Creating test user 'subourbon'");
-        const [bourbon] = await db.insert(users).values({
-          id: "subourbon_" + Date.now(),
-          username: "subourbon",
-          password: "events",
-          displayName: "Sub Ourbon",
-          email: "subourbon@example.com",
-          isAdmin: true,
-          isPro: true,
-          isPremium: true
-        }).returning();
+        const userId = "subourbon_" + Date.now();
         
-        console.log("Debug - Created subourbon user:", bourbon);
+        try {
+          // Use raw SQL to avoid type errors
+          await db.execute(sql`
+            INSERT INTO users (
+              id, username, password, display_name, email, 
+              is_admin, is_pro, is_premium
+            ) VALUES (
+              ${userId}, 'subourbon', 'events', 'Sub Ourbon', 'subourbon@example.com',
+              true, true, true
+            )
+          `);
+          
+          console.log("Debug - Created subourbon user with ID:", userId);
+        } catch (insertErr) {
+          console.error("Error inserting test user:", insertErr);
+          return res.status(500).json({ message: "Error creating test user", error: String(insertErr) });
+        }
       }
       
       // Always ensure testuser exists
       if (allUsers.length === 0 || !allUsers.find(u => u.username === "testuser")) {
         console.log("Debug - Creating test user 'testuser'");
-        const [newUser] = await db.insert(users).values({
-          id: "testuser_" + Date.now(),
-          username: "testuser",
-          password: "password",
-          displayName: "Test User",
-          isAdmin: false,
-          isPro: false,
-          isPremium: false
-        }).returning();
+        const userId = "testuser_" + Date.now();
         
-        console.log("Debug - Created test user:", newUser);
+        try {
+          // Use raw SQL to avoid type errors
+          await db.execute(sql`
+            INSERT INTO users (
+              id, username, password, display_name, 
+              is_admin, is_pro, is_premium
+            ) VALUES (
+              ${userId}, 'testuser', 'password', 'Test User',
+              false, false, false
+            )
+          `);
+          
+          console.log("Debug - Created testuser with ID:", userId);
+        } catch (insertErr) {
+          console.error("Error inserting testuser:", insertErr);
+          return res.status(500).json({ message: "Error creating testuser", error: String(insertErr) });
+        }
       }
       
       return res.json({
