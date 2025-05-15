@@ -99,34 +99,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Generate a username if the user doesn't exist
         const username = generateUsername(email, uid);
         
-        // Create a new user
-        user = await storage.upsertUser({
-          id: uid,
-          username,
-          displayName: displayName || 'User',
-          email,
-          profileImageUrl: photoURL,
-          isAdmin: false,
-          isPro: false,
-          isPremium: false
-        });
+        // Create a new user directly with SQL to avoid column mapping issues
+        try {
+          await db.execute(sql`
+            INSERT INTO users (
+              id, username, display_name, email, profile_image_url,
+              is_admin, is_pro, is_premium
+            ) VALUES (
+              ${uid}, ${username}, ${displayName || 'User'}, ${email || null}, ${photoURL || null},
+              false, false, false
+            )
+            ON CONFLICT (id) DO UPDATE SET
+              display_name = ${displayName || 'User'},
+              email = ${email || null},
+              profile_image_url = ${photoURL || null}
+          `);
+          
+          // Get the user we just created/updated
+          const [newUser] = await db.select().from(users).where(eq(users.id, uid));
+          user = newUser;
+        } catch (sqlError) {
+          console.error("SQL Error creating Firebase user:", sqlError);
+          return res.status(500).json({ message: "Database error creating user", error: String(sqlError) });
+        }
       } else if (user.id !== uid) {
-        // If email exists but with different ID, update the ID
-        user = await storage.updateUser(user.id, {
-          id: uid,
-          profileImageUrl: photoURL || user.profileImageUrl,
-          displayName: displayName || user.displayName
-        });
+        // If email exists but with different ID, update directly with SQL
+        try {
+          // First update the user ID and other fields
+          await db.execute(sql`
+            UPDATE users SET 
+              id = ${uid},
+              profile_image_url = ${photoURL || user.profileImageUrl || null},
+              display_name = ${displayName || user.displayName || 'User'}
+            WHERE id = ${user.id}
+          `);
+          
+          // Get the updated user
+          const [updatedUser] = await db.select().from(users).where(eq(users.id, uid));
+          user = updatedUser;
+        } catch (sqlError) {
+          console.error("SQL Error updating Firebase user:", sqlError);
+          return res.status(500).json({ message: "Database error updating user", error: String(sqlError) });
+        }
       }
       
-      // Log the user in
-      req.login(user, (err) => {
-        if (err) {
-          return res.status(500).json({ message: "Login failed" });
-        }
+      // Set user in session instead of using req.login since we removed passport
+      req.session.userId = user.id;
+      console.log("Firebase auth: Set session userId to:", user.id);
+      
+      try {
+        await new Promise<void>((resolve, reject) => {
+          req.session.save((err) => {
+            if (err) {
+              console.error("Firebase auth: Session save error:", err);
+              reject(err);
+            } else {
+              console.log("Firebase auth: Session saved successfully");
+              resolve();
+            }
+          });
+        });
         
-        return res.status(200).json(user);
-      });
+        // Return user data to client
+        return res.status(200).json({
+          id: user.id,
+          username: user.username,
+          displayName: user.display_name || "",
+          email: user.email,
+          profileImageUrl: user.profile_image_url,
+          isAdmin: !!user.is_admin,
+          isPro: !!user.is_pro,
+          isPremium: !!user.is_premium
+        });
+      } catch (sessionErr) {
+        console.error("Firebase auth: Session save error:", sessionErr);
+        return res.status(500).json({ message: "Login session error", error: String(sessionErr) });
+      }
     } catch (error) {
       console.error("Firebase authentication error:", error);
       return res.status(401).json({ message: "Authentication failed" });
