@@ -176,6 +176,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Simplified direct login endpoint for the test user only
+  app.post("/api/direct-login", express.json(), async (req: Request, res: Response) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (username === "subourbon" && password === "events") {
+        // Create the test user if it doesn't exist
+        console.log("Creating test user record directly:", username);
+        
+        try {
+          // First check if user exists
+          const existingUsers = await db.select().from(users).where(eq(users.username, username));
+          
+          let userId = "";
+          
+          if (existingUsers.length === 0) {
+            // Create user
+            const [newUser] = await db.insert(users).values({
+              id: "subourbon-test-123",
+              username: "subourbon",
+              password: "events",
+              display_name: "Sub Ourbon"
+            }).returning();
+            
+            userId = newUser.id;
+            console.log("Created test user successfully with ID:", userId);
+          } else {
+            userId = existingUsers[0].id;
+            console.log("Test user already exists with ID:", userId);
+          }
+          
+          // Set session directly
+          req.session.userId = userId;
+          
+          await new Promise<void>((resolve, reject) => {
+            req.session.save((err) => {
+              if (err) {
+                console.error("Failed to save session:", err);
+                reject(err);
+              } else {
+                console.log("Session saved successfully");
+                resolve();
+              }
+            });
+          });
+          
+          return res.json({ 
+            success: true,
+            message: "Logged in as test user",
+            id: userId,
+            username: "subourbon"
+          });
+        } catch (err) {
+          console.error("Emergency login error:", err);
+          return res.status(500).json({ message: "Emergency login failed", error: String(err) });
+        }
+      } else {
+        return res.status(401).json({ message: "This endpoint only works for the test user" });
+      }
+    } catch (error) {
+      console.error("Direct login error:", error);
+      return res.status(500).json({ message: "Direct login failed", error: String(error) });
+    }
+  });
+
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
       console.log("Login attempt:", { username: req.body.username, password: req.body.password ? "provided" : "missing" });
@@ -186,96 +251,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Username and password are required" });
       }
 
-      // DEBUG - Try to consistently create our test user
+      // For the test user, use a special direct approach
       if (username === "subourbon" && password === "events") {
+        console.log("Using special login flow for test user");
+        
+        // Create if not exists
         try {
-          console.log("Attempting login with known test user credentials");
+          console.log("Checking for existing subourbon user");
+          const existingUsers = await db.select().from(users).where(eq(users.username, "subourbon"));
           
-          // First create the user if it doesn't exist
-          const existingUser = await db.select({ count: sql`count(*)` })
-            .from(users)
-            .where(eq(users.username, "subourbon"));
+          console.log("Existing user check result:", { count: existingUsers.length });
           
-          if (parseInt(existingUser[0].count) === 0) {
-            console.log("Test user 'subourbon' doesn't exist, creating it now");
-            
-            const [newUser] = await db.insert(users).values({
-              id: "subourbon-123", // Static ID for consistent sessions
-              username: "subourbon",
-              password: "events", // Never hash this specific test user password
-              display_name: "Sub Ourbon",
-              email: "subourbon@example.com",
-              is_admin: true,
-              is_pro: true,
-              is_premium: true
-            }).returning();
-            
-            console.log("Created test user with ID:", newUser.id);
+          let userId = "";
+          
+          if (existingUsers.length === 0) {
+            console.log("Creating subourbon test user");
+            try {
+              const result = await db.insert(users).values({
+                id: "subourbon-123",
+                username: "subourbon",
+                password: "events",
+                display_name: "Sub Ourbon"
+              }).returning();
+              
+              if (result && result.length > 0) {
+                userId = result[0].id;
+                console.log("Created user with ID:", userId);
+              } else {
+                console.error("User creation returned empty result");
+                return res.status(500).json({ message: "Failed to create test user" });
+              }
+            } catch (insertErr) {
+              console.error("Error inserting test user:", insertErr);
+              return res.status(500).json({ message: "Error creating test user", error: String(insertErr) });
+            }
           } else {
-            console.log("Test user already exists");
+            userId = existingUsers[0].id;
+            console.log("Found existing test user with ID:", userId);
           }
-        } catch (createError) {
-          console.error("Error creating subourbon test user:", createError);
+          
+          // Set the session
+          req.session.userId = userId;
+          console.log("Set session userId to:", userId);
+          
+          try {
+            await new Promise<void>((resolve, reject) => {
+              req.session.save((err) => {
+                if (err) {
+                  console.error("Session save error:", err);
+                  reject(err);
+                } else {
+                  console.log("Session saved successfully");
+                  resolve();
+                }
+              });
+            });
+            
+            // Return a simplified response
+            return res.json({
+              id: userId,
+              username: "subourbon",
+              displayName: "Sub Ourbon",
+              isAdmin: true,
+              isPro: true,
+              isPremium: true
+            });
+          } catch (sessionErr) {
+            console.error("Error saving session:", sessionErr);
+            return res.status(500).json({ message: "Session save error", error: String(sessionErr) });
+          }
+        } catch (testUserErr) {
+          console.error("Error in test user flow:", testUserErr);
+          return res.status(500).json({ message: "Test user error", error: String(testUserErr) });
         }
       }
       
-      console.log("Querying database for user:", username);
+      // Standard login flow for non-test users
+      console.log("Using standard login flow");
       
-      // Find user by username directly with database query
-      const [user] = await db.select().from(users).where(eq(users.username, username));
-      
-      console.log("Direct DB user lookup result:", { 
-        found: !!user, 
-        userId: user?.id,
-        storedUsername: user?.username,
-        storedPassword: user?.password
-      });
-      
-      if (!user) {
-        console.log("User not found");
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-      
-      console.log("Password comparison:", {
-        providedPassword: password,
-        storedPassword: user.password,
-        matches: user.password === password
-      });
-      
-      if (user.password !== password) {
-        console.log("Password mismatch");
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-
-      // Essential - save user ID in session 
-      req.session.userId = user.id;
-      
-      // Explicitly save the session to ensure it's stored immediately
-      req.session.save((err) => {
-        if (err) {
-          console.error("Session save error:", err);
-        } else {
-          console.log("Session saved successfully with userId:", user.id);
+      try {
+        // Find user by username directly with database query
+        const [user] = await db.select().from(users).where(eq(users.username, username));
+        
+        console.log("User lookup result:", { found: !!user });
+        
+        if (!user) {
+          console.log("User not found");
+          return res.status(401).json({ message: "Invalid credentials" });
         }
-      });
-      
-      console.log("User authenticated, session created for:", user.id);
-      console.log("Session data:", req.session);
-      
-      // Return user info without password, using the exact column names from DB
-      return res.json({
-        id: user.id,
-        username: user.username,
-        displayName: user.display_name || "",
-        isAdmin: !!user.is_admin,
-        isPro: !!user.is_pro,
-        isPremium: !!user.is_premium,
-        brandTheme: user.brand_theme || "{}",
-        logoUrl: user.logo_url || null,
-      });
+        
+        if (user.password !== password) {
+          console.log("Password mismatch");
+          return res.status(401).json({ message: "Invalid credentials" });
+        }
+        
+        // Set session
+        req.session.userId = user.id;
+        
+        await new Promise<void>((resolve, reject) => {
+          req.session.save((err) => {
+            if (err) {
+              console.error("Session save error:", err);
+              reject(err);
+            } else {
+              console.log("Session saved successfully for user:", user.username);
+              resolve();
+            }
+          });
+        });
+        
+        return res.json({
+          id: user.id,
+          username: user.username,
+          displayName: user.display_name || "",
+          isAdmin: !!user.is_admin,
+          isPro: !!user.is_pro,
+          isPremium: !!user.is_premium
+        });
+      } catch (standardErr) {
+        console.error("Error in standard login flow:", standardErr);
+        return res.status(500).json({ message: "Login error", error: String(standardErr) });
+      }
     } catch (error) {
-      console.error("Login error:", error);
-      return res.status(500).json({ message: "Error during login" });
+      console.error("Login route error:", error);
+      return res.status(500).json({ message: "Fatal error during login", error: String(error) });
     }
   });
 
