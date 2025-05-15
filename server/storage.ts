@@ -805,9 +805,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserBranding(id: string, brandData: { brandTheme?: string, logoUrl?: string }): Promise<User | undefined> {
+    // Convert from camelCase to snake_case for database fields
+    const dbBrandData = {
+      brand_theme: brandData.brandTheme,
+      logo_url: brandData.logoUrl
+    };
+    
     const [updatedUser] = await db
       .update(users)
-      .set(brandData)
+      .set(dbBrandData)
       .where(eq(users.id, id))
       .returning();
     return updatedUser || undefined;
@@ -816,7 +822,7 @@ export class DatabaseStorage implements IStorage {
   async updateStripeCustomerId(userId: string, customerId: string): Promise<User | undefined> {
     const [updatedUser] = await db
       .update(users)
-      .set({ stripeCustomerId: customerId })
+      .set({ stripe_customer_id: customerId }) // Convert from camelCase to snake_case
       .where(eq(users.id, userId))
       .returning();
     return updatedUser || undefined;
@@ -825,7 +831,7 @@ export class DatabaseStorage implements IStorage {
   async updateStripeSubscriptionId(userId: string, subscriptionId: string): Promise<User | undefined> {
     const [updatedUser] = await db
       .update(users)
-      .set({ stripeSubscriptionId: subscriptionId })
+      .set({ stripe_subscription_id: subscriptionId }) // Convert from camelCase to snake_case
       .where(eq(users.id, userId))
       .returning();
     return updatedUser || undefined;
@@ -835,9 +841,15 @@ export class DatabaseStorage implements IStorage {
     stripeCustomerId?: string, 
     stripeSubscriptionId?: string 
   }): Promise<User | undefined> {
+    // Convert from camelCase to snake_case for database fields
+    const dbStripeData = {
+      stripe_customer_id: stripeData.stripeCustomerId,
+      stripe_subscription_id: stripeData.stripeSubscriptionId
+    };
+    
     const [updatedUser] = await db
       .update(users)
-      .set(stripeData)
+      .set(dbStripeData)
       .where(eq(users.id, userId))
       .returning();
     return updatedUser || undefined;
