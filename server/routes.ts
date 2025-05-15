@@ -686,7 +686,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Update to make user premium
-      const updatedUser = await storage.updateUser(user.id, { isPremium: true, isPro: true });
+      const updatedUser = await storage.updateUser(user.id, { is_premium: true, is_pro: true });
       
       if (!updatedUser) {
         return res.status(500).json({ message: "Failed to update user" });
@@ -861,10 +861,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add host branding information to the response if the host is premium
       const eventWithBranding = {
         ...event,
-        hostDisplayName: host?.displayName || "Event Host",
-        hostBranding: host?.isPremium ? {
-          logoUrl: host.logoUrl,
-          brandTheme: host.brandTheme
+        hostDisplayName: host?.display_name || "Event Host",
+        hostBranding: host?.is_premium ? {
+          logoUrl: host.logo_url,
+          brandTheme: host.brand_theme
         } : null,
         // Include custom RSVP text fields regardless of premium status
         // so they're available on the client
@@ -971,7 +971,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add host branding information to the response if the host is premium
       const eventWithBranding = {
         ...event,
-        hostDisplayName: host?.displayName || "Event Host",
+        hostDisplayName: host?.display_name || "Event Host",
         hostBranding: host?.isPremium ? {
           logoUrl: host.logoUrl,
           brandTheme: host.brandTheme
