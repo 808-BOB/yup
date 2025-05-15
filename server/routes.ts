@@ -895,7 +895,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      if (!currentUser.linkedinId || !currentUser.linkedinAccessToken || !currentUser.linkedinConnections) {
+      if (!currentUser.linkedin_id || !currentUser.linkedin_access_token || !currentUser.linkedin_connections) {
         return res.status(400).json({ message: "LinkedIn not connected or no connections available" });
       }
       
@@ -905,8 +905,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get the user IDs of all attendees who have responded "yup"
       const attendeeIds = responses
         .filter(response => response.response === "yup")
-        .map(response => response.userId)
-        .filter((id): id is number => id !== null);
+        .map(response => response.user_id)
+        .filter((id): id is string => id !== null);
       
       // Get the users who are attending
       const attendees = await Promise.all(
@@ -914,17 +914,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       // Parse the current user's LinkedIn connections
-      const myConnections = JSON.parse(currentUser.linkedinConnections);
+      const myConnections = JSON.parse(currentUser.linkedin_connections);
       
       // Filter for attendees with LinkedIn IDs and check if they're connected
       const connections = attendees
-        .filter(user => user && user.linkedinId)
+        .filter(user => user && user.linkedin_id)
         .map(user => ({
           id: user!.id,
-          displayName: user!.displayName,
-          linkedinId: user!.linkedinId!,
-          linkedinProfileUrl: user!.linkedinProfileUrl || `https://www.linkedin.com/in/${user!.linkedinId}`,
-          isConnected: myConnections.includes(user!.linkedinId)
+          displayName: user!.display_name,
+          linkedinId: user!.linkedin_id!,
+          linkedinProfileUrl: user!.linkedin_profile_url || `https://www.linkedin.com/in/${user!.linkedin_id}`,
+          isConnected: myConnections.includes(user!.linkedin_id)
         }));
       
       return res.json(connections);
