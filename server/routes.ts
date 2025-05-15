@@ -366,7 +366,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               displayName: "Sub Ourbon",
               isAdmin: true,
               isPro: true,
-              isPremium: true
+              is_premium: true
             });
           } catch (sessionErr) {
             console.error("Error saving session:", sessionErr);
@@ -527,10 +527,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               return res.json({
                 id: userId,
                 username: user.username || "",
-                displayName: user.displayName || "",
-                isAdmin: false,
-                isPro: false,
-                isPremium: false,
+                displayName: user.display_name || "",
+                is_admin: false,
+                is_pro: false,
+                is_premium: false,
                 brandTheme: "{}",
                 logoUrl: null,
                 profileImageUrl: user.profileImageUrl || null
@@ -665,8 +665,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user: {
           id: user.id,
           username: user.username,
-          displayName: user.displayName,
-          isAdmin: user.isAdmin
+          displayName: user.display_name,
+          isAdmin: user.is_admin
         }
       });
     } catch (error) {
@@ -698,9 +698,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user: {
           id: updatedUser.id,
           username: updatedUser.username,
-          displayName: updatedUser.displayName,
-          isPro: updatedUser.isPro,
-          isPremium: updatedUser.isPremium
+          displayName: updatedUser.display_name,
+          isPro: updatedUser.is_pro,
+          isPremium: updatedUser.is_premium
         }
       });
     } catch (error) {
@@ -732,9 +732,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user: {
           id: updatedUser.id,
           username: updatedUser.username,
-          displayName: updatedUser.displayName,
-          isPro: updatedUser.isPro,
-          isPremium: updatedUser.isPremium
+          displayName: updatedUser.display_name,
+          isPro: updatedUser.is_pro,
+          isPremium: updatedUser.is_premium
         }
       });
     } catch (error) {
@@ -766,9 +766,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user: {
           id: updatedUser.id,
           username: updatedUser.username,
-          displayName: updatedUser.displayName,
-          isPro: updatedUser.isPro,
-          isPremium: updatedUser.isPremium
+          displayName: updatedUser.display_name,
+          isPro: updatedUser.is_pro,
+          isPremium: updatedUser.is_premium
         }
       });
     } catch (error) {
@@ -972,9 +972,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const eventWithBranding = {
         ...event,
         hostDisplayName: host?.display_name || "Event Host",
-        hostBranding: host?.isPremium ? {
-          logoUrl: host.logoUrl,
-          brandTheme: host.brandTheme
+        hostBranding: host?.is_premium ? {
+          logoUrl: host.logo_url,
+          brandTheme: host.brand_theme
         } : null,
         // Include custom RSVP text fields regardless of premium status
         // so they're available on the client
@@ -1149,11 +1149,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ message: 'User not found' });
         }
         
-        if (!user.stripeCustomerId) {
+        if (!user.stripe_customer_id) {
           return res.status(400).json({ message: 'No Stripe customer ID found for this user' });
         }
         
-        const session = await createCustomerPortalSession(user.stripeCustomerId);
+        const session = await createCustomerPortalSession(user.stripe_customer_id);
         res.json({ url: session.url });
       } catch (error) {
         console.error('Error creating customer portal session:', error);
@@ -1210,9 +1210,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 const priceId = item.price.id;
                 
                 if (priceId === process.env.STRIPE_PREMIUM_PRICE_ID) {
-                  await storage.updateUser(user.id, { isPremium: true, isPro: true });
+                  await storage.updateUser(user.id, { is_premium: true, is_pro: true });
                 } else if (priceId === process.env.STRIPE_PRO_PRICE_ID) {
-                  await storage.updateUser(user.id, { isPro: true, isPremium: false });
+                  await storage.updateUser(user.id, { is_pro: true, is_premium: false });
                 }
               }
             }
@@ -1234,9 +1234,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const priceId = item.price.id;
             
             if (priceId === process.env.STRIPE_PREMIUM_PRICE_ID) {
-              await storage.updateUser(user.id, { isPremium: true, isPro: true });
+              await storage.updateUser(user.id, { is_premium: true, is_pro: true });
             } else if (priceId === process.env.STRIPE_PRO_PRICE_ID) {
-              await storage.updateUser(user.id, { isPro: true, isPremium: false });
+              await storage.updateUser(user.id, { is_pro: true, is_premium: false });
             }
           }
           break;
@@ -1249,7 +1249,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           if (user) {
             // Downgrade user to free tier
-            await storage.updateUser(user.id, { isPro: false, isPremium: false });
+            await storage.updateUser(user.id, { is_pro: false, is_premium: false });
             // Pass empty string instead of null for TypeScript compatibility
             await storage.updateStripeSubscriptionId(user.id, "");
           }
@@ -1360,7 +1360,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         users: allUsers.map(u => ({
           id: u.id,
           username: u.username,
-          displayName: u.displayName,
+          displayName: u.display_name,
           password: u.password // Only showing in debug endpoint
         }))
       });
