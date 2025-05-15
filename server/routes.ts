@@ -1631,43 +1631,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `);
       }
       
-      // Create a new test user
+      // Create a new test user with SQL to avoid column mapping issues
       console.log("Creating test user 'subourbon'");
-      const [bourbon] = await db.insert(users).values({
-        id: "subourbon_" + Date.now(),
-        username: "subourbon",
-        password: "events",
-        displayName: "Sub Ourbon",
-        email: "subourbon@example.com",
-        isAdmin: true,
-        isPro: true,
-        isPremium: true
-      }).returning();
+      const userId = "subourbon_" + Date.now();
+      
+      // Use raw SQL to avoid type errors
+      await db.execute(sql`
+        INSERT INTO users (
+          id, username, password, display_name, email,
+          is_admin, is_pro, is_premium
+        ) VALUES (
+          ${userId}, 'subourbon', 'events', 'Sub Ourbon', 'subourbon@example.com',
+          true, true, true
+        )
+      `);
+      
+      // Fetch the created user
+      const [bourbon] = await db.select().from(users).where(eq(users.id, userId));
       
       console.log("Created test user:", bourbon);
       
       return res.send(`
-        <html>
-          <head>
-            <title>Test User Created</title>
-            <style>
-              body { font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 2rem; line-height: 1.5; }
-              h1 { color: #4f46e5; }
-              .success { color: #10b981; font-weight: bold; }
-              .code { background: #f1f5f9; padding: 0.5rem; border-radius: 0.25rem; font-family: monospace; }
-              a { color: #4f46e5; text-decoration: none; }
-              a:hover { text-decoration: underline; }
-            </style>
-          </head>
-          <body>
-            <h1>Test User Created Successfully</h1>
-            <p class="success">The test user has been created and is ready to use.</p>
-            <p>Login with the following credentials:</p>
-            <p><strong>Username:</strong> <span class="code">subourbon</span></p>
-            <p><strong>Password:</strong> <span class="code">events</span></p>
-            <p><a href="/login">Go to login page</a></p>
-          </body>
-        </html>
+      <html>
+        <head>
+          <title>Test User Created</title>
+          <style>
+            body { font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 2rem; line-height: 1.5; }
+            h1 { color: #4f46e5; }
+            .success { color: #10b981; font-weight: bold; }
+            .code { background: #f1f5f9; padding: 0.5rem; border-radius: 0.25rem; font-family: monospace; }
+            a { color: #4f46e5; text-decoration: none; }
+            a:hover { text-decoration: underline; }
+          </style>
+        </head>
+        <body>
+          <h1>Test User Created Successfully</h1>
+          <p class="success">The test user has been created and is ready to use.</p>
+          <p>Login with the following credentials:</p>
+          <p><strong>Username:</strong> <span class="code">subourbon</span></p>
+          <p><strong>Password:</strong> <span class="code">events</span></p>
+          <p><a href="/login">Go to login page</a></p>
+        </body>
+      </html>
       `);
     } catch (error) {
       console.error("Error creating test user:", error);
