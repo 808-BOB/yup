@@ -8,7 +8,7 @@ import fs from "fs";
 // Extending Express Request type to include session
 declare module "express-session" {
   interface SessionData {
-    userId: number;
+    userId: string;
   }
 }
 
