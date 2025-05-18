@@ -366,7 +366,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               displayName: "Sub Ourbon",
               isAdmin: true,
               isPro: true,
-              is_premium: true
+              isPremium: true
             });
           } catch (sessionErr) {
             console.error("Error saving session:", sessionErr);
