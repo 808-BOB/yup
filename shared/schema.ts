@@ -31,8 +31,7 @@ export const users = pgTable("users", {
   linkedin_access_token: text("linkedin_access_token"), // LinkedIn OAuth access token
   linkedin_profile_url: text("linkedin_profile_url"), // LinkedIn profile URL
   linkedin_connections: text("linkedin_connections"), // JSON string containing LinkedIn connections data
-  created_at: timestamp("created_at").defaultNow(),
-  updated_at: timestamp("updated_at").defaultNow(),
+  // created_at and updated_at fields are removed as they don't exist in the database
 });
 
 export const insertUserSchema = createInsertSchema(users, {
