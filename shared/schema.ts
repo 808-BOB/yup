@@ -36,16 +36,10 @@ export const users = pgTable("users", {
 
 export const insertUserSchema = createInsertSchema(users, {
   id: z.string(), // Explicitly mark id as string
-}).omit({
-  created_at: true,
-  updated_at: true,
 });
 
 export const upsertUserSchema = createInsertSchema(users, {
   id: z.string(), // Explicitly mark id as string
-}).omit({
-  created_at: true,
-  updated_at: true,
 });
 
 // Session storage table for Replit Auth
