@@ -20,6 +20,7 @@ import Upgrade from "@/pages/upgrade";
 import Subscribe from "@/pages/subscribe";
 import SubscriptionSuccess from "@/pages/subscription-success";
 import LinkedInTest from "@/pages/linkedin-test";
+import LoginTest from "@/pages/login-test";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 
@@ -45,6 +46,7 @@ function Router() {
       <Route path="/subscribe" component={Subscribe} />
       <Route path="/upgrade/success" component={SubscriptionSuccess} />
       <Route path="/linkedin-test" component={LinkedInTest} />
+      <Route path="/login-test" component={LoginTest} />
       <Route component={NotFound} />
     </Switch>
   );
