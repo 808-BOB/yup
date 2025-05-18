@@ -359,14 +359,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
             });
             
-            // Return a simplified response - using camelCase for response to client
+            // Return a simplified response with proper field names matching the database
             return res.json({
               id: userId,
               username: "subourbon",
-              displayName: "Sub Ourbon",
-              isAdmin: true,
-              isPro: true,
-              isPremium: true
+              display_name: "Sub Ourbon",
+              is_admin: true,
+              is_pro: true,
+              is_premium: true
             });
           } catch (sessionErr) {
             console.error("Error saving session:", sessionErr);
@@ -585,11 +585,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(403).json({ message: "Not authorized" });
         }
         
-        const { displayName, password } = req.body;
+        const { display_name, password } = req.body;
         
         // Update user
         const updatedUser = await storage.updateUser(userId, {
-          displayName,
+          display_name,
           password,
         });
         
@@ -847,7 +847,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get the host information to include branding
-      const host = await storage.getUser(event.hostId);
+      const host = await storage.getUser(String(event.hostId));
       
       // Add debugging to see what's coming from the database
       console.log("Event data from DB (by ID):", {
