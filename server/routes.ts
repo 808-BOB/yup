@@ -251,8 +251,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Create user with only the columns we know exist in the database
             try {
               await db.execute(sql`
-                INSERT INTO users (id, username, password, display_name, is_admin, is_pro, is_premium)
-                VALUES ('subourbon-test-123', 'subourbon', 'events', 'Sub Ourbon', true, true, true)
+                INSERT INTO users (id, username, password, display_name, is_admin, is_pro, is_premium, profile_image_url)
+                VALUES ('subourbon-test-123', 'subourbon', 'events', 'Sub Ourbon', true, true, true, null)
               `);
               userId = "subourbon-test-123";
               console.log("Created test user successfully with ID:", userId);
@@ -327,8 +327,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             try {
               // Use raw SQL to avoid type errors
               await db.execute(sql`
-                INSERT INTO users (id, username, password, display_name, is_admin, is_pro, is_premium)
-                VALUES ('subourbon-123', 'subourbon', 'events', 'Sub Ourbon', true, true, true)
+                INSERT INTO users (id, username, password, display_name, is_admin, is_pro, is_premium, profile_image_url)
+                VALUES ('subourbon-123', 'subourbon', 'events', 'Sub Ourbon', true, true, true, null)
               `);
               
               userId = "subourbon-123";
