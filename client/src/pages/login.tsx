@@ -239,16 +239,7 @@ export default function Login() {
               Sign up
             </span>
           </p>
-          <p className="text-gray-400 text-sm mt-2">
-            <a 
-              href="/api/create-test-user" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-primary hover:text-primary/80 cursor-pointer"
-            >
-              Generate Test User
-            </a>
-          </p>
+
           
           {/* Test user login button - hidden but accessible for admins */}
           <div className="mt-4 opacity-0 hover:opacity-100 transition-opacity duration-300">
