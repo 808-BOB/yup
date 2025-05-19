@@ -29,7 +29,8 @@ export default function Header() {
     setLocation("/");
   };
 
-  const getInitials = (name: string) => {
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return ""; // Return empty string if name is null or undefined
     return name
       .split(" ")
       .map((n) => n[0])
