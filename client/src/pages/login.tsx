@@ -149,12 +149,7 @@ export default function Login() {
                   <span>Signing In...</span>
                 </div>
               ) : (
-                <div className="flex flex-col items-center">
-                  <span>Sign In</span>
-                  <span className="text-xs normal-case tracking-normal font-normal opacity-90 mt-1">
-                    Try subourbon/events for testing
-                  </span>
-                </div>
+                <span>Sign In</span>
               )}
             </Button>
           </form>
@@ -255,124 +250,23 @@ export default function Login() {
             </a>
           </p>
           
-          {/* Debug Tools Section */}
-          <div className="mt-4">
-            <div className="bg-emerald-900/20 border border-emerald-500/20 p-3 rounded-md">
-              <p className="text-emerald-300 text-sm font-medium mb-2">
-                👋 Having trouble logging in?
-              </p>
-              <p className="text-emerald-200/80 text-xs mb-2">
-                Use our instant login feature to bypass the regular login flow. This will create the test account if needed and log you in directly.
-              </p>
-              <p className="text-gray-400 text-xs mb-3">
-                Test credentials: username <span className="font-bold">subourbon</span> with password <span className="font-bold">events</span>
-              </p>
-              <div className="flex gap-2 justify-center">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="text-xs px-3 py-1 h-auto border-primary/50 text-primary hover:bg-primary/10"
-                  onClick={() => {
-                    form.setValue('username', 'subourbon');
-                    form.setValue('password', 'events');
-                    setTimeout(() => {
-                      form.handleSubmit(onSubmit)();
-                    }, 300);
-                  }}
-                >
-                  Login as Test User
-                </Button>
-                
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  className="text-xs px-3 py-1 h-auto bg-red-600 hover:bg-red-700"
-                  onClick={async () => {
-                    try {
-                      const response = await fetch('/api/direct-login', {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                          username: 'subourbon',
-                          password: 'events'
-                        }),
-                      });
-                      
-                      const data = await response.json();
-                      
-                      if (response.ok) {
-                        toast({
-                          title: "Direct Login Success",
-                          description: "You've been logged in using the emergency method",
-                        });
-                        console.log("Emergency login successful:", data);
-                        // Redirect to home
-                        window.location.href = "/my-events";
-                      } else {
-                        toast({
-                          title: "Emergency Login Failed",
-                          description: data.message || "Error during emergency login",
-                          variant: "destructive"
-                        });
-                        console.error("Emergency login failed:", data);
-                      }
-                    } catch (error) {
-                      console.error("Error during emergency login:", error);
-                      toast({
-                        title: "Error",
-                        description: "Emergency login failed. See console for details.",
-                        variant: "destructive"
-                      });
-                    }
-                  }}
-                >
-                  EMERGENCY LOGIN
-                </Button>
-                
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs px-3 py-1 h-auto text-amber-400 hover:bg-amber-500/10 hover:text-amber-500"
-                  onClick={async () => {
-                    try {
-                      const res = await fetch(`/api/debug/check-login/subourbon/events`);
-                      const data = await res.json();
-                      
-                      toast({
-                        title: data.success ? "Test Success" : "Test Failed",
-                        description: data.message,
-                        variant: data.success ? "default" : "destructive"
-                      });
-                      
-                      console.log("Credentials check result:", data);
-                    } catch (error) {
-                      toast({
-                        title: "Error",
-                        description: "Could not check credentials",
-                        variant: "destructive"
-                      });
-                      console.error("Error checking credentials:", error);
-                    }
-                  }}
-                >
-                  Check Credentials
-                </Button>
-                
-                <a 
-                  href="/api/debug/force-login/subourbon" 
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs px-3 py-1 rounded-md bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 hover:text-emerald-300 flex items-center justify-center"
-                >
-                  Force Login
-                </a>
-              </div>
-            </div>
+          {/* Test user login button - hidden but accessible for admins */}
+          <div className="mt-4 opacity-0 hover:opacity-100 transition-opacity duration-300">
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="text-xs px-3 py-1 h-auto text-gray-500"
+              onClick={() => {
+                form.setValue('username', 'subourbon');
+                form.setValue('password', 'events');
+                setTimeout(() => {
+                  form.handleSubmit(onSubmit)();
+                }, 300);
+              }}
+            >
+              Admin Access
+            </Button>
           </div>
         </div>
       </div>
