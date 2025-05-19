@@ -66,7 +66,7 @@ export default function Header() {
             {user ? (
               <Avatar className="cursor-pointer border border-primary w-8 h-8 bg-gray-900">
                 <AvatarFallback className="bg-gray-900 text-primary text-sm">
-                  {getInitials(user.displayName)}
+                  {getInitials(user.display_name)}
                 </AvatarFallback>
               </Avatar>
             ) : (
@@ -83,7 +83,7 @@ export default function Header() {
             {user ? (
               <>
                 <div className="px-2 py-1.5 text-sm font-medium">
-                  {user.displayName}
+                  {user.display_name}
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -108,7 +108,7 @@ export default function Header() {
                   <span>Plans</span>
                 </DropdownMenuItem>
                 {/* Premium users can access branding settings */}
-                {user.isPremium && (
+                {user.is_premium && (
                   <DropdownMenuItem
                     onClick={() => setLocation("/branding")}
                     className="cursor-pointer"
@@ -118,7 +118,7 @@ export default function Header() {
                   </DropdownMenuItem>
                 )}
                 {/* Admin-only link to style guide */}
-                {user.isAdmin && (
+                {user.is_admin && (
                   <DropdownMenuItem
                     onClick={() => setLocation("/style-guide")}
                     className="cursor-pointer"
