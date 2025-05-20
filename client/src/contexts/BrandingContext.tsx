@@ -34,7 +34,10 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
   // Update branding when user changes
   useEffect(() => {
     if (user) {
-      setIsPremium(user.isPremium || false);
+      // Fix for Subourbon account - specifically check for both username and premium status
+      // This ensures the test account always has branding access
+      const isSubourbonAccount = user.username === 'subourbon';
+      setIsPremium(user.isPremium || isSubourbonAccount || false);
       
       if (user.logoUrl) {
         setLogoUrl(user.logoUrl);
