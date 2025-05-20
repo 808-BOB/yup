@@ -1,11 +1,34 @@
-// Create a very simple version of the component to test the basic structure
-// This won't have all the functionality but will fix the structure issues
-
+// Fixed version of CreateEvent component with proper schema validation
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation } from "wouter";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
+import { 
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+
+// Create a schema directly using zod instead of relying on insertEventSchema.extend
+const formSchema = z.object({
+  title: z.string().min(1, "Event title is required"),
+  date: z.string().min(1, "Event date is required"),
+  startTime: z.string().min(1, "Start time is required"),
+  endTime: z.string().min(1, "End time is required"),
+  location: z.string().min(1, "Location is required"),
+  address: z.string().optional(),
+  description: z.string().optional(),
+  imageUrl: z.string().optional(),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 export default function CreateEvent() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -14,7 +37,8 @@ export default function CreateEvent() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [, navigate] = useLocation();
 
-  const form = useForm({
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
       date: "",
@@ -27,17 +51,40 @@ export default function CreateEvent() {
     }
   });
 
-  const onSubmit = async (data: any) => {
-    // Placeholder
-    console.log(data);
+  const onSubmit = async (data: FormValues) => {
+    setIsSubmitting(true);
+    try {
+      // This would normally send data to the API
+      console.log("Form submitted successfully:", data);
+      setTimeout(() => {
+        setIsSubmitting(false);
+        navigate("/");
+      }, 1000);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      setIsSubmitting(false);
+    }
   };
 
   const handleCancel = () => {
     navigate("/");
   };
 
-  const nextStep = () => {
-    setCurrentStep(currentStep + 1);
+  const nextStep = async () => {
+    // Get fields for the current step
+    let fieldsToValidate: (keyof FormValues)[] = [];
+    
+    if (currentStep === 1) {
+      fieldsToValidate = ['title', 'date', 'startTime', 'endTime'];
+    } else if (currentStep === 2) {
+      fieldsToValidate = ['location'];
+    }
+    
+    const isValid = await form.trigger(fieldsToValidate);
+    
+    if (isValid) {
+      setCurrentStep(currentStep + 1);
+    }
   };
 
   const prevStep = () => {
@@ -69,24 +116,175 @@ export default function CreateEvent() {
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-              {/* Step 1 */}
+              {/* Step 1: Basic Information */}
               {currentStep === 1 && (
                 <div className="space-y-5">
-                  <p>Step 1 content would go here</p>
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Event Title</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="My Awesome Event"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Date</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="startTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Start Time</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="time"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="endTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>End Time</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="time"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
               )}
 
-              {/* Step 2 */}
+              {/* Step 2: Location Information */}
               {currentStep === 2 && (
                 <div className="space-y-5">
-                  <p>Step 2 content would go here</p>
+                  <FormField
+                    control={form.control}
+                    name="location"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Location Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Virtual or Physical Location"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address (Optional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="123 Main St, City, State"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description (Optional)</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Tell people about your event"
+                            className="min-h-[120px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               )}
 
-              {/* Step 3 */}
+              {/* Step 3: Review and Submit */}
               {currentStep === 3 && (
                 <div className="space-y-5">
-                  <p>Step 3 content would go here</p>
+                  <h3 className="text-xl font-semibold">Review Your Event</h3>
+                  
+                  <div className="rounded-md border border-gray-800 p-4 space-y-3">
+                    <div>
+                      <p className="text-sm text-gray-400">Title</p>
+                      <p className="font-medium">{form.watch("title")}</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-400">Date</p>
+                        <p className="font-medium">{form.watch("date")}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-400">Time</p>
+                        <p className="font-medium">{form.watch("startTime")} - {form.watch("endTime")}</p>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <p className="text-sm text-gray-400">Location</p>
+                      <p className="font-medium">{form.watch("location")}</p>
+                      {form.watch("address") && (
+                        <p className="text-sm text-gray-400">{form.watch("address")}</p>
+                      )}
+                    </div>
+                    
+                    {form.watch("description") && (
+                      <div>
+                        <p className="text-sm text-gray-400">Description</p>
+                        <p>{form.watch("description")}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
