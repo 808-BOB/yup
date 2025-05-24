@@ -74,7 +74,7 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-950">
-      <div className="max-w-md mx-auto w-full px-4 pt-[120px]">
+      <div className="max-w-md mx-auto w-full px-4 pt-[120px] pb-10">
         <div className="text-center mb-8">
           <Link href="/">
             <img src={YupLogo} alt="Yup.RSVP" className="h-10 mx-auto mb-2" />
