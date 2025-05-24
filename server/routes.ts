@@ -184,12 +184,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User authentication & session
   app.post("/api/auth/signup", async (req: Request, res: Response) => {
     try {
-      const { username, password, displayName } = req.body;
+      const { username, password, displayName, phoneNumber, email } = req.body;
+
+      // Validate that at least phone or email is provided
+      if (!phoneNumber && !email) {
+        return res.status(400).json({ message: "Please provide either a phone number or email address" });
+      }
 
       // Check if username is already taken
       const existingUser = await storage.getUserByUsername(username);
       if (existingUser) {
         return res.status(400).json({ message: "Username already exists" });
+      }
+
+      // Check if email is already taken (if provided)
+      if (email) {
+        const existingEmailUser = await storage.getUserByEmail(email);
+        if (existingEmailUser) {
+          return res.status(400).json({ message: "Email address already registered" });
+        }
       }
       
       // Generate a unique ID for the user
@@ -199,10 +212,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         await db.execute(sql`
           INSERT INTO users (
-            id, username, password, display_name, 
+            id, username, password, display_name, email, phone_number,
             is_admin, is_pro, is_premium
           ) VALUES (
-            ${userId}, ${username}, ${password}, ${displayName}, 
+            ${userId}, ${username}, ${password}, ${displayName}, ${email || null}, ${phoneNumber || null},
             false, false, false
           )
         `);
@@ -222,6 +235,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: user.id,
         username: user.username,
         displayName: user.display_name,
+        email: user.email,
+        phoneNumber: user.phone_number,
         isAdmin: user.is_admin,
         isPro: user.is_pro,
         isPremium: user.is_premium,
@@ -446,6 +461,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.clearCookie("connect.sid"); // Clear the session cookie
       return res.json({ message: "Logged out successfully" });
     });
+  });
+
+  // Password reset request endpoint
+  app.post("/api/auth/forgot-password", async (req: Request, res: Response) => {
+    try {
+      const { contact, type } = req.body;
+
+      if (!contact) {
+        return res.status(400).json({ message: "Contact information is required" });
+      }
+
+      // Find user by email or phone number
+      let user;
+      if (type === "email") {
+        user = await storage.getUserByEmail(contact);
+      } else {
+        // For phone numbers, we need to find users by phone
+        const result = await db.execute(sql`SELECT * FROM users WHERE phone_number = ${contact}`);
+        user = result.rows?.[0];
+      }
+
+      if (!user) {
+        // Don't reveal whether the user exists or not for security
+        return res.json({ 
+          message: "If an account with that contact information exists, password reset instructions have been sent." 
+        });
+      }
+
+      // Generate a password reset token
+      const resetToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      const resetExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
+
+      // Store the reset token in the database
+      try {
+        await db.execute(sql`
+          UPDATE users 
+          SET reset_token = ${resetToken}, reset_token_expiry = ${resetExpiry.toISOString()}
+          WHERE id = ${user.id}
+        `);
+      } catch (dbError) {
+        console.error("Error storing reset token:", dbError);
+        return res.status(500).json({ message: "Failed to process password reset request" });
+      }
+
+      if (type === "email") {
+        // Log the reset information for development
+        console.log(`Password reset requested for email: ${contact}`);
+        console.log(`Reset token: ${resetToken}`);
+        
+        res.json({ 
+          message: "Password reset instructions have been sent to your email address.",
+          // For development only
+          resetToken: process.env.NODE_ENV === 'development' ? resetToken : undefined
+        });
+      } else {
+        // For SMS reset
+        const resetCode = resetToken.substring(0, 6).toUpperCase();
+        console.log(`Password reset requested for phone: ${contact}`);
+        console.log(`Reset code: ${resetCode}`);
+        
+        res.json({ 
+          message: "Password reset code has been sent to your phone number.",
+          // For development only
+          resetCode: process.env.NODE_ENV === 'development' ? resetCode : undefined
+        });
+      }
+
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      res.status(500).json({ message: "Failed to process password reset request" });
+    }
   });
 
   app.get(

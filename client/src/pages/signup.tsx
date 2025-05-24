@@ -24,12 +24,29 @@ const signupSchema = z
   .object({
     username: z.string().min(3, "Username must be at least 3 characters"),
     displayName: z.string().min(1, "Display name is required"),
+    phoneNumber: z.string().optional(),
+    email: z.string().email("Please enter a valid email").optional(),
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string().min(1, "Confirm your password"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
+  })
+  .refine((data) => data.phoneNumber || data.email, {
+    message: "Please provide either a phone number or email address",
+    path: ["phoneNumber"],
+  })
+  .refine((data) => {
+    if (data.phoneNumber) {
+      // Basic phone number validation - must be at least 10 digits
+      const phoneRegex = /^\+?[\d\s\-\(\)]{10,}$/;
+      return phoneRegex.test(data.phoneNumber);
+    }
+    return true;
+  }, {
+    message: "Please enter a valid phone number",
+    path: ["phoneNumber"],
   });
 
 type SignupFormValues = z.infer<typeof signupSchema>;
@@ -46,6 +63,8 @@ export default function Signup() {
     defaultValues: {
       username: "",
       displayName: "",
+      phoneNumber: "",
+      email: "",
       password: "",
       confirmPassword: "",
     },
@@ -55,7 +74,7 @@ export default function Signup() {
     setIsSubmitting(true);
 
     try {
-      await signup(data.username, data.displayName, data.password);
+      await signup(data.username, data.displayName, data.password, data.phoneNumber, data.email);
       toast({
         title: "Success",
         description: "Account created successfully. You are now logged in.",
@@ -122,6 +141,50 @@ export default function Signup() {
                     />
                   </FormControl>
                   <FormMessage className="text-primary" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="phoneNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">
+                    Phone Number (Preferred)
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="+1 (555) 123-4567"
+                      className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage className="text-primary" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-400 uppercase text-xs tracking-wider">
+                    Email Address
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="your.email@example.com"
+                      className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage className="text-primary" />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Provide either phone number or email address
+                  </p>
                 </FormItem>
               )}
             />

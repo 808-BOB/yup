@@ -18,6 +18,9 @@ export const users = pgTable("users", {
   password: text("password"), // Optional for OAuth-based authentication
   display_name: text("display_name").notNull(),
   email: text("email"),
+  phone_number: text("phone_number"), // Phone number for contact and password recovery
+  reset_token: text("reset_token"), // Password reset token
+  reset_token_expiry: timestamp("reset_token_expiry"), // Reset token expiration time
   // Removing first_name and last_name fields as they're not in the database
   profile_image_url: text("profile_image_url"),
   is_admin: boolean("is_admin").notNull().default(false),

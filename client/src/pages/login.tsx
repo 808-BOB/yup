@@ -229,7 +229,16 @@ export default function Login() {
           </div>
         </div>
         
-        <div className="text-center mt-6">
+        <div className="text-center mt-6 space-y-3">
+          <p className="text-gray-400 text-sm">
+            <span
+              onClick={() => setLocation("/forgot-password")}
+              className="text-primary hover:text-primary/80 cursor-pointer"
+            >
+              Forgot your password?
+            </span>
+          </p>
+          
           <p className="text-gray-400 text-sm">
             Don't have an account?{" "}
             <span

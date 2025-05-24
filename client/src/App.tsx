@@ -21,6 +21,7 @@ import Subscribe from "@/pages/subscribe";
 import SubscriptionSuccess from "@/pages/subscription-success";
 import LinkedInTest from "@/pages/linkedin-test";
 import LoginTest from "@/pages/login-test";
+import ForgotPassword from "@/pages/forgot-password";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 
@@ -39,6 +40,7 @@ function Router() {
       <Route path="/profile" component={Profile} />
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
+      <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/style-guide" component={StyleGuide} />
       <Route path="/branding" component={Branding} />

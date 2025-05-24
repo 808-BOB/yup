@@ -24,6 +24,8 @@ interface AuthContextType {
     username: string,
     displayName: string,
     password: string,
+    phoneNumber?: string,
+    email?: string,
   ) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   loginWithApple: () => Promise<void>;
@@ -124,6 +126,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     username: string,
     displayName: string,
     password: string,
+    phoneNumber?: string,
+    email?: string,
   ) => {
     setIsLoading(true);
     setError(null);
@@ -133,6 +137,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         username,
         displayName,
         password,
+        phoneNumber,
+        email,
       });
 
       setUser(userData);
