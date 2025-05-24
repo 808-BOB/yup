@@ -205,8 +205,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Generate a unique ID for the user
-      const userId = `local_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      // Generate a unique numeric ID for the user
+      const userId = Date.now();
 
       // Create the new user using SQL to avoid column mapping issues
       try {
