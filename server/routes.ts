@@ -227,8 +227,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get the user we just created
       const user = await db.select().from(users).where(eq(users.id, userId)).then(rows => rows[0]);
 
-      // Add user to session
+      // Add user to session and save it
       req.session.userId = user.id;
+      
+      // Save the session to ensure it persists
+      await new Promise<void>((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) {
+            console.error("Failed to save session after signup:", err);
+            reject(err);
+          } else {
+            console.log("Session saved successfully after signup for user:", user.username);
+            resolve();
+          }
+        });
+      });
 
       // Return user info without password (converting from snake_case DB fields to camelCase response)
       return res.status(201).json({
