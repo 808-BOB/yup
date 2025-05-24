@@ -76,10 +76,11 @@ export default function Signup() {
     try {
       await signup(data.username, data.displayName, data.password, data.phoneNumber, data.email);
       toast({
-        title: "Success",
+        title: "Welcome to Yup.RSVP!",
         description: "Account created successfully. You are now logged in.",
       });
-      setLocation("/");
+      // Redirect to the main dashboard/home page
+      setLocation("/my-events");
     } catch (error) {
       toast({
         title: "Error",
