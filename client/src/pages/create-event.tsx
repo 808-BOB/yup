@@ -122,6 +122,9 @@ export default function CreateEvent() {
       }
     } catch (error) {
       console.error("Error submitting event:", error);
+      // Log form errors to help debug
+      console.error("Form errors:", form.formState.errors);
+      console.error("Form data being submitted:", data);
     } finally {
       setIsSubmitting(false);
     }
