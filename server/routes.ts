@@ -937,6 +937,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .replace(/^-+|-+$/g, '');
       }
       
+      // Convert hostId to string to match database schema
+      if (req.body.hostId) {
+        req.body.hostId = String(req.body.hostId);
+      }
+      
       const event = await storage.createEvent(req.body);
       console.log("Event created successfully:", event);
       res.status(201).json(event);
