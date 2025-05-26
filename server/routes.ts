@@ -929,12 +929,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("Creating event with data:", req.body);
       
-      // Generate a slug from the title if not provided
+      // Generate a unique slug from the title if not provided
       if (!req.body.slug && req.body.title) {
-        req.body.slug = req.body.title
+        const baseSlug = req.body.title
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/^-+|-+$/g, '');
+        
+        // Add timestamp to ensure uniqueness
+        const timestamp = Date.now();
+        req.body.slug = `${baseSlug}-${timestamp}`;
       }
       
       // Convert hostId to string to match database schema
