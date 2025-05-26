@@ -108,11 +108,41 @@ export default function CreateEvent() {
 
       if (isEditMode && eventData) {
         // Update existing event
-        await apiRequest("PUT", `/api/events/${eventData.id}`, eventData);
-        queryClient.invalidateQueries({ queryKey: ["/api/events"] });
-        queryClient.invalidateQueries({ queryKey: [`/api/events/${eventData.id}`] });
-        queryClient.invalidateQueries({ queryKey: [`/api/events/slug/${params?.slug}`] });
-        navigate(`/events/${params?.slug}`);
+        const updateData = {
+          ...eventData,
+          ...data,
+          hostId: user.id,
+          id: eventData.id
+        };
+        console.log("Making API request to update event...");
+        console.log("Update data:", updateData);
+        try {
+          const response = await fetch(`/api/events/${eventData.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updateData),
+            credentials: "include",
+          });
+          
+          console.log("Update response status:", response.status);
+          console.log("Update response ok:", response.ok);
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Update error response:", errorText);
+            throw new Error(`Server returned ${response.status}: ${errorText}`);
+          }
+          
+          const updatedEvent = await response.json();
+          console.log("Event updated successfully:", updatedEvent);
+          queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+          queryClient.invalidateQueries({ queryKey: [`/api/events/${updateData.id}`] });
+          queryClient.invalidateQueries({ queryKey: [`/api/events/slug/${params?.slug}`] });
+          navigate(`/events/${params?.slug}`);
+        } catch (fetchError) {
+          console.error("Update error details:", fetchError);
+          throw fetchError;
+        }
       } else {
         // Create new event
         console.log("Making API request to create event...");
