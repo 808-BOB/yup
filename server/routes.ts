@@ -718,10 +718,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     isAuthenticated,
     async (req: Request, res: Response) => {
       try {
-        const userId = parseInt(req.params.id);
+        const userId = req.params.id;
+        
+        console.log("Branding update request for user:", userId);
+        console.log("Session user ID:", req.session.userId);
+        console.log("Request body:", req.body);
         
         // Only allow users to update their own branding
         if (req.session.userId !== userId) {
+          console.log("Authorization failed - session userId doesn't match param userId");
           return res.status(403).json({ message: "Not authorized" });
         }
         
