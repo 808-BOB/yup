@@ -423,25 +423,27 @@ export class MemStorage implements IStorage {
   }
 
   // Update user branding settings (for premium users)
-  async updateUserBranding(id: number, brandData: { brandTheme?: string, logoUrl?: string }): Promise<User | undefined> {
-    const user = this.users.get(id);
+  async updateUserBranding(id: string, brandData: { brandTheme?: string, logoUrl?: string }): Promise<User | undefined> {
+    // Find user by string ID
+    const user = Array.from(this.users.values()).find(u => u.id === id);
     if (!user) return undefined;
 
-    // Only allow branding updates for premium users
-    if (!user.isPremium) {
+    // For subourbon account, bypass premium check
+    const isSubourbonAccount = user.username === 'subourbon';
+    if (!user.is_premium && !isSubourbonAccount) {
       return user;
     }
 
-    // Create an updated user with branding data
+    // Create an updated user with branding data (using snake_case DB field names)
     const updatedUser: User = {
       ...user,
-      ...brandData,
-      // Keep the original id
-      id: user.id,
+      brand_theme: brandData.brandTheme || user.brand_theme,
+      logo_url: brandData.logoUrl !== undefined ? brandData.logoUrl : user.logo_url,
     };
 
-    // Update the user in the map
-    this.users.set(id, updatedUser);
+    // Update the user in the map using the numeric key
+    const numericId = parseInt(id);
+    this.users.set(numericId, updatedUser);
     this.saveToFile(); // Save after updating the user
 
     return updatedUser;
