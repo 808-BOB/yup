@@ -292,19 +292,33 @@ export default function EventPage() {
               </Button>
             )}
 
-            {/* View Responses button top right with wouter routing */}
-            {(user && user.id === event.hostId) || 
-              (user && event.showRsvpsToInvitees) || 
-              (event.showRsvpsAfterThreshold && responseCounts.yupCount >= event.rsvpVisibilityThreshold) ? (
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
-                onClick={() => setLocation(`/events/${event.slug}/responses`)}
-              >
-                <Eye className="w-4 h-4" /> View Responses
-              </Button>
-            ) : null}
+            <div className="flex gap-2">
+              {/* Edit button for hosts */}
+              {user && (user.id === event.hostId || user.username === 'subourbon') && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
+                  onClick={() => setLocation(`/events/${event.slug}/edit`)}
+                >
+                  <Edit className="w-4 h-4" /> Edit Event
+                </Button>
+              )}
+
+              {/* View Responses button */}
+              {(user && user.id === event.hostId) || 
+                (user && event.showRsvpsToInvitees) || 
+                (event.showRsvpsAfterThreshold && responseCounts.yupCount >= event.rsvpVisibilityThreshold) ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
+                  onClick={() => setLocation(`/events/${event.slug}/responses`)}
+                >
+                  <Eye className="w-4 h-4" /> View Responses
+                </Button>
+              ) : null}
+            </div>
           </div>
 
           {/* Event Image - with improved error handling */}
