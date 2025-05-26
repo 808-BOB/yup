@@ -28,6 +28,7 @@ const formSchema = z.object({
   allowPlusOne: z.boolean().default(true),
   maxGuestsPerRsvp: z.number().min(1).max(10).default(3),
   showRsvpsToInvitees: z.boolean().default(true),
+
   showRsvpsAfterThreshold: z.boolean().default(false),
   rsvpVisibilityThreshold: z.number().min(1).default(5),
   customYesText: z.string().optional(),
@@ -482,8 +483,41 @@ export default function CreateEvent() {
                           onCheckedChange={(checked) => form.setValue("showRsvpsToInvitees", !!checked)}
                         />
                         <Label htmlFor="showRsvpsToInvitees" className="text-white">
-                          Show RSVPs to invitees
+                          Show RSVP responses to invitees?
                         </Label>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="showRsvpsAfterThreshold"
+                            checked={form.watch("showRsvpsAfterThreshold")}
+                            onCheckedChange={(checked) => form.setValue("showRsvpsAfterThreshold", !!checked)}
+                          />
+                          <Label htmlFor="showRsvpsAfterThreshold" className="text-white">
+                            Set a minimum positive RSVPs to show the guest list to invitees
+                          </Label>
+                        </div>
+                        
+                        {form.watch("showRsvpsAfterThreshold") && (
+                          <div className="ml-6 space-y-2">
+                            <Label className="text-white text-sm">
+                              Minimum "Yup" responses needed: {form.watch("rsvpVisibilityThreshold") || 5}
+                            </Label>
+                            <input
+                              type="range"
+                              min="1"
+                              max="20"
+                              value={form.watch("rsvpVisibilityThreshold") || 5}
+                              onChange={(e) => form.setValue("rsvpVisibilityThreshold", parseInt(e.target.value))}
+                              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                            />
+                            <div className="flex justify-between text-xs text-gray-400">
+                              <span>1</span>
+                              <span>20</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
