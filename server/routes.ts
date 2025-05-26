@@ -1061,16 +1061,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/events/:id", async (req: Request, res: Response) => {
     try {
-      const event = await storage.updateEvent(
-        parseInt(req.params.id),
-        req.body
-      );
+      console.log("PUT /api/events/:id - Update data:", req.body);
+      const eventId = parseInt(req.params.id);
+      console.log("Event ID:", eventId);
+      
+      // Clean the data before updating
+      const updateData = {
+        ...req.body,
+        hostId: String(req.body.hostId), // Ensure hostId is string
+      };
+      delete updateData.id; // Remove id from update data
+      
+      const event = await storage.updateEvent(eventId, updateData);
       if (!event) {
         return res.status(404).json({ error: "Event not found" });
       }
+      console.log("Event updated successfully:", event);
       res.json(event);
     } catch (error) {
-      res.status(500).json({ error: "Failed to update event" });
+      console.error("Failed to update event:", error);
+      res.status(500).json({ error: "Failed to update event", details: error instanceof Error ? error.message : "Unknown error" });
     }
   });
 
