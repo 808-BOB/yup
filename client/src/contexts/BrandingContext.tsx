@@ -85,8 +85,8 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
       return;
     }
     
-    // Only update the primary color for premium users
-    if (isPremium) {
+    // Update the primary color for any user with a custom theme
+    if (theme && theme.primary) {
       // Parse the HSL color to get its components
       let primaryColor = theme.primary;
       
