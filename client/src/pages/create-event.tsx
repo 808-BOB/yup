@@ -112,7 +112,7 @@ export default function CreateEvent() {
         queryClient.invalidateQueries({ queryKey: ["/api/events"] });
         queryClient.invalidateQueries({ queryKey: [`/api/events/${eventData.id}`] });
         queryClient.invalidateQueries({ queryKey: [`/api/events/slug/${params?.slug}`] });
-        navigate(`/event/${params?.slug}`);
+        navigate(`/events/${params?.slug}`);
       } else {
         // Create new event
         console.log("Making API request to create event...");
@@ -136,7 +136,7 @@ export default function CreateEvent() {
           const newEvent = await response.json();
           console.log("Event created successfully:", newEvent);
           queryClient.invalidateQueries({ queryKey: ["/api/events"] });
-          navigate(`/event/${newEvent.slug}`);
+          navigate(`/events/${newEvent.slug}`);
         } catch (fetchError) {
           console.error("Fetch error details:", fetchError);
           throw fetchError;
