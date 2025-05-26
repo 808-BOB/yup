@@ -27,6 +27,7 @@ const formSchema = z.object({
   allowGuestRsvp: z.boolean().default(true),
   allowPlusOne: z.boolean().default(true),
   maxGuestsPerRsvp: z.number().min(1).max(10).default(3),
+  maxAttendees: z.number().optional(),
   showRsvpsToInvitees: z.boolean().default(true),
 
   showRsvpsAfterThreshold: z.boolean().default(false),

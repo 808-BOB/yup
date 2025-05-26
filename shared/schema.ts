@@ -74,6 +74,7 @@ export const events = pgTable("events", {
   allowGuestRsvp: boolean("allow_guest_rsvp").notNull().default(true),
   allowPlusOne: boolean("allow_plus_one").notNull().default(true),
   maxGuestsPerRsvp: integer("max_guests_per_rsvp").notNull().default(3),
+  maxAttendees: integer("max_attendees"), // null means unlimited
   showRsvpsToInvitees: boolean("show_rsvps_to_invitees").notNull().default(true),
   showYupRsvpsToInvitees: boolean("show_yup_rsvps_to_invitees").notNull().default(true),
   showNopeRsvpsToInvitees: boolean("show_nope_rsvps_to_invitees").notNull().default(true),
