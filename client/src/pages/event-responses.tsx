@@ -8,6 +8,7 @@ import { type Event, type Response } from "@shared/schema";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import PageTitle from "@/components/page-title";
+import EventGuestManager from "@/components/event-guest-manager";
 
 // Extended Response type that includes user info added by the API
 type ResponseWithUserInfo = Response & {
@@ -179,6 +180,13 @@ export default function EventResponses() {
             <ArrowLeft className="w-4 h-4" /> Back to Event
           </Button>
         </div>
+
+        {/* Guest Management Component for Hosts */}
+        {isHost && (
+          <div className="mb-6">
+            <EventGuestManager eventId={event.id.toString()} isHost={isHost} />
+          </div>
+        )}
 
         <Card className="bg-gray-900 border border-gray-800">
           <CardContent className="p-6">
