@@ -356,10 +356,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Use raw SQL to avoid type errors
               await db.execute(sql`
                 INSERT INTO users (id, username, password, display_name, is_admin, is_pro, is_premium, profile_image_url)
-                VALUES ('subourbon-123', 'subourbon', 'events', 'Sub Ourbon', true, true, true, null)
+                VALUES ('1', 'subourbon', 'events', 'Sub Ourbon', true, true, true, null)
               `);
               
-              userId = "subourbon-123";
+              userId = "1";
               console.log("Created user with ID:", userId);
             } catch (insertErr) {
               console.error("Error inserting test user:", insertErr);
