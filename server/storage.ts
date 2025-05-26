@@ -423,7 +423,7 @@ export class MemStorage implements IStorage {
   }
 
   // Update user branding settings (for premium users)
-  async updateUserBranding(id: string, brandData: { brandTheme?: string, logoUrl?: string }): Promise<User | undefined> {
+  async updateUserBranding(id: string, brandData: { brand_theme?: string, logo_url?: string }): Promise<User | undefined> {
     // Find user by string ID
     const user = Array.from(this.users.values()).find(u => u.id === id);
     if (!user) return undefined;
@@ -437,8 +437,8 @@ export class MemStorage implements IStorage {
     // Create an updated user with branding data (using snake_case DB field names)
     const updatedUser: User = {
       ...user,
-      brand_theme: brandData.brandTheme || user.brand_theme,
-      logo_url: brandData.logoUrl !== undefined ? brandData.logoUrl : user.logo_url,
+      brand_theme: brandData.brand_theme || user.brand_theme,
+      logo_url: brandData.logo_url !== undefined ? brandData.logo_url : user.logo_url,
     };
 
     // Update the user in the map using the numeric key
