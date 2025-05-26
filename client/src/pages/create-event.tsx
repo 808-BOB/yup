@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Upload } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -77,6 +77,31 @@ export default function CreateEvent() {
       useCustomRsvpText: false,
     },
   });
+
+  // Handle image upload
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Check file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please select an image smaller than 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Create a preview URL
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        form.setValue("imageUrl", reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Populate form when editing
   useEffect(() => {
@@ -254,13 +279,58 @@ export default function CreateEvent() {
                 {currentStep === 1 && (
                   <>
                     <div className="space-y-2">
-                      <Label htmlFor="imageUrl" className="text-white">Event Image (Optional)</Label>
-                      <Input
-                        id="imageUrl"
-                        {...form.register("imageUrl")}
-                        className="bg-slate-700 border-slate-600 text-white"
-                        placeholder="Enter image URL"
-                      />
+                      <Label htmlFor="eventImage" className="text-white">Event Image (Optional)</Label>
+                      <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-600 rounded-md bg-slate-700">
+                        {form.watch("imageUrl") ? (
+                          <div className="mb-4">
+                            <img
+                              src={form.watch("imageUrl")}
+                              alt="Event Preview"
+                              className="max-h-32 object-contain rounded"
+                            />
+                          </div>
+                        ) : (
+                          <div className="mb-4 text-center text-slate-400">
+                            <Upload className="mx-auto h-12 w-12 text-slate-500" />
+                            <p className="mt-2">Upload event photo</p>
+                          </div>
+                        )}
+                        
+                        <Label
+                          htmlFor="eventImage"
+                          className="relative cursor-pointer bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-md py-2 px-4"
+                        >
+                          Choose Photo
+                          <Input
+                            id="eventImage"
+                            type="file"
+                            accept="image/png,image/jpeg,image/jpg,image/gif"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            onChange={handleImageUpload}
+                          />
+                        </Label>
+                        
+                        {form.watch("imageUrl") && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="mt-2"
+                            onClick={() => form.setValue("imageUrl", "")}
+                          >
+                            Remove Image
+                          </Button>
+                        )}
+                      </div>
+                      
+                      <div className="text-sm text-slate-400">
+                        <p>Recommended specifications:</p>
+                        <ul className="list-disc list-inside mt-1">
+                          <li>File formats: PNG, JPEG, JPG, or GIF</li>
+                          <li>Maximum file size: 5MB</li>
+                          <li>Aspect ratio: 16:9 recommended</li>
+                        </ul>
+                      </div>
                     </div>
 
                     <div className="space-y-2">
