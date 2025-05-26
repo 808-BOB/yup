@@ -491,10 +491,10 @@ export default function EventPage() {
             </CardContent>
           </Card>
 
-          {/* Show LinkedIn connections for the event */}
-          {user && (
+          {/* LinkedIn connections temporarily hidden */}
+          {/* {user && (
             <EventConnections eventId={event.id} />
-          )}
+          )} */}
 
           <div className="mt-auto pb-6">
             <p className="text-center mb-8 text-gray-400 uppercase tracking-wide font-mono">
