@@ -288,7 +288,7 @@ export default function EventPage() {
                 className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
                 onClick={() => setLocation("/my-events")}
               >
-                <ArrowLeft className="w-4 h-4" /> Back to Events
+                <ArrowLeft className="w-4 h-4" /> Back
               </Button>
             )}
 
@@ -298,14 +298,14 @@ export default function EventPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
+                  className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700 px-2"
                   onClick={() => setLocation(`/events/${event.slug}/edit`)}
                 >
-                  <Edit className="w-4 h-4" /> Edit Event
+                  <Edit className="w-4 h-4" />
                 </Button>
               )}
 
-              {/* View Responses button */}
+              {/* View RSVPs button */}
               {(user && user.id === event.hostId) || 
                 (user && event.showRsvpsToInvitees) || 
                 (event.showRsvpsAfterThreshold && responseCounts.yupCount >= event.rsvpVisibilityThreshold) ? (
@@ -315,7 +315,7 @@ export default function EventPage() {
                   className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
                   onClick={() => setLocation(`/events/${event.slug}/responses`)}
                 >
-                  <Eye className="w-4 h-4" /> View Responses
+                  <Eye className="w-4 h-4" /> View RSVPs
                 </Button>
               ) : null}
             </div>

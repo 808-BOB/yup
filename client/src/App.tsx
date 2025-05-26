@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Event from "@/pages/event";
 import CreateEvent from "@/pages/create-event";
+import EditEvent from "@/pages/edit-event";
 import MyEvents from "@/pages/my-events";
 import EventList from "@/pages/event-list";
 import EventResponses from "@/pages/event-responses";
@@ -31,7 +32,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/event-list" component={EventList} />
       <Route path="/events/create" component={CreateEvent} />
-      <Route path="/events/:slug/edit" component={CreateEvent} />
+      <Route path="/events/:slug/edit" component={EditEvent} />
       {/* Support both slug and ID routes for responses */}
       <Route path="/events/:slug/responses" component={EventResponses} />
       <Route path="/events/:id/responses" component={EventResponses} />
