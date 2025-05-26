@@ -27,7 +27,7 @@ import { Event } from "@shared/schema";
 export default function CreateEvent() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
-  const [, params] = useRoute("/edit-event/:slug");
+  const [, params] = useRoute("/events/:slug/edit");
   const isEditMode = !!params?.slug;
 
   const [currentStep, setCurrentStep] = useState(1);
