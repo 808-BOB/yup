@@ -191,7 +191,7 @@ export default function CreateEvent() {
     <div className="min-h-screen bg-gray-900 text-white">
       <Header />
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <main>
+        <main className="pt-8">
           <h1 className="text-3xl font-bold mb-8">{pageTitle}</h1>
           
           <div className="mb-8 flex items-center justify-between">
