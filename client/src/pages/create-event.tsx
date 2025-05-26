@@ -115,8 +115,18 @@ export default function CreateEvent() {
         navigate(`/event/${params?.slug}`);
       } else {
         // Create new event
-        const newEvent = await apiRequest("POST", "/api/events", eventData)
-          .then(res => res.json());
+        console.log("Making API request to create event...");
+        const response = await apiRequest("POST", "/api/events", eventData);
+        console.log("API response status:", response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("API error response:", errorText);
+          throw new Error(`Failed to create event: ${response.status} ${errorText}`);
+        }
+        
+        const newEvent = await response.json();
+        console.log("Event created successfully:", newEvent);
         queryClient.invalidateQueries({ queryKey: ["/api/events"] });
         navigate(`/event/${newEvent.slug}`);
       }
