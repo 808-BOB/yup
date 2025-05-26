@@ -922,10 +922,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Events
   app.post("/api/events", async (req: Request, res: Response) => {
     try {
+      console.log("Creating event with data:", req.body);
+      
+      // Generate a slug from the title if not provided
+      if (!req.body.slug && req.body.title) {
+        req.body.slug = req.body.title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+      }
+      
       const event = await storage.createEvent(req.body);
+      console.log("Event created successfully:", event);
       res.status(201).json(event);
     } catch (error) {
-      res.status(500).json({ error: "Failed to create event" });
+      console.error("Failed to create event:", error);
+      res.status(500).json({ error: "Failed to create event", details: error.message });
     }
   });
 
