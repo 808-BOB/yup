@@ -476,48 +476,55 @@ export default function CreateEvent() {
                     <div className="space-y-4">
                       <h3 className="text-lg font-semibold text-white">Visibility Settings</h3>
                       
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="showRsvpsToInvitees"
-                          checked={form.watch("showRsvpsToInvitees")}
-                          onCheckedChange={(checked) => form.setValue("showRsvpsToInvitees", !!checked)}
-                        />
-                        <Label htmlFor="showRsvpsToInvitees" className="text-white">
-                          Show RSVP responses to invitees?
-                        </Label>
-                      </div>
-
                       <div className="space-y-3">
+                        <p className="text-gray-300 text-sm">Control what your invitees can see:</p>
+                        
                         <div className="flex items-center space-x-2">
                           <Checkbox
-                            id="showRsvpsAfterThreshold"
-                            checked={form.watch("showRsvpsAfterThreshold")}
-                            onCheckedChange={(checked) => form.setValue("showRsvpsAfterThreshold", !!checked)}
+                            id="showRsvpsToInvitees"
+                            checked={form.watch("showRsvpsToInvitees")}
+                            onCheckedChange={(checked) => form.setValue("showRsvpsToInvitees", !!checked)}
                           />
-                          <Label htmlFor="showRsvpsAfterThreshold" className="text-white">
-                            Set a minimum positive RSVPs to show the guest list to invitees
+                          <Label htmlFor="showRsvpsToInvitees" className="text-white">
+                            Show RSVP "Yup" responses to invitees?
                           </Label>
                         </div>
-                        
-                        {form.watch("showRsvpsAfterThreshold") && (
-                          <div className="ml-6 space-y-2">
-                            <Label className="text-white text-sm">
-                              Minimum "Yup" responses needed: {form.watch("rsvpVisibilityThreshold") || 5}
-                            </Label>
-                            <input
-                              type="range"
-                              min="1"
-                              max="20"
-                              value={form.watch("rsvpVisibilityThreshold") || 5}
-                              onChange={(e) => form.setValue("rsvpVisibilityThreshold", parseInt(e.target.value))}
-                              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+
+                        <div className="space-y-3">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="showRsvpsAfterThreshold"
+                              checked={form.watch("showRsvpsAfterThreshold")}
+                              onCheckedChange={(checked) => form.setValue("showRsvpsAfterThreshold", !!checked)}
                             />
-                            <div className="flex justify-between text-xs text-gray-400">
-                              <span>1</span>
-                              <span>20</span>
-                            </div>
+                            <Label htmlFor="showRsvpsAfterThreshold" className="text-white">
+                              Set a minimum positive RSVPs to show the guest list to invitees
+                            </Label>
                           </div>
-                        )}
+                          
+                          {form.watch("showRsvpsAfterThreshold") && (
+                            <div className="ml-6 space-y-2">
+                              <Label className="text-white text-sm">
+                                Minimum "Yup" responses needed: {form.watch("rsvpVisibilityThreshold") || 5}
+                              </Label>
+                              <input
+                                type="range"
+                                min="1"
+                                max="20"
+                                value={form.watch("rsvpVisibilityThreshold") || 5}
+                                onChange={(e) => form.setValue("rsvpVisibilityThreshold", parseInt(e.target.value))}
+                                className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                              />
+                              <div className="flex justify-between text-xs text-gray-400">
+                                <span>1</span>
+                                <span>20</span>
+                              </div>
+                              <p className="text-gray-400 text-xs">
+                                Guest list will be hidden until this many people respond "Yup"
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
