@@ -734,8 +734,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Update branding (this method checks for premium status)
         const updatedUser = await storage.updateUserBranding(userId, {
-          brandTheme: brandTheme,
-          logoUrl: logoUrl,
+          brand_theme: brandTheme,
+          logo_url: logoUrl,
         });
         
         if (!updatedUser) {
