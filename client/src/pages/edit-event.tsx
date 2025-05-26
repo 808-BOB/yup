@@ -95,15 +95,23 @@ export default function EditEvent() {
 
   const updateEventMutation = useMutation({
     mutationFn: async (data: FormValues) => {
-      const response = await apiRequest(`/api/events/${event?.id}`, {
+      const response = await fetch(`/api/events/${event?.id}`, {
         method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           ...data,
           dateTime: new Date(data.dateTime).toISOString(),
           endDateTime: data.endDateTime ? new Date(data.endDateTime).toISOString() : null,
         }),
       });
-      return response;
+      
+      if (!response.ok) {
+        throw new Error('Failed to update event');
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
