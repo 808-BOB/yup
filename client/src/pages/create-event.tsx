@@ -116,19 +116,31 @@ export default function CreateEvent() {
       } else {
         // Create new event
         console.log("Making API request to create event...");
-        const response = await apiRequest("POST", "/api/events", eventData);
-        console.log("API response status:", response.status);
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("API error response:", errorText);
-          throw new Error(`Failed to create event: ${response.status} ${errorText}`);
+        try {
+          const response = await fetch("/api/events", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(eventData),
+            credentials: "include",
+          });
+          
+          console.log("Raw response status:", response.status);
+          console.log("Raw response ok:", response.ok);
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Server error response:", errorText);
+            throw new Error(`Server returned ${response.status}: ${errorText}`);
+          }
+          
+          const newEvent = await response.json();
+          console.log("Event created successfully:", newEvent);
+          queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+          navigate(`/event/${newEvent.slug}`);
+        } catch (fetchError) {
+          console.error("Fetch error details:", fetchError);
+          throw fetchError;
         }
-        
-        const newEvent = await response.json();
-        console.log("Event created successfully:", newEvent);
-        queryClient.invalidateQueries({ queryKey: ["/api/events"] });
-        navigate(`/event/${newEvent.slug}`);
       }
     } catch (error) {
       console.error("Error submitting event:", error);
