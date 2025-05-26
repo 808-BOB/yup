@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import InviteModal from "@/components/invite-modal";
 import { useRoute, useLocation, Link } from "wouter";
 import { Calendar, MapPin, User, Users, ArrowLeft, Eye, Edit, Plus } from "lucide-react";
@@ -159,6 +159,11 @@ export default function EventPage() {
         userId: user.id,
         response,
       });
+
+      // Invalidate and refetch relevant queries to update counts
+      queryClient.invalidateQueries({ queryKey: ['/api/events', event.id] });
+      queryClient.invalidateQueries({ queryKey: [`/api/events/${event.id}/connections`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${user.id}/responses`] });
 
       // Toggle behavior - if clicking the same button, clear the response
       setUserResponse(userResponse === response ? null : response);

@@ -57,12 +57,6 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
           console.error('Failed to parse theme:', e);
           setTheme(defaultTheme);
         }
-      } else if (isSubourbonAccount) {
-        // Set Subourbon's branded theme immediately
-        const subourbonTheme = {
-          primary: 'hsl(38, 85%, 55%)' // Gold/brown for Subourbon
-        };
-        setTheme(subourbonTheme);
       } else {
         setTheme(defaultTheme);
       }
