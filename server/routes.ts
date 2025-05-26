@@ -387,15 +387,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
             });
             
-            // Return a simplified response with proper field names matching the database
-            return res.json({
-              id: userId,
-              username: "subourbon",
-              display_name: "Sub Ourbon",
-              is_admin: true,
-              is_pro: true,
-              is_premium: true
-            });
+            // Get the complete user data including branding fields
+            const fullUser = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+            if (fullUser.length > 0) {
+              const userData = fullUser[0];
+              return res.json({
+                id: userData.id,
+                username: userData.username,
+                display_name: userData.display_name,
+                is_admin: userData.is_admin,
+                is_pro: userData.is_pro,
+                is_premium: userData.is_premium,
+                brand_theme: userData.brand_theme,
+                logo_url: userData.logo_url
+              });
+            } else {
+              return res.json({
+                id: userId,
+                username: "subourbon",
+                display_name: "Sub Ourbon",
+                is_admin: true,
+                is_pro: true,
+                is_premium: true,
+                brand_theme: null,
+                logo_url: null
+              });
+            }
           } catch (sessionErr) {
             console.error("Error saving session:", sessionErr);
             return res.status(500).json({ message: "Session save error", error: String(sessionErr) });
