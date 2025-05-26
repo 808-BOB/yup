@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,8 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, ArrowRight, Upload, X, Image } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
@@ -37,18 +37,15 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function CreateEventFixed() {
+export default function CreateEvent() {
   const [, navigate] = useLocation();
   const params = useParams();
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const isEditMode = !!params?.slug;
   
@@ -85,75 +82,26 @@ export default function CreateEventFixed() {
   useEffect(() => {
     if (eventData && isEditMode) {
       form.reset({
-        title: eventData.title || "",
-        date: eventData.date || "",
-        startTime: eventData.startTime || "",
-        endTime: eventData.endTime || "",
-        location: eventData.location || "",
-        address: eventData.address || "",
-        description: eventData.description || "",
-        imageUrl: eventData.imageUrl || "",
-        allowGuestRsvp: eventData.allowGuestRsvp ?? true,
-        allowPlusOne: eventData.allowPlusOne ?? true,
-        maxGuestsPerRsvp: eventData.maxGuestsPerRsvp ?? 3,
-        showRsvpsToInvitees: eventData.showRsvpsToInvitees ?? true,
-        showRsvpsAfterThreshold: eventData.showRsvpsAfterThreshold ?? false,
-        rsvpVisibilityThreshold: eventData.rsvpVisibilityThreshold ?? 5,
-        customYesText: eventData.customYesText || "",
-        customNoText: eventData.customNoText || "",
-        useCustomRsvpText: eventData.useCustomRsvpText ?? false,
+        title: (eventData as any).title || "",
+        date: (eventData as any).date || "",
+        startTime: (eventData as any).startTime || "",
+        endTime: (eventData as any).endTime || "",
+        location: (eventData as any).location || "",
+        address: (eventData as any).address || "",
+        description: (eventData as any).description || "",
+        imageUrl: (eventData as any).imageUrl || "",
+        allowGuestRsvp: (eventData as any).allowGuestRsvp ?? true,
+        allowPlusOne: (eventData as any).allowPlusOne ?? true,
+        maxGuestsPerRsvp: (eventData as any).maxGuestsPerRsvp ?? 3,
+        showRsvpsToInvitees: (eventData as any).showRsvpsToInvitees ?? true,
+        showRsvpsAfterThreshold: (eventData as any).showRsvpsAfterThreshold ?? false,
+        rsvpVisibilityThreshold: (eventData as any).rsvpVisibilityThreshold ?? 5,
+        customYesText: (eventData as any).customYesText || "",
+        customNoText: (eventData as any).customNoText || "",
+        useCustomRsvpText: (eventData as any).useCustomRsvpText ?? false,
       });
-      
-      if (eventData.imageUrl) {
-        setUploadedImage(eventData.imageUrl);
-      }
     }
   }, [eventData, isEditMode, form]);
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Please select an image under 5MB",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Check file type
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: "Invalid file type",
-          description: "Please select an image file",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setImageFile(file);
-      
-      // Create preview URL
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setUploadedImage(result);
-        form.setValue('imageUrl', result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const removeImage = () => {
-    setUploadedImage(null);
-    setImageFile(null);
-    form.setValue('imageUrl', '');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
 
   const onSubmit = async (data: FormValues) => {
     if (!user) return;
@@ -163,7 +111,7 @@ export default function CreateEventFixed() {
     try {
       // Generate slug for new events
       const slug = isEditMode 
-        ? eventData.slug 
+        ? (eventData as any).slug 
         : `${data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`;
 
       const eventPayload = {
@@ -175,7 +123,7 @@ export default function CreateEventFixed() {
 
       if (isEditMode && eventData) {
         // Update existing event
-        const response = await fetch(`/api/events/${eventData.id}`, {
+        const response = await fetch(`/api/events/${(eventData as any).id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(eventPayload),
@@ -191,7 +139,7 @@ export default function CreateEventFixed() {
         
         // Invalidate queries
         queryClient.invalidateQueries({ queryKey: ["/api/events"] });
-        queryClient.invalidateQueries({ queryKey: [`/api/events/${eventData.id}`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/events/${(eventData as any).id}`] });
         queryClient.invalidateQueries({ queryKey: [`/api/events/slug/${slug}`] });
         
         toast({
@@ -305,44 +253,13 @@ export default function CreateEventFixed() {
                 {/* Step 1: Basic Details */}
                 {currentStep === 1 && (
                   <>
-                    {/* Event Image Upload */}
                     <div className="space-y-2">
-                      <Label className="text-white">Event Image (Optional)</Label>
-                      
-                      {uploadedImage ? (
-                        <div className="relative">
-                          <img 
-                            src={uploadedImage} 
-                            alt="Event preview"
-                            className="w-full h-48 object-cover rounded-lg"
-                          />
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            className="absolute top-2 right-2"
-                            onClick={removeImage}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div 
-                          className="border-2 border-dashed border-slate-600 rounded-lg p-8 text-center cursor-pointer hover:border-amber-600 transition-colors"
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <Image className="h-12 w-12 mx-auto text-slate-400 mb-4" />
-                          <p className="text-slate-400 mb-2">Click to upload an image</p>
-                          <p className="text-sm text-slate-500">PNG, JPG up to 5MB</p>
-                        </div>
-                      )}
-                      
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileUpload}
-                        className="hidden"
+                      <Label htmlFor="imageUrl" className="text-white">Event Image (Optional)</Label>
+                      <Input
+                        id="imageUrl"
+                        {...form.register("imageUrl")}
+                        className="bg-slate-700 border-slate-600 text-white"
+                        placeholder="Enter image URL"
                       />
                     </div>
 
@@ -508,9 +425,9 @@ export default function CreateEventFixed() {
                     <h3 className="text-lg font-semibold text-white">Review Your Event</h3>
                     
                     <div className="bg-slate-700 rounded-lg p-6 space-y-4">
-                      {uploadedImage && (
+                      {form.watch("imageUrl") && (
                         <img 
-                          src={uploadedImage} 
+                          src={form.watch("imageUrl")} 
                           alt="Event preview"
                           className="w-full h-48 object-cover rounded-lg"
                         />
