@@ -30,6 +30,7 @@ export default function EventPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   // State management
   const [userResponse, setUserResponse] = useState<"yup" | "nope" | "maybe" | null>(null);
