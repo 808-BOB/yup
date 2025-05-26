@@ -221,7 +221,7 @@ export default function CreateEvent() {
     <div className="min-h-screen bg-gray-900 text-white">
       <Header />
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <main className="pt-8">
+        <main className="pt-16">
           <h1 className="text-3xl font-bold mb-8">{pageTitle}</h1>
           
           <div className="mb-8 flex items-center justify-between">
@@ -242,6 +242,37 @@ export default function CreateEvent() {
               {/* Step 1: Image through time fields */}
               {currentStep === 1 && (
                 <div className="space-y-5">
+                  <FormField
+                    control={form.control}
+                    name="imageUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Event Image (Optional)</FormLabel>
+                        <FormControl>
+                          <div className="space-y-4">
+                            <Input
+                              placeholder="Enter image URL"
+                              {...field}
+                            />
+                            {field.value && (
+                              <div className="border rounded-lg overflow-hidden">
+                                <img 
+                                  src={field.value} 
+                                  alt="Event preview" 
+                                  className="w-full h-48 object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <FormField
                     control={form.control}
                     name="title"

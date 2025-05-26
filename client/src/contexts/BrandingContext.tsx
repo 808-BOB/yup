@@ -37,18 +37,18 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
       // Fix for Subourbon account - specifically check for both username and premium status
       // This ensures the test account always has branding access
       const isSubourbonAccount = user.username === 'subourbon';
-      setIsPremium(user.isPremium || isSubourbonAccount || false);
+      setIsPremium(user.is_premium || isSubourbonAccount || false);
       
-      if (user.logoUrl) {
-        setLogoUrl(user.logoUrl);
+      if (user.logo_url) {
+        setLogoUrl(user.logo_url);
       } else {
         setLogoUrl(null);
       }
       
       // Parse brandTheme if it exists
-      if (user.brandTheme) {
+      if (user.brand_theme) {
         try {
-          const parsed = JSON.parse(user.brandTheme);
+          const parsed = JSON.parse(user.brand_theme);
           setTheme({
             ...defaultTheme,
             ...parsed
@@ -57,6 +57,12 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
           console.error('Failed to parse theme:', e);
           setTheme(defaultTheme);
         }
+      } else if (isSubourbonAccount) {
+        // Set Subourbon's branded theme immediately
+        const subourbonTheme = {
+          primary: 'hsl(38, 85%, 55%)' // Gold/brown for Subourbon
+        };
+        setTheme(subourbonTheme);
       } else {
         setTheme(defaultTheme);
       }
