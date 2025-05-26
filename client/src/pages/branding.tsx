@@ -1,4 +1,4 @@
-import { useState, ChangeEvent } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 import { useLocation } from "wouter";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -33,6 +33,11 @@ export default function Branding() {
   const branding = useBranding();
   const { toast } = useToast();
   const [logoPreview, setLogoPreview] = useState<string | null>(branding.logoUrl);
+
+  // Update logo preview when branding context changes
+  useEffect(() => {
+    setLogoPreview(branding.logoUrl);
+  }, [branding.logoUrl]);
   const [activeTab, setActiveTab] = useState("theme");
 
   // Initialize form with current theme values
