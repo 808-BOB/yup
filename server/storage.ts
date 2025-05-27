@@ -1046,22 +1046,27 @@ export class DatabaseStorage implements IStorage {
   async getEventResponses(eventId: number): Promise<{ yupCount: number; nopeCount: number; maybeCount: number }> {
     const allResponses = await this.getResponsesByEvent(eventId);
     
-    // Calculate yup count including plus ones
+    // Calculate counts including guest counts for all response types
     const yupResponses = allResponses.filter(r => r.response === 'yup');
-    const yupCount = yupResponses.reduce((total, response) => {
-      // Add the guest themselves
-      let count = 1;
-      // Add their plus ones if they have any
-      if (response.guestCount && response.guestCount > 0) {
-        count += response.guestCount;
-      }
-      return total + count;
-    }, 0);
+    const nopeResponses = allResponses.filter(r => r.response === 'nope');
+    const maybeResponses = allResponses.filter(r => r.response === 'maybe');
+    
+    const calculateTotalCount = (responses: any[]) => {
+      return responses.reduce((total, response) => {
+        // Add the guest themselves
+        let count = 1;
+        // Add their plus ones if they have any
+        if (response.guestCount && response.guestCount > 0) {
+          count += response.guestCount;
+        }
+        return total + count;
+      }, 0);
+    };
     
     return {
-      yupCount: yupCount,
-      nopeCount: allResponses.filter(r => r.response === 'nope').length,
-      maybeCount: allResponses.filter(r => r.response === 'maybe').length,
+      yupCount: calculateTotalCount(yupResponses),
+      nopeCount: calculateTotalCount(nopeResponses),
+      maybeCount: calculateTotalCount(maybeResponses),
     };
   }
 
