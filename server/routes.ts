@@ -1109,6 +1109,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/events/:id", async (req: Request, res: Response) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      console.log("DELETE /api/events/:id - Event ID:", eventId);
+      
+      const deleted = await storage.deleteEvent(eventId);
+      if (!deleted) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      
+      console.log("Event deleted successfully:", eventId);
+      res.json({ message: "Event deleted successfully" });
+    } catch (error) {
+      console.error("Failed to delete event:", error);
+      res.status(500).json({ error: "Failed to delete event", details: error instanceof Error ? error.message : "Unknown error" });
+    }
+  });
+
   app.get("/api/events/slug/:slug", async (req: Request, res: Response) => {
     try {
       const event = await storage.getEventBySlug(req.params.slug);

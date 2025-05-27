@@ -54,6 +54,7 @@ export interface IStorage {
     id: number,
     eventUpdate: Partial<InsertEvent>,
   ): Promise<Event | undefined>;
+  deleteEvent(id: number): Promise<boolean>;
   getEvent(id: number): Promise<Event | undefined>;
   getEventBySlug(slug: string): Promise<Event | undefined>;
   getUserEvents(userId: number): Promise<Event[]>;
@@ -914,6 +915,25 @@ export class DatabaseStorage implements IStorage {
       .where(eq(events.id, id))
       .returning();
     return updatedEvent || undefined;
+  }
+
+  async deleteEvent(id: number): Promise<boolean> {
+    try {
+      // First delete all responses associated with this event
+      await db.delete(responses).where(eq(responses.eventId, id));
+      
+      // Then delete all invitations associated with this event
+      await db.delete(invitations).where(eq(invitations.eventId, id));
+      
+      // Finally delete the event itself
+      const result = await db.delete(events).where(eq(events.id, id));
+      
+      // Return true if at least one row was affected
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      return false;
+    }
   }
 
   async getEvent(id: number): Promise<Event | undefined> {

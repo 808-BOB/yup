@@ -109,6 +109,26 @@ export default function EditEvent() {
     return isNaN(parsed) ? defaultValue : parsed;
   };
 
+  const deleteEventMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("DELETE", `/api/events/${slug}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Event Deleted",
+        description: "The event has been permanently deleted.",
+      });
+      setLocation("/my-events");
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete the event. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const updateEventMutation = useMutation({
     mutationFn: async (data: FormValues) => {
       // Combine separate date and time fields
@@ -436,22 +456,39 @@ export default function EditEvent() {
             </CardContent>
           </Card>
 
-          <div className="flex gap-3">
+          <div className="flex justify-between">
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setLocation(`/events/${slug}`)}
+                className="bg-gray-900 border-gray-800 hover:border-gray-700"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={updateEventMutation.isPending}
+                className="bg-primary hover:bg-primary/90"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {updateEventMutation.isPending ? "Saving..." : "Save"}
+              </Button>
+            </div>
+            
             <Button
               type="button"
-              variant="outline"
-              onClick={() => setLocation(`/events/${slug}`)}
-              className="bg-gray-900 border-gray-800 hover:border-gray-700"
+              variant="destructive"
+              onClick={() => {
+                if (confirm("Are you sure you want to delete this event? This action cannot be undone.")) {
+                  deleteEventMutation.mutate();
+                }
+              }}
+              disabled={deleteEventMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
             >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={updateEventMutation.isPending}
-              className="bg-primary hover:bg-primary/90"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              {updateEventMutation.isPending ? "Saving..." : "Save"}
+              <Trash2 className="w-4 h-4 mr-2" />
+              {deleteEventMutation.isPending ? "Deleting..." : "Delete Event"}
             </Button>
           </div>
         </form>
