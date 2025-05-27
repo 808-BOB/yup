@@ -604,6 +604,27 @@ export class MemStorage implements IStorage {
     return updatedEvent;
   }
 
+  async deleteEvent(id: number): Promise<boolean> {
+    const existingEvent = this.events.get(id);
+    if (!existingEvent) {
+      return false;
+    }
+
+    // Delete all responses for this event
+    const responsesToDelete = Array.from(this.responses.entries())
+      .filter(([_, response]) => response.eventId === id)
+      .map(([responseId, _]) => responseId);
+    
+    responsesToDelete.forEach(responseId => {
+      this.responses.delete(responseId);
+    });
+
+    // Delete the event
+    this.events.delete(id);
+    this.saveToFile(); // Save after deleting
+    return true;
+  }
+
   async getEvent(id: number): Promise<Event | undefined> {
     return this.events.get(id);
   }
