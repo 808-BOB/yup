@@ -46,9 +46,12 @@ export default function EditEvent() {
   // Get event slug from URL params
   const params = useParams();
   const slug = params.slug;
+  
+  console.log('Edit page - slug from params:', slug);
+  console.log('Edit page - full params:', params);
 
   const { data: event, isLoading } = useQuery<Event>({
-    queryKey: ['/api/events/slug', slug],
+    queryKey: [`/api/events/slug/${slug}`],
     enabled: !!slug,
   });
 
