@@ -34,21 +34,21 @@ export default function EventResponses() {
   // Get event identifier (slug or id) from the appropriate route match
   const isIdRoute = matchById && paramsById?.id;
   const isSlugRoute = matchBySlug && paramsBySlug?.slug;
-  
+
   // Try to fetch event by slug if that route matched
   const { data: eventBySlug } = useQuery<Event>({
     queryKey: [`/api/events/slug/${paramsBySlug?.slug}`],
     enabled: !!isSlugRoute && !!paramsBySlug?.slug,
     retry: 1,
   });
-  
+
   // Try to fetch event by ID if that route matched
   const { data: eventById } = useQuery<Event>({
     queryKey: [`/api/events/${paramsById?.id}`],
     enabled: !!isIdRoute && !!paramsById?.id,
     retry: 1,
   });
-  
+
   // Use whichever event was found
   const event = eventBySlug || eventById;
 
@@ -147,7 +147,7 @@ export default function EventResponses() {
       eventHostId: event.hostId,
       matchCheck: user.id === event.hostId
     });
-    
+
     let description = "Access to view RSVPs has been restricted by the event host.";
     if (event && event.showRsvpsAfterThreshold) {
       description = `RSVPs will be visible once ${event.rsvpVisibilityThreshold} people respond with "YUP".`;
@@ -180,7 +180,7 @@ export default function EventResponses() {
           >
             <ArrowLeft className="w-4 h-4" /> Back to Event
           </Button>
-          
+
           {isHost && (
             <Button
               variant="outline"
