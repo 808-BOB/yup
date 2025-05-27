@@ -220,7 +220,7 @@ export default function EventResponses() {
 
             <div className="grid grid-cols-3 gap-3 mb-8">
               <div className="bg-gray-800 p-4 rounded-sm">
-                <div className="text-primary text-2xl font-bold mb-1">
+                <div className="text-white text-2xl font-bold mb-1">
                   {responseCounts?.yupCount || 0}
                 </div>
                 <div className="text-xs uppercase tracking-wider text-gray-400">
@@ -228,7 +228,7 @@ export default function EventResponses() {
                 </div>
               </div>
               <div className="bg-gray-800 p-4 rounded-sm">
-                <div className="text-gray-400 text-2xl font-bold mb-1">
+                <div className="text-[var(--primary)] text-2xl font-bold mb-1">
                   {responseCounts?.nopeCount || 0}
                 </div>
                 <div className="text-xs uppercase tracking-wider text-gray-400">
@@ -236,7 +236,7 @@ export default function EventResponses() {
                 </div>
               </div>
               <div className="bg-gray-800 p-4 rounded-sm">
-                <div className="text-yellow-500 text-2xl font-bold mb-1">
+                <div className="text-gray-400 text-2xl font-bold mb-1">
                   {responseCounts?.maybeCount || 0}
                 </div>
                 <div className="text-xs uppercase tracking-wider text-gray-400">
