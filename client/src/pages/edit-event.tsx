@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { ArrowLeft, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Event } from "@shared/schema";
@@ -135,7 +135,7 @@ export default function EditEvent() {
       // Combine separate date and time fields
       const eventDateTime = `${data.date}T${data.time}`;
       const eventDate = new Date(eventDateTime);
-      
+
       let endTime = null;
       if (data.endDate && data.endTime) {
         const endDateTime = `${data.endDate}T${data.endTime}`;
@@ -174,7 +174,7 @@ export default function EditEvent() {
         const error = await response.text();
         throw new Error(error || "Failed to update event");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -226,7 +226,7 @@ export default function EditEvent() {
           >
             <ArrowLeft className="w-4 h-4" /> Back
           </Button>
-          
+
           <h1 className="text-2xl font-bold text-white">
             Edit Event
           </h1>
@@ -252,6 +252,12 @@ export default function EditEvent() {
                           e.currentTarget.style.display = "none";
                         }}
                       />
+                    </div>
+                  )}
+                  {!form.watch("imageUrl") && (
+                    <div className="aspect-video bg-gray-800 border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center text-gray-400">
+                      <Camera className="w-8 h-8 mb-2 text-primary" />
+                      <span className="text-sm">No Event Image</span>
                     </div>
                   )}
                   <div className="flex gap-2">
@@ -476,7 +482,7 @@ export default function EditEvent() {
                 {updateEventMutation.isPending ? "Saving..." : "Save"}
               </Button>
             </div>
-            
+
             <Button
               type="button"
               variant="destructive"
