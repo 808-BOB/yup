@@ -60,9 +60,10 @@ export default function EventResponses() {
     enabled: !!eventId,
   });
 
-  const { data: responseCounts = { yupCount: 0, nopeCount: 0 } } = useQuery<{
+  const { data: responseCounts = { yupCount: 0, nopeCount: 0, maybeCount: 0 } } = useQuery<{
     yupCount: number;
     nopeCount: number;
+    maybeCount: number;
   }>({
     queryKey: [`/api/events/${eventId}/responses/count`],
     enabled: !!eventId,
