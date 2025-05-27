@@ -272,11 +272,17 @@ export default function EventResponses() {
                               <span className="text-xs text-gray-400">
                                 {response.guestEmail || ""}
                               </span>
+                              <span className="text-xs text-gray-500">
+                                {new Date(response.createdAt).toLocaleDateString()} at {new Date(response.createdAt).toLocaleTimeString()}
+                              </span>
                             </>
                           ) : (
                             <>
                               <span className="text-sm text-gray-200">
                                 {response.userName || `User ${response.userId || 'unknown'}`}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {new Date(response.createdAt).toLocaleDateString()} at {new Date(response.createdAt).toLocaleTimeString()}
                               </span>
                               <span className="text-xs text-gray-400">
                                 {response.userEmail || (response.userId ? `user${response.userId}@example.com` : 'unknown email')}
@@ -308,16 +314,27 @@ export default function EventResponses() {
                           {response.isGuest ? (
                             <>
                               <span className="text-sm text-gray-200">
-                                {response.guestName || ""}
+                                {response.guestName || ""}{" "}
+                                {(response.guestCount ?? 0) > 0 && (
+                                  <span className="text-xs text-primary">
+                                    +{response.guestCount}
+                                  </span>
+                                )}
                               </span>
                               <span className="text-xs text-gray-400">
                                 {response.guestEmail || ""}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {new Date(response.createdAt).toLocaleDateString()} at {new Date(response.createdAt).toLocaleTimeString()}
                               </span>
                             </>
                           ) : (
                             <>
                               <span className="text-sm text-gray-200">
                                 {response.userName || `User ${response.userId || 'unknown'}`}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {new Date(response.createdAt).toLocaleDateString()} at {new Date(response.createdAt).toLocaleTimeString()}
                               </span>
                               <span className="text-xs text-gray-400">
                                 {response.userEmail || (response.userId ? `user${response.userId}@example.com` : 'unknown email')}
@@ -349,16 +366,27 @@ export default function EventResponses() {
                           {response.isGuest ? (
                             <>
                               <span className="text-sm text-gray-200">
-                                {response.guestName || ""}
+                                {response.guestName || ""}{" "}
+                                {(response.guestCount ?? 0) > 0 && (
+                                  <span className="text-xs text-primary">
+                                    +{response.guestCount}
+                                  </span>
+                                )}
                               </span>
                               <span className="text-xs text-gray-400">
                                 {response.guestEmail || ""}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {new Date(response.createdAt).toLocaleDateString()} at {new Date(response.createdAt).toLocaleTimeString()}
                               </span>
                             </>
                           ) : (
                             <>
                               <span className="text-sm text-gray-200">
                                 {response.userName || `User ${response.userId || 'unknown'}`}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {new Date(response.createdAt).toLocaleDateString()} at {new Date(response.createdAt).toLocaleTimeString()}
                               </span>
                               <span className="text-xs text-gray-400">
                                 {response.userEmail || (response.userId ? `user${response.userId}@example.com` : 'unknown email')}
