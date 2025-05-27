@@ -95,6 +95,14 @@ export default function EditEvent() {
     }
   }, [event, form]);
 
+  const parseNumericField = (value: string | undefined, defaultValue: number | null = null): number | null => {
+    if (!value || value === "" || value === "undefined" || value === "null") {
+      return defaultValue;
+    }
+    const parsed = Number(value);
+    return isNaN(parsed) ? defaultValue : parsed;
+  };
+
   const updateEventMutation = useMutation({
     mutationFn: async (data: FormValues) => {
       const [date, time] = data.dateTime.split('T');
@@ -115,11 +123,11 @@ export default function EditEvent() {
         imageUrl: data.imageUrl || null,
         allowGuestRsvp: data.allowGuestRsvp,
         allowPlusOne: data.allowPlusOne,
-        maxGuestsPerRsvp: data.maxGuestsPerRsvp && data.maxGuestsPerRsvp !== "" ? Number(data.maxGuestsPerRsvp) : 1,
-        maxAttendees: data.maxAttendees && data.maxAttendees !== "" ? Number(data.maxAttendees) : null,
+        maxGuestsPerRsvp: parseNumericField(data.maxGuestsPerRsvp, 1),
+        maxAttendees: parseNumericField(data.maxAttendees, null),
         showRsvpsToInvitees: data.showRsvpsToInvitees,
         showRsvpsAfterThreshold: data.showRsvpsAfterThreshold,
-        rsvpVisibilityThreshold: data.rsvpVisibilityThreshold && data.rsvpVisibilityThreshold !== "" ? Number(data.rsvpVisibilityThreshold) : 0,
+        rsvpVisibilityThreshold: parseNumericField(data.rsvpVisibilityThreshold, 0),
         customYesText: data.customYesText || null,
         customNoText: data.customNoText || null,
       };
