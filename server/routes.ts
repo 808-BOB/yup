@@ -1224,19 +1224,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const responseId = parseInt(req.params.id);
       
+      console.log("DELETE request debug:", {
+        responseId,
+        sessionUserId: req.session.userId,
+        sessionUserIdType: typeof req.session.userId
+      });
+      
       // Get the response to check event ownership
       const existingResponse = await storage.getResponseById(responseId);
       if (!existingResponse) {
+        console.log("Response not found:", responseId);
         return res.status(404).json({ error: "Response not found" });
       }
       
+      console.log("Found response:", {
+        id: existingResponse.id,
+        eventId: existingResponse.eventId,
+        userId: existingResponse.userId
+      });
+      
       // Get the event to check if user is host
       const event = await storage.getEvent(existingResponse.eventId);
-      if (!event || event.hostId !== parseInt(req.session.userId!)) {
+      if (!event) {
+        console.log("Event not found:", existingResponse.eventId);
+        return res.status(404).json({ error: "Event not found" });
+      }
+      
+      console.log("Event host check:", {
+        eventHostId: event.hostId,
+        eventHostIdType: typeof event.hostId,
+        sessionUserId: req.session.userId,
+        sessionUserIdType: typeof req.session.userId,
+        comparison: event.hostId === parseInt(req.session.userId!)
+      });
+      
+      if (event.hostId !== parseInt(req.session.userId!)) {
+        console.log("Host permission denied");
         return res.status(403).json({ error: "Only event hosts can delete responses" });
       }
       
+      console.log("Attempting to delete response:", responseId);
       await storage.deleteResponse(responseId);
+      console.log("Response deleted successfully");
       res.json({ message: "Response deleted successfully" });
     } catch (error) {
       console.error("Error deleting response:", error);
