@@ -1278,11 +1278,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/events/:id/responses",
     async (req: Request, res: Response) => {
       try {
-        const responses = await storage.getResponsesByEvent(
-          parseInt(req.params.id)
-        );
+        const eventIdentifier = req.params.id;
+        let eventId: number;
+        
+        // Check if it's a numeric ID or a slug
+        if (!isNaN(parseInt(eventIdentifier))) {
+          eventId = parseInt(eventIdentifier);
+        } else {
+          // It's a slug, so get the event first
+          const event = await storage.getEventBySlug(eventIdentifier);
+          if (!event) {
+            return res.status(404).json({ error: "Event not found" });
+          }
+          eventId = event.id;
+        }
+        
+        const responses = await storage.getResponsesByEvent(eventId);
         res.json(responses);
       } catch (error) {
+        console.error("Error getting responses:", error);
         res.status(500).json({ error: "Failed to get responses" });
       }
     }
@@ -1293,9 +1307,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/events/:id/responses/count",
     async (req: Request, res: Response) => {
       try {
-        const counts = await storage.getEventResponses(parseInt(req.params.id));
+        const eventIdentifier = req.params.id;
+        let eventId: number;
+        
+        // Check if it's a numeric ID or a slug
+        if (!isNaN(parseInt(eventIdentifier))) {
+          eventId = parseInt(eventIdentifier);
+        } else {
+          // It's a slug, so get the event first
+          const event = await storage.getEventBySlug(eventIdentifier);
+          if (!event) {
+            return res.status(404).json({ error: "Event not found" });
+          }
+          eventId = event.id;
+        }
+        
+        const counts = await storage.getEventResponses(eventId);
         res.json(counts);
       } catch (error) {
+        console.error("Error getting response counts:", error);
         res.status(500).json({ error: "Failed to get response counts" });
       }
     }
