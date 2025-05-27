@@ -70,6 +70,9 @@ export interface IStorage {
   getEventResponses(
     eventId: number,
   ): Promise<{ yupCount: number; nopeCount: number; maybeCount: number }>;
+  getResponseById(id: number): Promise<Response | undefined>;
+  updateResponse(id: number, responseUpdate: Partial<InsertResponse>): Promise<Response | undefined>;
+  deleteResponse(id: number): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -1060,6 +1063,24 @@ export class DatabaseStorage implements IStorage {
       nopeCount: allResponses.filter(r => r.response === 'nope').length,
       maybeCount: allResponses.filter(r => r.response === 'maybe').length,
     };
+  }
+
+  async getResponseById(id: number): Promise<Response | undefined> {
+    const [response] = await db.select().from(responses).where(eq(responses.id, id));
+    return response || undefined;
+  }
+
+  async updateResponse(id: number, responseUpdate: Partial<InsertResponse>): Promise<Response | undefined> {
+    const [updatedResponse] = await db
+      .update(responses)
+      .set(responseUpdate)
+      .where(eq(responses.id, id))
+      .returning();
+    return updatedResponse || undefined;
+  }
+
+  async deleteResponse(id: number): Promise<void> {
+    await db.delete(responses).where(eq(responses.id, id));
   }
 }
 
