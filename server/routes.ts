@@ -1232,7 +1232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get the event to check if user is host
       const event = await storage.getEvent(existingResponse.eventId);
-      if (!event || event.hostId !== req.session.userId) {
+      if (!event || event.hostId !== parseInt(req.session.userId!)) {
         return res.status(403).json({ error: "Only event hosts can delete responses" });
       }
       
