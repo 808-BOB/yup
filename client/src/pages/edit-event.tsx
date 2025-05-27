@@ -114,7 +114,7 @@ export default function EditEvent() {
   const deleteEventMutation = useMutation({
     mutationFn: async () => {
       if (!event?.id) throw new Error("Event ID not found");
-      return apiRequest("DELETE", `/api/events/${event.id}`);
+      return eventService.deleteEvent(event.id);
     },
     onSuccess: () => {
       toast({
@@ -147,37 +147,25 @@ export default function EditEvent() {
 
       const updateData = {
         title: data.title,
-        description: data.description || null,
+        description: data.description || undefined,
         location: data.location,
         date: eventDate.toISOString().split('T')[0],
         startTime: eventDate.toTimeString().slice(0, 5),
-        endTime: endTime,
-        imageUrl: data.imageUrl || null,
+        endTime: endTime || undefined,
+        imageUrl: data.imageUrl || undefined,
         allowGuestRsvp: data.allowGuestRsvp,
         allowPlusOne: data.allowPlusOne,
-        maxGuestsPerRsvp: data.maxGuestsPerRsvp || null,
-        maxAttendees: data.maxAttendees || null,
+        maxGuestsPerRsvp: data.maxGuestsPerRsvp || undefined,
+        maxAttendees: data.maxAttendees || undefined,
         showRsvpsToInvitees: data.showRsvpsToInvitees,
         showRsvpsAfterThreshold: data.showRsvpsAfterThreshold,
-        rsvpVisibilityThreshold: data.rsvpVisibilityThreshold || null,
-        customYesText: data.customYesText || null,
-        customNoText: data.customNoText || null,
+        rsvpVisibilityThreshold: data.rsvpVisibilityThreshold || undefined,
+        customYesText: data.customYesText || undefined,
+        customNoText: data.customNoText || undefined,
       };
 
-      const response = await fetch(`/api/events/${event?.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updateData),
-      });
-
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || "Failed to update event");
-      }
-
-      return response.json();
+      if (!event?.id) throw new Error("Event ID not found");
+      return eventService.updateEvent(event.id, updateData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });

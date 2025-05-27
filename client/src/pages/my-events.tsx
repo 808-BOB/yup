@@ -10,7 +10,7 @@ import { type Event } from "@shared/schema";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { eventService } from "@/services";
 
 type ResponseFilter = "all" | "yup" | "nope" | "maybe" | "archives";
 
