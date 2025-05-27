@@ -296,15 +296,38 @@ export default function EditEvent() {
                 </div>
 
                 <div>
-                  <Label htmlFor="imageUrl" className="text-white">Event Image URL</Label>
+                  <Label htmlFor="imageUrl" className="text-white">Event Image</Label>
+                  {form.watch("imageUrl") && (
+                    <div className="mb-3">
+                      <img 
+                        src={form.watch("imageUrl")} 
+                        alt="Current event image" 
+                        className="w-full h-32 object-cover rounded border border-slate-600"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
                   <Input
-                    id="imageUrl"
-                    {...form.register("imageUrl")}
-                    className="bg-slate-700 border-slate-600 text-white"
-                    placeholder="https://example.com/image.jpg"
+                    id="imageUpload"
+                    type="file"
+                    accept="image/*"
+                    className="bg-slate-700 border-slate-600 text-white mb-2"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          const base64String = event.target?.result as string;
+                          form.setValue("imageUrl", base64String);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
                   />
-                  <p className="text-slate-400 text-xs mt-1">
-                    Add a URL to an image that represents your event
+                  <p className="text-slate-400 text-xs">
+                    Upload a new image from your device (JPG, PNG, etc.)
                   </p>
                 </div>
 
