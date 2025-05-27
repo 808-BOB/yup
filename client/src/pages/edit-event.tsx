@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, useParams } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -43,8 +43,9 @@ export default function EditEvent() {
   const { toast } = useToast();
   const [isPreviewMode, setIsPreviewMode] = useState(false);
 
-  // Get event slug from URL
-  const slug = window.location.pathname.split('/')[2];
+  // Get event slug from URL params
+  const params = useParams();
+  const slug = params.slug;
 
   const { data: event, isLoading } = useQuery<Event>({
     queryKey: ['/api/events/slug', slug],
@@ -57,8 +58,8 @@ export default function EditEvent() {
       title: event.title,
       description: event.description || "",
       location: event.location,
-      dateTime: new Date(event.dateTime).toISOString().slice(0, 16),
-      endDateTime: event.endDateTime ? new Date(event.endDateTime).toISOString().slice(0, 16) : "",
+      dateTime: `${event.date}T${event.startTime}`,
+      endDateTime: event.endTime ? `${event.date}T${event.endTime}` : "",
       imageUrl: event.imageUrl || "",
       allowGuestRsvp: event.allowGuestRsvp,
       allowPlusOne: event.allowPlusOne,
@@ -78,8 +79,8 @@ export default function EditEvent() {
       title: event.title,
       description: event.description || "",
       location: event.location,
-      dateTime: new Date(event.dateTime).toISOString().slice(0, 16),
-      endDateTime: event.endDateTime ? new Date(event.endDateTime).toISOString().slice(0, 16) : "",
+      dateTime: `${event.date}T${event.startTime}`,
+      endDateTime: event.endTime ? `${event.date}T${event.endTime}` : "",
       imageUrl: event.imageUrl || "",
       allowGuestRsvp: event.allowGuestRsvp,
       allowPlusOne: event.allowPlusOne,
