@@ -1193,6 +1193,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update a response (for host editing)
+  app.patch("/api/responses/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const responseId = parseInt(req.params.id);
+      const { response } = req.body;
+      
+      // Get the response to check event ownership
+      const existingResponse = await storage.getResponseById(responseId);
+      if (!existingResponse) {
+        return res.status(404).json({ error: "Response not found" });
+      }
+      
+      // Get the event to check if user is host
+      const event = await storage.getEvent(existingResponse.eventId);
+      if (!event || event.hostId !== req.session.userId) {
+        return res.status(403).json({ error: "Only event hosts can edit responses" });
+      }
+      
+      const updatedResponse = await storage.updateResponse(responseId, { response });
+      res.json(updatedResponse);
+    } catch (error) {
+      console.error("Error updating response:", error);
+      res.status(500).json({ error: "Failed to update response" });
+    }
+  });
+
+  // Delete a response (for host removing attendees)
+  app.delete("/api/responses/:id", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const responseId = parseInt(req.params.id);
+      
+      // Get the response to check event ownership
+      const existingResponse = await storage.getResponseById(responseId);
+      if (!existingResponse) {
+        return res.status(404).json({ error: "Response not found" });
+      }
+      
+      // Get the event to check if user is host
+      const event = await storage.getEvent(existingResponse.eventId);
+      if (!event || event.hostId !== req.session.userId) {
+        return res.status(403).json({ error: "Only event hosts can delete responses" });
+      }
+      
+      await storage.deleteResponse(responseId);
+      res.json({ message: "Response deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting response:", error);
+      res.status(500).json({ error: "Failed to delete response" });
+    }
+  });
+
   // Get event responses
   app.get(
     "/api/events/:id/responses",
