@@ -41,7 +41,7 @@ type FormValues = z.infer<typeof formSchema>;
 export default function EditEvent() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
+
 
   // Get event slug from URL params
   const params = useParams();
@@ -148,7 +148,7 @@ export default function EditEvent() {
         title: "Success",
         description: "Event updated successfully!",
       });
-      setLocation(`/events/${slug}`);
+      setLocation(`/my-events`);
     },
     onError: (error: any) => {
       toast({
@@ -160,13 +160,8 @@ export default function EditEvent() {
   });
 
   const onSubmit = (data: FormValues) => {
-    if (isPreviewMode) {
-      // User confirmed, now save
-      updateEventMutation.mutate(data);
-    } else {
-      // Show preview
-      setIsPreviewMode(true);
-    }
+    // Directly save without preview
+    updateEventMutation.mutate(data);
   };
 
   if (isLoading) {
@@ -198,7 +193,7 @@ export default function EditEvent() {
           </Button>
           
           <h1 className="text-2xl font-bold text-white">
-            {isPreviewMode ? "Review Changes" : "Edit Event"}
+            Edit Event
           </h1>
         </div>
 
@@ -487,10 +482,11 @@ export default function EditEvent() {
               </Button>
               <Button
                 type="submit"
+                disabled={updateEventMutation.isPending}
                 className="bg-primary hover:bg-primary/90"
               >
-                <Eye className="w-4 h-4 mr-2" />
-                Preview Changes
+                <Save className="w-4 h-4 mr-2" />
+                {updateEventMutation.isPending ? "Saving..." : "Save"}
               </Button>
             </div>
           </form>
