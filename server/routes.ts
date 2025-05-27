@@ -33,6 +33,11 @@ const stripe = process.env.STRIPE_SECRET_KEY ?
 
 // Middleware to check if user is authenticated
 export const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
+  // Check for session-based authentication first
+  if (req.session && req.session.userId) {
+    return next();
+  }
+  // Fall back to Passport authentication
   if (req.isAuthenticated() && req.user) {
     return next();
   }
@@ -1258,7 +1263,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         comparison: event.hostId === parseInt(req.session.userId!)
       });
       
-      if (event.hostId !== parseInt(req.session.userId!)) {
+      // Handle both string and number comparison for hostId
+      const sessionUserId = req.session.userId;
+      const isHost = (event.hostId === sessionUserId) || 
+                    (event.hostId === parseInt(sessionUserId!)) ||
+                    (event.hostId.toString() === sessionUserId);
+      
+      if (!isHost) {
         console.log("Host permission denied");
         return res.status(403).json({ error: "Only event hosts can delete responses" });
       }
