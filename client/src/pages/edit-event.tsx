@@ -296,7 +296,7 @@ export default function EditEvent() {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <div>
                   <Label htmlFor="date" className="text-white">Start Date & Time</Label>
                   <div className="grid grid-cols-2 gap-2">
@@ -424,8 +424,8 @@ export default function EditEvent() {
                 <div>
                   <Label className="text-white">RSVP visibility threshold: {form.watch("rsvpVisibilityThreshold") || 0} attendees</Label>
                   <Slider
-                    value={[parseInt(form.watch("rsvpVisibilityThreshold") || "0")]}
-                    onValueChange={(value) => form.setValue("rsvpVisibilityThreshold", value[0].toString())}
+                    value={[form.watch("rsvpVisibilityThreshold") || 0]}
+                    onValueChange={(value) => form.setValue("rsvpVisibilityThreshold", value[0])}
                     max={50}
                     min={1}
                     step={1}
