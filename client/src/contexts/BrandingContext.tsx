@@ -35,26 +35,26 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (user) {
       console.log('BrandingContext: User loaded:', user);
-      console.log('BrandingContext: User brand_theme:', user.brand_theme);
-      console.log('BrandingContext: User logo_url:', user.logo_url);
+      console.log('BrandingContext: User brandTheme:', user.brandTheme);
+      console.log('BrandingContext: User logoUrl:', user.logoUrl);
       
       // Fix for Subourbon account - specifically check for both username and premium status
       // This ensures the test account always has branding access
       const isSubourbonAccount = user.username === 'subourbon';
-      setIsPremium(user.is_premium || isSubourbonAccount || false);
+      setIsPremium(user.isPremium || isSubourbonAccount || false);
       
-      if (user.logo_url) {
-        setLogoUrl(user.logo_url);
-        console.log('BrandingContext: Logo URL set to:', user.logo_url);
+      if (user.logoUrl) {
+        setLogoUrl(user.logoUrl);
+        console.log('BrandingContext: Logo URL set to:', user.logoUrl);
       } else {
         setLogoUrl(null);
         console.log('BrandingContext: No logo URL found');
       }
       
       // Parse brandTheme if it exists
-      if (user.brand_theme) {
+      if (user.brandTheme) {
         try {
-          const parsed = JSON.parse(user.brand_theme);
+          const parsed = JSON.parse(user.brandTheme);
           console.log('User brand theme loaded:', parsed);
           setTheme({
             ...defaultTheme,
