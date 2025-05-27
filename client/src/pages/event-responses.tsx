@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
 import Header from "@/components/header";
@@ -23,6 +24,7 @@ export default function EventResponses() {
   const [, setLocation] = useLocation();
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  const [showGuestManagement, setShowGuestManagement] = useState(false);
 
   console.log("EventResponses Component - Route Info:", { 
     matchBySlug, paramsBySlug,
@@ -196,15 +198,15 @@ export default function EventResponses() {
               variant="outline"
               size="sm"
               className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
-              onClick={() => setLocation(`/events/${event.slug}/edit`)}
+              onClick={() => setShowGuestManagement(!showGuestManagement)}
             >
-              <Edit className="w-4 h-4" /> Edit RSVPs
+              <Edit className="w-4 h-4" /> {showGuestManagement ? "Hide" : "Edit"} RSVPs
             </Button>
           )}
         </div>
 
         {/* Guest Management Component for Hosts */}
-        {isHost && (
+        {isHost && showGuestManagement && (
           <div className="mb-6">
             <EventGuestManager eventId={event.id.toString()} isHost={isHost} />
           </div>
