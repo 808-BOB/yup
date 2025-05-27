@@ -98,10 +98,7 @@ export default function EventPage() {
     try {
       const isLoggedIn = !!user;
 
-      // Handle toggle behavior - if the user clicks the same response, clear it
-      if (userResponse === response) {
-        response = userResponse; // This will be cleared in the API call
-      }
+      // No toggle behavior - always set the selected response
 
       // For guest users, show the guest RSVP modal if guest RSVP is allowed
       if (!isLoggedIn && event.allowGuestRsvp) {
@@ -131,8 +128,8 @@ export default function EventPage() {
               guestCount: 0, // Default to 0 when updating responses without showing modal
             });
 
-            setUserResponse(userResponse === response ? null : response);
-            setPreviousResponse(userResponse === response ? null : response);
+            setUserResponse(response);
+            setPreviousResponse(response);
             setShowConfirmation(true);
           } catch (error) {
             toast({
