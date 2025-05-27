@@ -162,6 +162,9 @@ export default function EventPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/events', event.id] });
       queryClient.invalidateQueries({ queryKey: [`/api/events/${event.id}/connections`] });
       queryClient.invalidateQueries({ queryKey: [`/api/users/${user.id}/responses`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/events/${event.id}/responses`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/events/${event.id}/responses/count`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/events/${event.id}/users/${user.id}/response`] });
 
       // Set the response (no toggle behavior for logged-in users)
       setUserResponse(response);

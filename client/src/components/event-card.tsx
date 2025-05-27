@@ -162,6 +162,15 @@ export default function EventCard({
                     {responses?.filter((r) => r.response === "nope").length || 0}{" "}
                     nope
                   </span>
+                  {responses?.filter((r) => r.response === "maybe").length > 0 && (
+                    <>
+                      <span className="text-sm text-gray-600">|</span>
+                      <span className="text-sm text-yellow-500 font-medium">
+                        {responses?.filter((r) => r.response === "maybe").length || 0}{" "}
+                        maybe
+                      </span>
+                    </>
+                  )}
                 </div>
               )}
             </div>
