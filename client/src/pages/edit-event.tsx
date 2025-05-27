@@ -111,7 +111,8 @@ export default function EditEvent() {
 
   const deleteEventMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("DELETE", `/api/events/${slug}`);
+      if (!event?.id) throw new Error("Event ID not found");
+      return apiRequest("DELETE", `/api/events/${event.id}`);
     },
     onSuccess: () => {
       toast({
