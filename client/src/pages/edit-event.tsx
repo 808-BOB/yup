@@ -15,7 +15,8 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { ArrowLeft, Save, Trash2, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
+import { eventService } from "@/services";
 import type { Event } from "@shared/schema";
 
 const formSchema = z.object({
@@ -50,6 +51,7 @@ export default function EditEvent() {
 
   const { data: event, isLoading } = useQuery<Event>({
     queryKey: [`/api/events/slug/${slug}`],
+    queryFn: () => eventService.getEventBySlug(slug!),
     enabled: !!slug,
   });
 
