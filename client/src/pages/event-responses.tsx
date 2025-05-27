@@ -154,8 +154,8 @@ export default function EventResponses() {
     console.log("Access denied for logged-in user:", {
       userId: user.id,
       username: user.username,
-      displayName: user.displayName,
-      isAdmin: user.isAdmin,
+      displayName: user.display_name,
+      isAdmin: user.is_admin,
       eventHostId: event.hostId,
       matchCheck: user.id === event.hostId
     });
