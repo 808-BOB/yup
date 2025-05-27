@@ -22,16 +22,18 @@ const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   location: z.string().min(1, "Location is required"),
-  dateTime: z.string().min(1, "Date and time is required"),
-  endDateTime: z.string().optional(),
+  date: z.string().min(1, "Date is required"),
+  time: z.string().min(1, "Time is required"),
+  endDate: z.string().optional(),
+  endTime: z.string().optional(),
   imageUrl: z.string().optional(),
   allowGuestRsvp: z.boolean().default(false),
   allowPlusOne: z.boolean().default(false),
-  maxGuestsPerRsvp: z.string().optional(),
-  maxAttendees: z.string().optional(),
+  maxGuestsPerRsvp: z.number().optional(),
+  maxAttendees: z.number().optional(),
   showRsvpsToInvitees: z.boolean().default(true),
   showRsvpsAfterThreshold: z.boolean().default(false),
-  rsvpVisibilityThreshold: z.string().optional(),
+  rsvpVisibilityThreshold: z.number().optional(),
   customYesText: z.string().optional(),
   customNoText: z.string().optional(),
 });
@@ -57,16 +59,18 @@ export default function EditEvent() {
       title: event.title,
       description: event.description || "",
       location: event.location,
-      dateTime: `${event.date}T${event.startTime}`,
-      endDateTime: event.endTime ? `${event.date}T${event.endTime}` : "",
+      date: event.date,
+      time: event.startTime,
+      endDate: event.date,
+      endTime: event.endTime || "",
       imageUrl: event.imageUrl || "",
       allowGuestRsvp: event.allowGuestRsvp,
       allowPlusOne: event.allowPlusOne,
-      maxGuestsPerRsvp: event.maxGuestsPerRsvp?.toString() || "",
-      maxAttendees: event.maxAttendees?.toString() || "",
+      maxGuestsPerRsvp: event.maxGuestsPerRsvp || undefined,
+      maxAttendees: event.maxAttendees || undefined,
       showRsvpsToInvitees: event.showRsvpsToInvitees,
       showRsvpsAfterThreshold: event.showRsvpsAfterThreshold,
-      rsvpVisibilityThreshold: event.rsvpVisibilityThreshold?.toString() || "",
+      rsvpVisibilityThreshold: event.rsvpVisibilityThreshold || undefined,
       customYesText: event.customYesText || "",
       customNoText: event.customNoText || "",
     } : undefined,
@@ -79,16 +83,18 @@ export default function EditEvent() {
         title: event.title,
         description: event.description || "",
         location: event.location,
-        dateTime: `${event.date}T${event.startTime}`,
-        endDateTime: event.endTime ? `${event.date}T${event.endTime}` : "",
+        date: event.date,
+        time: event.startTime,
+        endDate: event.date,
+        endTime: event.endTime || "",
         imageUrl: event.imageUrl || "",
         allowGuestRsvp: event.allowGuestRsvp,
         allowPlusOne: event.allowPlusOne,
-        maxGuestsPerRsvp: event.maxGuestsPerRsvp?.toString() || "",
-        maxAttendees: event.maxAttendees?.toString() || "",
+        maxGuestsPerRsvp: event.maxGuestsPerRsvp || undefined,
+        maxAttendees: event.maxAttendees || undefined,
         showRsvpsToInvitees: event.showRsvpsToInvitees,
         showRsvpsAfterThreshold: event.showRsvpsAfterThreshold,
-        rsvpVisibilityThreshold: event.rsvpVisibilityThreshold?.toString() || "",
+        rsvpVisibilityThreshold: event.rsvpVisibilityThreshold || undefined,
         customYesText: event.customYesText || "",
         customNoText: event.customNoText || "",
       });
@@ -105,12 +111,15 @@ export default function EditEvent() {
 
   const updateEventMutation = useMutation({
     mutationFn: async (data: FormValues) => {
-      const [date, time] = data.dateTime.split('T');
-      const eventDate = new Date(data.dateTime);
+      // Combine separate date and time fields
+      const eventDateTime = `${data.date}T${data.time}`;
+      const eventDate = new Date(eventDateTime);
       
-      let endDate = null;
-      if (data.endDateTime) {
-        endDate = new Date(data.endDateTime);
+      let endTime = null;
+      if (data.endDate && data.endTime) {
+        const endDateTime = `${data.endDate}T${data.endTime}`;
+        const endDate = new Date(endDateTime);
+        endTime = endDate.toTimeString().slice(0, 5);
       }
 
       const updateData = {
@@ -119,15 +128,15 @@ export default function EditEvent() {
         location: data.location,
         date: eventDate.toISOString().split('T')[0],
         startTime: eventDate.toTimeString().slice(0, 5),
-        endTime: endDate ? endDate.toTimeString().slice(0, 5) : null,
+        endTime: endTime,
         imageUrl: data.imageUrl || null,
         allowGuestRsvp: data.allowGuestRsvp,
         allowPlusOne: data.allowPlusOne,
-        maxGuestsPerRsvp: parseNumericField(data.maxGuestsPerRsvp, 1),
-        maxAttendees: parseNumericField(data.maxAttendees, null),
+        maxGuestsPerRsvp: data.maxGuestsPerRsvp || null,
+        maxAttendees: data.maxAttendees || null,
         showRsvpsToInvitees: data.showRsvpsToInvitees,
         showRsvpsAfterThreshold: data.showRsvpsAfterThreshold,
-        rsvpVisibilityThreshold: parseNumericField(data.rsvpVisibilityThreshold, 0),
+        rsvpVisibilityThreshold: data.rsvpVisibilityThreshold || null,
         customYesText: data.customYesText || null,
         customNoText: data.customNoText || null,
       };
@@ -225,12 +234,6 @@ export default function EditEvent() {
                     </div>
                   )}
                   <div className="flex gap-2">
-                    <Input
-                      id="imageUrl"
-                      placeholder="Image URL or paste image data"
-                      {...form.register("imageUrl")}
-                      className="bg-slate-700 border-slate-600 text-white flex-1"
-                    />
                     <Button
                       type="button"
                       variant="outline"
@@ -253,7 +256,7 @@ export default function EditEvent() {
                         input.click();
                       }}
                     >
-                      Choose Image
+                      {form.watch("imageUrl") ? "Replace Image" : "Upload Image"}
                     </Button>
                   </div>
                 </div>
@@ -295,26 +298,44 @@ export default function EditEvent() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="dateTime" className="text-white">Start Date & Time</Label>
-                  <Input
-                    id="dateTime"
-                    type="datetime-local"
-                    {...form.register("dateTime")}
-                    className="bg-slate-700 border-slate-600 text-white"
-                  />
-                  {form.formState.errors.dateTime && (
-                    <p className="text-red-400 text-sm mt-1">{form.formState.errors.dateTime.message}</p>
+                  <Label htmlFor="date" className="text-white">Start Date & Time</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      id="date"
+                      type="date"
+                      {...form.register("date")}
+                      className="bg-slate-700 border-slate-600 text-white"
+                    />
+                    <Input
+                      id="time"
+                      type="time"
+                      {...form.register("time")}
+                      className="bg-slate-700 border-slate-600 text-white"
+                    />
+                  </div>
+                  {(form.formState.errors.date || form.formState.errors.time) && (
+                    <p className="text-red-400 text-sm mt-1">
+                      {form.formState.errors.date?.message || form.formState.errors.time?.message}
+                    </p>
                   )}
                 </div>
 
                 <div>
-                  <Label htmlFor="endDateTime" className="text-white">End Date & Time (Optional)</Label>
-                  <Input
-                    id="endDateTime"
-                    type="datetime-local"
-                    {...form.register("endDateTime")}
-                    className="bg-slate-700 border-slate-600 text-white"
-                  />
+                  <Label htmlFor="endDate" className="text-white">End Date & Time (Optional)</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      id="endDate"
+                      type="date"
+                      {...form.register("endDate")}
+                      className="bg-slate-700 border-slate-600 text-white"
+                    />
+                    <Input
+                      id="endTime"
+                      type="time"
+                      {...form.register("endTime")}
+                      className="bg-slate-700 border-slate-600 text-white"
+                    />
+                  </div>
                 </div>
               </div>
             </CardContent>
