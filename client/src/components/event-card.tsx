@@ -153,19 +153,19 @@ export default function EventCard({
 
               {showStats && (
                 <div className="flex items-center gap-2 mt-1 sm:mt-0">
-                  <span className="text-sm text-primary font-medium">
+                  <span className="text-sm text-white font-medium">
                     {responses?.filter((r) => r.response === "yup").length || 0}{" "}
                     yup
                   </span>
                   <span className="text-sm text-gray-600">|</span>
-                  <span className="text-sm text-gray-400 font-medium">
+                  <span className="text-sm text-[var(--primary)] font-medium">
                     {responses?.filter((r) => r.response === "nope").length || 0}{" "}
                     nope
                   </span>
                   {responses?.filter((r) => r.response === "maybe").length > 0 && (
                     <>
                       <span className="text-sm text-gray-600">|</span>
-                      <span className="text-sm text-yellow-500 font-medium">
+                      <span className="text-sm text-gray-400 font-medium">
                         {responses?.filter((r) => r.response === "maybe").length || 0}{" "}
                         maybe
                       </span>

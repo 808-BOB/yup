@@ -147,11 +147,11 @@ export default function EventGuestManager({ eventId, isHost }: GuestManagerProps
   const getResponseColor = (response: string) => {
     switch (response) {
       case "yup":
-        return "bg-green-500/10 text-green-400 border-green-500/20";
+        return "bg-white/10 text-white border-white/20";
       case "nope":
-        return "bg-red-500/10 text-red-400 border-red-500/20";
+        return "bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20";
       case "maybe":
-        return "bg-yellow-500/10 text-yellow-400 border-yellow-500/20";
+        return "bg-gray-500/10 text-gray-400 border-gray-500/20";
       default:
         return "bg-gray-500/10 text-gray-400 border-gray-500/20";
     }
