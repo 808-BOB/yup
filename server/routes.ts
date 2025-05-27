@@ -974,10 +974,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/events", async (_req: Request, res: Response) => {
     try {
+      console.log("Getting all events...");
       const events = await storage.getAllEvents();
+      console.log("Found events:", events.length);
       res.json(events);
     } catch (error) {
-      res.status(500).json({ error: "Failed to get events" });
+      console.error("Error getting events:", error);
+      res.status(500).json({ error: "Failed to get events", details: error.message });
     }
   });
 

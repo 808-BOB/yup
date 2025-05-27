@@ -970,7 +970,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllEvents(): Promise<Event[]> {
-    return await db.select().from(events).orderBy(desc(events.date));
+    try {
+      console.log("Database getAllEvents called");
+      const result = await db.select().from(events).orderBy(desc(events.date));
+      console.log("Database query result:", result.length, "events");
+      if (result.length > 0) {
+        console.log("First event:", JSON.stringify(result[0], null, 2));
+      }
+      return result;
+    } catch (error) {
+      console.error("Database getAllEvents error:", error);
+      throw error;
+    }
   }
 
   async createResponse(response: InsertResponse): Promise<Response> {
