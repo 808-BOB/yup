@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation, useParams } from "wouter";
 import { useForm } from "react-hook-form";
@@ -76,26 +76,28 @@ export default function EditEvent() {
     } : undefined,
   });
 
-  // Reset form when event data loads
-  if (event && !form.formState.isDirty) {
-    form.reset({
-      title: event.title,
-      description: event.description || "",
-      location: event.location,
-      dateTime: `${event.date}T${event.startTime}`,
-      endDateTime: event.endTime ? `${event.date}T${event.endTime}` : "",
-      imageUrl: event.imageUrl || "",
-      allowGuestRsvp: event.allowGuestRsvp,
-      allowPlusOne: event.allowPlusOne,
-      maxGuestsPerRsvp: event.maxGuestsPerRsvp,
-      maxAttendees: event.maxAttendees || undefined,
-      showRsvpsToInvitees: event.showRsvpsToInvitees,
-      showRsvpsAfterThreshold: event.showRsvpsAfterThreshold,
-      rsvpVisibilityThreshold: event.rsvpVisibilityThreshold,
-      customYesText: event.customYesText || "",
-      customNoText: event.customNoText || "",
-    });
-  }
+  // Reset form when event data loads - use useEffect to prevent infinite re-renders
+  useEffect(() => {
+    if (event) {
+      form.reset({
+        title: event.title,
+        description: event.description || "",
+        location: event.location,
+        dateTime: `${event.date}T${event.startTime}`,
+        endDateTime: event.endTime ? `${event.date}T${event.endTime}` : "",
+        imageUrl: event.imageUrl || "",
+        allowGuestRsvp: event.allowGuestRsvp,
+        allowPlusOne: event.allowPlusOne,
+        maxGuestsPerRsvp: event.maxGuestsPerRsvp,
+        maxAttendees: event.maxAttendees || undefined,
+        showRsvpsToInvitees: event.showRsvpsToInvitees,
+        showRsvpsAfterThreshold: event.showRsvpsAfterThreshold,
+        rsvpVisibilityThreshold: event.rsvpVisibilityThreshold,
+        customYesText: event.customYesText || "",
+        customNoText: event.customNoText || "",
+      });
+    }
+  }, [event]);
 
   const updateEventMutation = useMutation({
     mutationFn: async (data: FormValues) => {
@@ -291,6 +293,19 @@ export default function EditEvent() {
                     {...form.register("endDateTime")}
                     className="bg-slate-700 border-slate-600 text-white"
                   />
+                </div>
+
+                <div>
+                  <Label htmlFor="imageUrl" className="text-white">Event Image URL</Label>
+                  <Input
+                    id="imageUrl"
+                    {...form.register("imageUrl")}
+                    className="bg-slate-700 border-slate-600 text-white"
+                    placeholder="https://example.com/image.jpg"
+                  />
+                  <p className="text-slate-400 text-xs mt-1">
+                    Add a URL to an image that represents your event
+                  </p>
                 </div>
 
                 <div>
