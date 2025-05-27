@@ -170,7 +170,7 @@ export default function EventResponses() {
         {event && <PageTitle title={`${event.title} RSVPs`} />}
       </div>
       <main className="flex-1 animate-fade-in">
-        <div className="flex mb-4 gap-2">
+        <div className="flex justify-between items-center mb-4">
           <Button
             variant="outline"
             size="sm"
@@ -179,6 +179,17 @@ export default function EventResponses() {
           >
             <ArrowLeft className="w-4 h-4" /> Back to Event
           </Button>
+          
+          {isHost && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
+              onClick={() => setLocation(`/events/${event.slug}/edit`)}
+            >
+              <Edit className="w-4 h-4" /> Edit RSVPs
+            </Button>
+          )}
         </div>
 
         {/* Guest Management Component for Hosts */}

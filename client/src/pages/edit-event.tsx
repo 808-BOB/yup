@@ -101,20 +101,42 @@ export default function EditEvent() {
 
   const updateEventMutation = useMutation({
     mutationFn: async (data: FormValues) => {
+      const eventDate = new Date(data.dateTime);
+      const endDate = data.endDateTime ? new Date(data.endDateTime) : null;
+      
+      const updateData = {
+        title: data.title,
+        description: data.description || null,
+        location: data.location,
+        date: eventDate.toISOString().split('T')[0], // YYYY-MM-DD format
+        startTime: eventDate.toTimeString().slice(0, 5), // HH:MM format
+        endTime: endDate ? endDate.toTimeString().slice(0, 5) : null,
+        imageUrl: data.imageUrl || null,
+        allowGuestRsvp: data.allowGuestRsvp,
+        allowPlusOne: data.allowPlusOne,
+        maxGuestsPerRsvp: data.maxGuestsPerRsvp,
+        maxAttendees: data.maxAttendees || null,
+        showRsvpsToInvitees: data.showRsvpsToInvitees,
+        showRsvpsAfterThreshold: data.showRsvpsAfterThreshold,
+        rsvpVisibilityThreshold: data.rsvpVisibilityThreshold,
+        customYesText: data.customYesText || null,
+        customNoText: data.customNoText || null,
+      };
+
+      console.log('Updating event with data:', updateData);
+      
       const response = await fetch(`/api/events/${event?.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...data,
-          dateTime: new Date(data.dateTime).toISOString(),
-          endDateTime: data.endDateTime ? new Date(data.endDateTime).toISOString() : null,
-        }),
+        body: JSON.stringify(updateData),
       });
       
       if (!response.ok) {
-        throw new Error('Failed to update event');
+        const errorText = await response.text();
+        console.error('Update failed:', errorText);
+        throw new Error(`Failed to update event: ${response.status}`);
       }
       
       return response.json();
@@ -247,6 +269,47 @@ export default function EditEvent() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
+                  <Label htmlFor="imageUrl" className="text-white">Event Image</Label>
+                  {form.watch("imageUrl") && (
+                    <div className="mb-3">
+                      <img 
+                        src={form.watch("imageUrl")} 
+                        alt="Current event image" 
+                        className="w-full h-32 object-cover rounded border border-slate-600"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                  <div className="relative">
+                    <input
+                      id="imageUpload"
+                      type="file"
+                      accept="image/*"
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            const base64String = event.target?.result as string;
+                            form.setValue("imageUrl", base64String);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    <div className="bg-primary text-white px-4 py-2 rounded text-center cursor-pointer hover:bg-primary/90">
+                      Choose Image
+                    </div>
+                  </div>
+                  <p className="text-slate-400 text-xs mt-1">
+                    Upload a new image from your device (JPG, PNG, etc.)
+                  </p>
+                </div>
+
+                <div>
                   <Label htmlFor="title" className="text-white">Event Title</Label>
                   <Input
                     id="title"
@@ -278,7 +341,7 @@ export default function EditEvent() {
                     id="dateTime"
                     type="datetime-local"
                     {...form.register("dateTime")}
-                    className="bg-slate-700 border-slate-600 text-white"
+                    className="bg-slate-700 border-slate-600 text-white [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:sepia [&::-webkit-calendar-picker-indicator]:hue-rotate-45"
                   />
                   {form.formState.errors.dateTime && (
                     <p className="text-red-400 text-sm mt-1">{form.formState.errors.dateTime.message}</p>
@@ -295,41 +358,7 @@ export default function EditEvent() {
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="imageUrl" className="text-white">Event Image</Label>
-                  {form.watch("imageUrl") && (
-                    <div className="mb-3">
-                      <img 
-                        src={form.watch("imageUrl")} 
-                        alt="Current event image" 
-                        className="w-full h-32 object-cover rounded border border-slate-600"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    </div>
-                  )}
-                  <Input
-                    id="imageUpload"
-                    type="file"
-                    accept="image/*"
-                    className="bg-slate-700 border-slate-600 text-white mb-2"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                          const base64String = event.target?.result as string;
-                          form.setValue("imageUrl", base64String);
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                  />
-                  <p className="text-slate-400 text-xs">
-                    Upload a new image from your device (JPG, PNG, etc.)
-                  </p>
-                </div>
+
 
                 <div>
                   <Label htmlFor="description" className="text-white">Description</Label>
