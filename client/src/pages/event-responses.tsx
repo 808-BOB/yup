@@ -205,7 +205,7 @@ export default function EventResponses() {
               {event.title} RSVPs
             </h2>
 
-            <div className="grid grid-cols-2 gap-4 mb-8">
+            <div className="grid grid-cols-3 gap-3 mb-8">
               <div className="bg-gray-800 p-4 rounded-sm">
                 <div className="text-primary text-2xl font-bold mb-1">
                   {responseCounts?.yupCount || 0}
@@ -220,6 +220,14 @@ export default function EventResponses() {
                 </div>
                 <div className="text-xs uppercase tracking-wider text-gray-400">
                   Not Going
+                </div>
+              </div>
+              <div className="bg-gray-800 p-4 rounded-sm">
+                <div className="text-yellow-500 text-2xl font-bold mb-1">
+                  {responseCounts?.maybeCount || 0}
+                </div>
+                <div className="text-xs uppercase tracking-wider text-gray-400">
+                  Maybe
                 </div>
               </div>
             </div>
@@ -306,6 +314,47 @@ export default function EventResponses() {
                         </div>
                         <div className="text-xs text-gray-400 font-medium uppercase">
                           Nope
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-yellow-500 uppercase tracking-wider mb-3">
+                  Maybe
+                </h3>
+                <div className="space-y-2">
+                  {responses
+                    ?.filter((r) => r.response === "maybe")
+                    .map((response: ResponseWithUserInfo) => (
+                      <div
+                        key={response.id}
+                        className="flex items-center justify-between p-3 bg-gray-800/50 rounded-sm"
+                      >
+                        <div className="flex flex-col">
+                          {response.isGuest ? (
+                            <>
+                              <span className="text-sm text-gray-200">
+                                {response.guestName || ""}
+                              </span>
+                              <span className="text-xs text-gray-400">
+                                {response.guestEmail || ""}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-sm text-gray-200">
+                                {response.userName || `User ${response.userId || 'unknown'}`}
+                              </span>
+                              <span className="text-xs text-gray-400">
+                                {response.userEmail || (response.userId ? `user${response.userId}@example.com` : 'unknown email')}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        <div className="text-xs text-yellow-500 font-medium uppercase">
+                          Maybe
                         </div>
                       </div>
                     ))}

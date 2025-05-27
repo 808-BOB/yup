@@ -166,8 +166,8 @@ export default function EventPage() {
       queryClient.invalidateQueries({ queryKey: [`/api/events/${event.id}/connections`] });
       queryClient.invalidateQueries({ queryKey: [`/api/users/${user.id}/responses`] });
 
-      // Toggle behavior - if clicking the same button, clear the response
-      setUserResponse(userResponse === response ? null : response);
+      // Set the response (no toggle behavior for logged-in users)
+      setUserResponse(response);
       setShowConfirmation(true);
     } catch (error) {
       toast({
