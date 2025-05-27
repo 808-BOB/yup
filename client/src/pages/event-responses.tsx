@@ -94,7 +94,17 @@ export default function EventResponses() {
   }
 
   // Host can always view responses - make sure we handle user and event values safely
-  const isHost = user && event && user.id === event.hostId;
+  console.log("Host Detection Debug:", { 
+    userId: user?.id, 
+    userIdType: typeof user?.id,
+    eventHostId: event?.hostId, 
+    eventHostIdType: typeof event?.hostId,
+    strictEqual: user?.id === event?.hostId,
+    stringComparison: user?.id === event?.hostId?.toString(),
+    numberComparison: user?.id?.toString() === event?.hostId
+  });
+  
+  const isHost = user && event && (user.id === event.hostId || user.id === event.hostId.toString() || user.id.toString() === event.hostId);
 
   // Calculate if threshold is reached for showing responses
   const hasYupThresholdReached = 
