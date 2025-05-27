@@ -1212,7 +1212,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get the event to check if user is host
       const event = await storage.getEvent(existingResponse.eventId);
-      if (!event || event.hostId !== req.session.userId) {
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      
+      // Handle both string and number comparison for hostId
+      const sessionUserId = req.session.userId;
+      const isHost = (event.hostId === sessionUserId) || 
+                    (event.hostId === parseInt(sessionUserId!)) ||
+                    (event.hostId.toString() === sessionUserId);
+      
+      if (!isHost) {
         return res.status(403).json({ error: "Only event hosts can edit responses" });
       }
       
