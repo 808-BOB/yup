@@ -321,10 +321,10 @@ export default function EventPage() {
             </div>
           </div>
 
-          {/* Event Image - with improved error handling */}
-          <div className="w-full h-48 mb-6 overflow-hidden rounded-sm bg-gray-800">
-            {event.imageUrl ? (
-              event.imageUrl.startsWith("data:") ? (
+          {/* Event Image - prominently displayed */}
+          {event.imageUrl ? (
+            <div className="w-full h-64 mb-6 overflow-hidden rounded-lg shadow-lg">
+              {event.imageUrl.startsWith("data:") ? (
                 <div
                   className="w-full h-full bg-no-repeat bg-center bg-cover"
                   style={{ backgroundImage: `url(${event.imageUrl})` }}
@@ -335,17 +335,24 @@ export default function EventPage() {
                   alt={event.title}
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    // Just hide the element on error, don't log to console
                     e.currentTarget.style.display = "none";
                   }}
                 />
-              )
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-800">
-                <p className="text-gray-500">No image</p>
+              )}
+            </div>
+          ) : (
+            <div className="w-full h-48 mb-6 overflow-hidden rounded-lg bg-gray-800 border-2 border-dashed border-gray-600">
+              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                <div className="text-center">
+                  <div className="text-4xl mb-2">📸</div>
+                  <div>No Event Image</div>
+                  {user && user.id === event.hostId && (
+                    <p className="text-xs mt-2 text-gray-500">Click Edit to add an image</p>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
           <Card className="mb-6 animate-slide-up bg-gray-900 border border-gray-800">
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
