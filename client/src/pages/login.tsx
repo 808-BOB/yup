@@ -79,7 +79,7 @@ export default function Login() {
             <img src={YupLogo} alt="Yup.RSVP" className="h-10 mx-auto mb-2" />
           </Link>
           <h2 className="mt-6 text-xl font-semibold text-gray-200">
-            Sign in to your account
+            Helping humans commit.
           </h2>
         </div>
 
