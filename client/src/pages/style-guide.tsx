@@ -71,9 +71,9 @@ export default function StyleGuide() {
                 <div className="flex flex-col space-y-2">
                   <div 
                     className="h-20 bg-primary-foreground text-primary rounded flex justify-end items-start p-2 cursor-pointer"
-                    onClick={() => copyToClipboard("hsl(var(--primary-foreground))")}
+                    onClick={() => copyToClipboard("#ffffff")}
                   >
-                    {copiedColor === "hsl(var(--primary-foreground))" ? (
+                    {copiedColor === "#ffffff" ? (
                       <Check className="h-5 w-5" />
                     ) : (
                       <Copy className="h-5 w-5" />
@@ -81,7 +81,7 @@ export default function StyleGuide() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm font-medium">Primary Foreground</span>
-                    <span className="text-sm text-muted-foreground">hsl(var(--primary-foreground))</span>
+                    <span className="text-sm text-muted-foreground">#ffffff</span>
                   </div>
                 </div>
               </CardContent>
@@ -114,9 +114,9 @@ export default function StyleGuide() {
                 <div className="flex flex-col space-y-2">
                   <div 
                     className="h-20 bg-foreground rounded flex justify-end items-start p-2 cursor-pointer"
-                    onClick={() => copyToClipboard("hsl(var(--foreground))")}
+                    onClick={() => copyToClipboard("#020817")}
                   >
-                    {copiedColor === "hsl(var(--foreground))" ? (
+                    {copiedColor === "#020817" ? (
                       <Check className="text-white h-5 w-5" />
                     ) : (
                       <Copy className="text-white h-5 w-5" />
@@ -124,7 +124,7 @@ export default function StyleGuide() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm font-medium">Foreground</span>
-                    <span className="text-sm text-muted-foreground">hsl(var(--foreground))</span>
+                    <span className="text-sm text-muted-foreground">#020817</span>
                   </div>
                 </div>
               </CardContent>
@@ -140,9 +140,9 @@ export default function StyleGuide() {
                 <div className="flex flex-col space-y-2">
                   <div 
                     className="h-20 bg-accent rounded flex justify-end items-start p-2 cursor-pointer"
-                    onClick={() => copyToClipboard("hsl(var(--accent))")}
+                    onClick={() => copyToClipboard("#f8fafc")}
                   >
-                    {copiedColor === "hsl(var(--accent))" ? (
+                    {copiedColor === "#f8fafc" ? (
                       <Check className="h-5 w-5" />
                     ) : (
                       <Copy className="h-5 w-5" />
@@ -150,7 +150,7 @@ export default function StyleGuide() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm font-medium">Accent</span>
-                    <span className="text-sm text-muted-foreground">hsl(var(--accent))</span>
+                    <span className="text-sm text-muted-foreground">#f8fafc</span>
                   </div>
                 </div>
 
