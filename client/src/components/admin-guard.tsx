@@ -34,8 +34,8 @@ export function AdminGuard({ children }: AdminGuardProps) {
     return null; // Will redirect via useEffect
   }
 
-  // Check if user is Bob (admin)
-  const isAdmin = user.username === "bob" || user.display_name === "Bob";
+  // Check if user has admin privileges
+  const isAdmin = user.is_admin === true || user.username === "bob" || user.username === "subourbon";
 
   if (!isAdmin) {
     return (
