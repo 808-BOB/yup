@@ -113,8 +113,8 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
 
   // Apply theme to CSS variables when theme changes
   useEffect(() => {
-    // Check if we're on admin pages - always use default theme
-    const isAdminPage = window.location.pathname.includes('/admin');
+    // Check if we're on admin pages - always use default theme (only in browser)
+    const isAdminPage = typeof window !== 'undefined' && window.location.pathname.includes('/admin');
     
     // Apply default YUP.RSVP magenta theme for non-logged-in users or admin pages
     if (!user || isAdminPage) {
