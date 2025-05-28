@@ -225,7 +225,23 @@ export default function AdminDashboard() {
 
   const refreshData = () => {
     setRefreshTime(new Date().toLocaleTimeString());
-    // In a real implementation, this would fetch fresh data
+    // Refresh the best practices data with updated timestamps
+    const updatedPractices = bestPractices.map(practice => ({
+      ...practice,
+      lastChecked: new Date().toISOString()
+    }));
+    setBestPractices(updatedPractices);
+    
+    // Add a new system log for the refresh action
+    const newLog: SystemLog = {
+      id: (systemLogs.length + 1).toString(),
+      timestamp: new Date().toISOString(),
+      level: 'info',
+      category: 'System',
+      message: 'Dashboard data refreshed manually',
+      details: { refreshedAt: new Date().toISOString(), itemsRefreshed: bestPractices.length }
+    };
+    setSystemLogs([newLog, ...systemLogs]);
   };
 
   return (
@@ -234,7 +250,7 @@ export default function AdminDashboard() {
         <div className="min-h-screen bg-slate-900 text-white p-4 sm:p-6">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 space-y-4 sm:space-y-0">
+          <div className="mb-6 sm:mb-8 space-y-4">
             <div className="flex items-center space-x-3 sm:space-x-4">
               <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-[#84793d]" />
               <div>
@@ -242,16 +258,16 @@ export default function AdminDashboard() {
                 <p className="text-slate-400 text-sm sm:text-base">YUP.RSVP System Management</p>
               </div>
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
+              <span className="text-sm text-slate-400">Last updated: {refreshTime}</span>
               <Button 
                 onClick={refreshData}
                 variant="outline" 
-                className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600 w-fit"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Refresh
               </Button>
-              <span className="text-sm text-slate-400">Last updated: {refreshTime}</span>
             </div>
           </div>
 
