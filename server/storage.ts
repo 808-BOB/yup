@@ -1062,26 +1062,19 @@ export class DatabaseStorage implements IStorage {
 
   async getResponsesByEvent(eventId: number): Promise<Response[]> {
     return await db
-      .select({
-        id: responses.id,
-        eventId: responses.eventId,
-        userId: responses.userId,
-        userName: users.display_name,
-        userEmail: users.email,
-        response: responses.response,
-        plusOneCount: responses.plusOneCount,
-        isGuest: responses.isGuest,
-        guestName: responses.guestName,
-        guestEmail: responses.guestEmail,
-        createdAt: responses.createdAt,
-      })
+      .select()
       .from(responses)
       .leftJoin(users, eq(responses.userId, users.id))
       .where(eq(responses.eventId, eventId))
-      .orderBy(asc(responses.createdAt));
+      .orderBy(asc(responses.createdAt))
+      .then(results => results.map(result => ({
+        ...result.responses,
+        userName: result.users?.display_name || result.responses.guestName || 'Unknown',
+        userEmail: result.users?.email || result.responses.guestEmail || '',
+      })));
   }
 
-  async getUserEventResponse(eventId: number, userId: number | null): Promise<Response | undefined> {
+  async getUserEventResponse(eventId: number, userId: string | null): Promise<Response | undefined> {
     if (!userId) return undefined;
     
     const [response] = await db
