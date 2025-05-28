@@ -332,30 +332,32 @@ export default function Admin() {
               </CardContent>
             </Card>
 
-            {/* Priority Actions */}
-            <Card className="bg-gray-900 border-gray-800">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5 text-yellow-500" />
-                  Priority Actions
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {bestPractices
-                  .filter(bp => bp.status !== "compliant")
-                  .slice(0, 3)
-                  .map((practice, index) => (
-                    <div key={index} className="flex items-center gap-2 p-2 bg-gray-800/50 border border-gray-700 rounded">
-                      {getStatusIcon(practice.status)}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-white truncate">{practice.name}</div>
-                        <div className="text-xs text-gray-400">{practice.description}</div>
+            {/* Priority Actions - Only show when there are items that need attention */}
+            {bestPractices.filter(bp => bp.status !== "compliant").length > 0 && (
+              <Card className="bg-gray-900 border-gray-800">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5 text-yellow-500" />
+                    Priority Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {bestPractices
+                    .filter(bp => bp.status !== "compliant")
+                    .slice(0, 3)
+                    .map((practice, index) => (
+                      <div key={index} className="flex items-center gap-2 p-2 bg-gray-800/50 border border-gray-700 rounded">
+                        {getStatusIcon(practice.status)}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-white truncate">{practice.name}</div>
+                          <div className="text-xs text-gray-400">{practice.description}</div>
+                        </div>
                       </div>
-                    </div>
-                  ))
-                }
-              </CardContent>
-            </Card>
+                    ))
+                  }
+                </CardContent>
+              </Card>
+            )}
 
             {/* Detailed Best Practices */}
             <Card className="bg-gray-900 border-gray-800">
