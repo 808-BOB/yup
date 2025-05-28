@@ -260,15 +260,8 @@ export default function Admin() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-400">
-                Last updated: {lastUpdated}
-              </div>
-              <Avatar className="w-8 h-8 border border-primary">
-                <AvatarFallback className="bg-gray-900 text-primary text-xs">
-                  {user?.display_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'AD'}
-                </AvatarFallback>
-              </Avatar>
+            <div className="text-sm text-gray-400">
+              Last updated: {lastUpdated}
             </div>
 
             <Button 
