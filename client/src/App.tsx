@@ -2,6 +2,7 @@ import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import { ErrorBoundary } from "@/components/error-boundary";
 import Footer from "@/components/footer";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
@@ -59,19 +60,21 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrandingProvider>
-          <div className="flex flex-col min-h-[100dvh] bg-gray-950">
-            <main className="flex-1">
-              <Router />
-            </main>
-            <Footer />
-            <Toaster />
-          </div>
-        </BrandingProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <BrandingProvider>
+            <div className="flex flex-col min-h-[100dvh] bg-gray-950">
+              <main className="flex-1">
+                <Router />
+              </main>
+              <Footer />
+              <Toaster />
+            </div>
+          </BrandingProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
