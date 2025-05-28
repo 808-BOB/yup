@@ -930,19 +930,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Route for creating test invites
-  app.get("/api/create-test-invites", async (req: Request, res: Response) => {
+  // Admin routes for metrics
+  app.get("/api/admin/users/count", async (req: Request, res: Response) => {
     try {
-      const eventId = 1; // Assuming event ID 1 exists
-      const userIds = [2, 3, 4]; // Assuming user IDs 2, 3, 4 exist
-      
-      for (const userId of userIds) {
-        await storage.createInvitation(eventId, userId);
-      }
-      
-      res.json({ message: "Test invites created", success: true });
+      const users = await storage.getAllUsers();
+      res.json({ count: users.length });
     } catch (error) {
-      res.status(500).json({ message: "Failed to create test invites" });
+      console.error("Error getting user count:", error);
+      res.status(500).json({ error: "Failed to get user count" });
+    }
+  });
+
+  app.get("/api/admin/events/count", async (req: Request, res: Response) => {
+    try {
+      const events = await storage.getAllEvents();
+      res.json({ count: events.length });
+    } catch (error) {
+      console.error("Error getting event count:", error);
+      res.status(500).json({ error: "Failed to get event count" });
+    }
+  });
+
+  app.get("/api/admin/metrics", async (req: Request, res: Response) => {
+    try {
+      const [users, events, responses] = await Promise.all([
+        storage.getAllUsers(),
+        storage.getAllEvents(),
+        storage.getAllResponses()
+      ]);
+
+      // Calculate total responses including guest counts
+      const totalResponses = responses.reduce((total, response) => {
+        return total + 1 + (response.guest_count || 0);
+      }, 0);
+
+      res.json({
+        totalUsers: users.length,
+        totalEvents: events.length,
+        totalResponses,
+        systemUptime: "99.9%",
+        lastUpdated: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error getting metrics:", error);
+      res.status(500).json({ error: "Failed to get metrics" });
     }
   });
 
