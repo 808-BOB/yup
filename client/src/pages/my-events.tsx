@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Loader2, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { eventService } from "@/services";
+import { apiRequest } from "@/lib/queryClient";
 
 type ResponseFilter = "all" | "yup" | "nope" | "maybe" | "archives";
 
@@ -29,13 +30,17 @@ export default function MyEvents() {
   } = useQuery<Event[]>({
     queryKey: [`/api/users/${user?.id || 0}/events`],
     enabled: !!user,
-    onSuccess: (data) => {
-      console.log('Events fetched successfully:', data);
-    },
-    onError: (err) => {
-      console.error('Error fetching events:', err);
-    },
   });
+
+  // Debug logging
+  useEffect(() => {
+    if (events.length > 0) {
+      console.log('Events loaded:', events);
+    }
+    if (error) {
+      console.error('Events error:', error);
+    }
+  }, [events, error]);
 
   // Fetch all of the user's responses
   const { data: userResponses = {} } = useQuery<Record<string, "yup" | "nope">>({
@@ -46,7 +51,7 @@ export default function MyEvents() {
   // Mutation for creating test events
   const createTestEvents = useMutation({
     mutationFn: () => apiRequest<{ success: boolean, message: string, events: Event[] }>("GET", "/api/create-test-invites"),
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       toast({
         title: "Success",
         description: data.message,
@@ -87,7 +92,7 @@ export default function MyEvents() {
   const isLoading = authLoading || eventsLoading;
 
   // Filter events based on response type and date
-  const filteredEvents = events.filter(event => {
+  const filteredEvents = events ? events.filter(event => {
     const response = userResponses[event.id];
     const eventDate = new Date(event.date);
     const today = new Date();
@@ -103,7 +108,7 @@ export default function MyEvents() {
     if (responseFilter === "maybe" && !response) return true;
 
     return false;
-  });
+  }) : [];
 
   const handleCreateTestEvents = () => {
     createTestEvents.mutate();
