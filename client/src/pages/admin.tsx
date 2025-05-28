@@ -311,50 +311,56 @@ export default function AdminDashboard() {
           </div>
 
           {/* Main Content Tabs */}
-          <Tabs defaultValue="practices" className="space-y-6">
-            <TabsList className="bg-slate-800 border-slate-700">
-              <TabsTrigger value="practices" className="data-[state=active]:bg-slate-700">
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Best Practices
-              </TabsTrigger>
-              <TabsTrigger value="logs" className="data-[state=active]:bg-slate-700">
-                <Activity className="w-4 h-4 mr-2" />
-                System Logs
-              </TabsTrigger>
-              <TabsTrigger value="style-guide" className="data-[state=active]:bg-slate-700">
-                <FileText className="w-4 h-4 mr-2" />
-                Style Guide
-              </TabsTrigger>
-              <TabsTrigger value="monitoring" className="data-[state=active]:bg-slate-700">
-                <Eye className="w-4 h-4 mr-2" />
-                Monitoring
-              </TabsTrigger>
-            </TabsList>
+          <Tabs defaultValue="practices" className="space-y-4 sm:space-y-6">
+            <div className="overflow-x-auto">
+              <TabsList className="bg-slate-800 border-slate-700 w-full sm:w-auto">
+                <TabsTrigger value="practices" className="data-[state=active]:bg-slate-700 text-xs sm:text-sm px-2 sm:px-3">
+                  <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Best Practices</span>
+                  <span className="sm:hidden">Practices</span>
+                </TabsTrigger>
+                <TabsTrigger value="logs" className="data-[state=active]:bg-slate-700 text-xs sm:text-sm px-2 sm:px-3">
+                  <Activity className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">System Logs</span>
+                  <span className="sm:hidden">Logs</span>
+                </TabsTrigger>
+                <TabsTrigger value="style-guide" className="data-[state=active]:bg-slate-700 text-xs sm:text-sm px-2 sm:px-3">
+                  <FileText className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Style Guide</span>
+                  <span className="sm:hidden">Style</span>
+                </TabsTrigger>
+                <TabsTrigger value="monitoring" className="data-[state=active]:bg-slate-700 text-xs sm:text-sm px-2 sm:px-3">
+                  <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Monitoring</span>
+                  <span className="sm:hidden">Monitor</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             {/* Best Practices Tab */}
             <TabsContent value="practices">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
                 {bestPractices.map((practice) => (
                   <Card key={practice.id} className="bg-slate-800 border-slate-700">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg text-white flex items-center">
+                    <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
+                        <CardTitle className="text-base sm:text-lg text-white flex items-center">
                           {getStatusIcon(practice.status)}
-                          <span className="ml-2">{practice.title}</span>
+                          <span className="ml-2 line-clamp-2">{practice.title}</span>
                         </CardTitle>
-                        <div className="flex items-center space-x-2">
-                          <Badge className={getPriorityColor(practice.priority)}>
+                        <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+                          <Badge className={`${getPriorityColor(practice.priority)} text-xs`}>
                             {practice.priority}
                           </Badge>
-                          <Badge className={getStatusColor(practice.status)}>
+                          <Badge className={`${getStatusColor(practice.status)} text-xs`}>
                             {practice.status}
                           </Badge>
                         </div>
                       </div>
                       <p className="text-sm text-slate-400">{practice.category}</p>
                     </CardHeader>
-                    <CardContent>
-                      <p className="text-slate-300 mb-3">{practice.description}</p>
+                    <CardContent className="p-3 sm:p-6 pt-0">
+                      <p className="text-slate-300 mb-2 sm:mb-3 text-sm sm:text-base">{practice.description}</p>
                       {practice.lastChecked && (
                         <p className="text-xs text-slate-500">
                           Last checked: {new Date(practice.lastChecked).toLocaleString()}
@@ -369,29 +375,29 @@ export default function AdminDashboard() {
             {/* System Logs Tab */}
             <TabsContent value="logs">
               <Card className="bg-slate-800 border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-white">Recent System Activity</CardTitle>
+                <CardHeader className="p-3 sm:p-6">
+                  <CardTitle className="text-white text-lg sm:text-xl">Recent System Activity</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
+                <CardContent className="p-3 sm:p-6 pt-0">
+                  <div className="space-y-3 sm:space-y-4 max-h-96 overflow-y-auto">
                     {systemLogs.map((log) => (
-                      <div key={log.id} className="border-b border-slate-700 pb-4 last:border-b-0">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center space-x-3">
-                            <Badge className={getLogLevelColor(log.level)}>
+                      <div key={log.id} className="border-b border-slate-700 pb-3 sm:pb-4 last:border-b-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 space-y-1 sm:space-y-0">
+                          <div className="flex items-center space-x-2 sm:space-x-3">
+                            <Badge className={`${getLogLevelColor(log.level)} text-xs`}>
                               {log.level.toUpperCase()}
                             </Badge>
-                            <span className="text-slate-400 text-sm">{log.category}</span>
+                            <span className="text-slate-400 text-xs sm:text-sm">{log.category}</span>
                           </div>
                           <span className="text-xs text-slate-500">
                             {new Date(log.timestamp).toLocaleString()}
                           </span>
                         </div>
-                        <p className="text-white mb-2">{log.message}</p>
+                        <p className="text-white mb-2 text-sm sm:text-base">{log.message}</p>
                         {log.details && (
                           <details className="text-sm text-slate-400">
                             <summary className="cursor-pointer">Show details</summary>
-                            <pre className="mt-2 whitespace-pre-wrap">
+                            <pre className="mt-2 whitespace-pre-wrap text-xs sm:text-sm overflow-x-auto">
                               {JSON.stringify(log.details, null, 2)}
                             </pre>
                           </details>
