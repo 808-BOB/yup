@@ -1062,8 +1062,21 @@ export class DatabaseStorage implements IStorage {
 
   async getResponsesByEvent(eventId: number): Promise<Response[]> {
     return await db
-      .select()
+      .select({
+        id: responses.id,
+        eventId: responses.eventId,
+        userId: responses.userId,
+        userName: users.display_name,
+        userEmail: users.email,
+        response: responses.response,
+        plusOneCount: responses.plusOneCount,
+        isGuest: responses.isGuest,
+        guestName: responses.guestName,
+        guestEmail: responses.guestEmail,
+        createdAt: responses.createdAt,
+      })
       .from(responses)
+      .leftJoin(users, eq(responses.userId, users.id))
       .where(eq(responses.eventId, eventId))
       .orderBy(asc(responses.createdAt));
   }
