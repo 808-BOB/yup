@@ -48,9 +48,9 @@ export interface BrandingContextType {
   resetToDefault: () => void;
 }
 
-// Default theme values - simplified to only include primary accent color
+// Default YUP.RSVP theme values - magenta brand colors
 const defaultTheme: BrandTheme = {
-  primary: 'hsl(308, 100%, 66%)' // Magenta
+  primary: 'hsl(308, 100%, 66%)' // YUP.RSVP magenta
 };
 
 const BrandingContext = createContext<BrandingContextType | undefined>(undefined);
@@ -113,17 +113,17 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
 
   // Apply theme to CSS variables when theme changes
   useEffect(() => {
-    // Reset theme if not logged in - apply default primary color styling
+    // Apply default YUP.RSVP magenta theme for non-logged-in users
     if (!user) {
       document.documentElement.style.setProperty('--primary', '308 100% 66%');
-      document.documentElement.style.setProperty('--primary-color', '#d946ef');
+      document.documentElement.style.setProperty('--primary-color', 'hsl(308, 100%, 66%)');
       document.documentElement.style.setProperty('--ring', '308 100% 66%');
       document.documentElement.style.setProperty('--border', '308 100% 20%');
       
-      // Ensure the default styling is applied immediately
-      document.documentElement.style.setProperty('--color-primary', '#d946ef');
-      document.documentElement.style.setProperty('--color-primary-hover', '#d946ef');
-      console.log('Applied default primary colors for non-logged-in user');
+      // Apply default YUP.RSVP branding colors
+      document.documentElement.style.setProperty('--color-primary', 'hsl(308, 100%, 66%)');
+      document.documentElement.style.setProperty('--color-primary-hover', 'hsl(308, 100%, 66%)');
+      console.log('Applied default YUP.RSVP magenta theme for login');
       return;
     }
     
