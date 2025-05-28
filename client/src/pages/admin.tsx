@@ -243,9 +243,6 @@ export default function AdminDashboard() {
               </div>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
-              <Badge variant="outline" className="text-green-400 border-green-400 text-xs sm:text-sm">
-                Admin Access
-              </Badge>
               <Button 
                 onClick={refreshData}
                 variant="outline" 
