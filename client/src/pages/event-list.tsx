@@ -79,14 +79,18 @@ export default function EventList() {
 
   const isLoading = authLoading || eventsLoading;
 
-  // Filter events based on response type
+  // Filter events based on response type and date (Central Time)
   const filteredEvents = events.filter(event => {
     const response = userResponses[event.id];
-    const eventDate = new Date(event.date);
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
-    const isPastEvent = eventDate < tomorrow;
+    
+    // Get date 2 days ago in Central Time (YYYY-MM-DD format)
+    const twoDaysAgoCentral = new Date();
+    twoDaysAgoCentral.setDate(twoDaysAgoCentral.getDate() - 2);
+    const twoDaysAgoStr = twoDaysAgoCentral.toLocaleDateString('en-CA', { timeZone: 'America/Chicago' });
+    const eventDateStr = event.date; // Already in YYYY-MM-DD format
+    
+    // Event is archived if its date is more than 2 days ago in Central Time
+    const isPastEvent = eventDateStr < twoDaysAgoStr;
 
     if (responseFilter === "archives") return isPastEvent;
     if (isPastEvent) return false;
