@@ -202,10 +202,10 @@ export default function AdminDashboard() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'text-red-400';
-      case 'medium': return 'text-yellow-400';
-      case 'low': return 'text-green-400';
-      default: return 'text-gray-400';
+      case 'high': return 'bg-red-600 text-white border-red-500';
+      case 'medium': return 'bg-orange-600 text-white border-orange-500';
+      case 'low': return 'bg-purple-600 text-white border-purple-500';
+      default: return 'bg-gray-600 text-white border-gray-500';
     }
   };
 
@@ -341,21 +341,17 @@ export default function AdminDashboard() {
             <TabsContent value="practices">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
                 {bestPractices.map((practice) => (
-                  <Card key={practice.id} className="bg-slate-800 border-slate-700">
-                    <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
+                  <Card key={practice.id} className="bg-slate-800 border-slate-700 relative">
+                    {/* Priority badge positioned absolutely in top-right */}
+                    <Badge className={`absolute top-3 right-3 text-xs ${getPriorityColor(practice.priority)} z-10`}>
+                      {practice.priority.toUpperCase()}
+                    </Badge>
+                    <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6 pr-16">
+                      <div className="flex flex-col space-y-2">
                         <CardTitle className="text-base sm:text-lg text-white flex items-center">
                           {getStatusIcon(practice.status)}
                           <span className="ml-2 line-clamp-2">{practice.title}</span>
                         </CardTitle>
-                        <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
-                          <Badge className={`${getPriorityColor(practice.priority)} text-xs`}>
-                            {practice.priority}
-                          </Badge>
-                          <Badge className={`${getStatusColor(practice.status)} text-xs`}>
-                            {practice.status}
-                          </Badge>
-                        </div>
                       </div>
                       <p className="text-sm text-slate-400">{practice.category}</p>
                     </CardHeader>
