@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { AdminGuard } from "@/components/admin-guard";
+import Header from "@/components/header";
 
 interface BestPracticeItem {
   id: string;
@@ -247,10 +248,18 @@ export default function AdminDashboard() {
   return (
     <AdminGuard>
       <ErrorBoundary>
-        <div className="min-h-screen bg-slate-900 text-white p-4 sm:p-6">
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="mb-6 sm:mb-8 space-y-4">
+        <div className="min-h-screen bg-slate-900 text-white">
+          <Header />
+          <div className="p-4 sm:p-6">
+            <div className="max-w-7xl mx-auto">
+              {/* Header */}
+              <div className="mb-6 sm:mb-8 space-y-4"></div>
+            </div>
+          </div>
+        </div>
+      </ErrorBoundary>
+    </AdminGuard>
+  );
             <div className="flex items-center space-x-3 sm:space-x-4">
               <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-[#84793d]" />
               <div>
@@ -582,7 +591,8 @@ export default function AdminDashboard() {
               </div>
             </TabsContent>
           </Tabs>
-        </div>
+            </div>
+          </div>
         </div>
       </ErrorBoundary>
     </AdminGuard>
