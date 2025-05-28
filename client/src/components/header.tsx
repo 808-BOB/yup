@@ -44,9 +44,18 @@ export default function Header() {
       <div className="flex items-center">
         <img
           src={getLogoUrl(branding)}
-          alt="Yup.RSVP"
+          alt="Yup.RSVP - Navigate to dashboard"
           className="h-6 sm:h-8 w-auto max-w-[120px] sm:max-w-[144px] object-contain cursor-pointer"
           onClick={() => setLocation(user ? "/my-events" : "/")}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setLocation(user ? "/my-events" : "/");
+            }
+          }}
+          tabIndex={0}
+          role="button"
+          aria-label="Navigate to dashboard"
         />
       </div>
       <div className="flex items-center space-x-2 sm:space-x-4">
