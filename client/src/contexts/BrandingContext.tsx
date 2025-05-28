@@ -113,12 +113,17 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
 
   // Apply theme to CSS variables when theme changes
   useEffect(() => {
-    // Reset theme if not logged in
+    // Reset theme if not logged in - apply default primary color styling
     if (!user) {
       document.documentElement.style.setProperty('--primary', '308 100% 66%');
       document.documentElement.style.setProperty('--primary-color', '#d946ef');
       document.documentElement.style.setProperty('--ring', '308 100% 66%');
       document.documentElement.style.setProperty('--border', '308 100% 20%');
+      
+      // Ensure the default styling is applied immediately
+      document.documentElement.style.setProperty('--color-primary', '#d946ef');
+      document.documentElement.style.setProperty('--color-primary-hover', '#d946ef');
+      console.log('Applied default primary colors for non-logged-in user');
       return;
     }
     
