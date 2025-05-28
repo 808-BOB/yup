@@ -100,7 +100,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
           setTheme(defaultTheme);
         }
       } else {
-        console.log('No brand theme found for user, using default');
+        console.log('No custom brand theme found for user, using default YUP.RSVP theme');
         setTheme(defaultTheme);
       }
     } else {
@@ -127,11 +127,12 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
       return;
     }
     
-    // Update the primary color for any user with a custom theme
-    if (theme && theme.primary) {
+    // TEMPORARILY DISABLED: Apply default YUP.RSVP theme for all users to test
+    // Custom themes should only apply when users are actively using custom branding
+    if (false && theme && theme.primary && isPremium && theme.primary !== defaultTheme.primary && user?.username === 'subourbon') {
       // Parse the HSL color to get its components
       let primaryColor = theme.primary;
-      console.log('Applying theme with primary color:', primaryColor);
+      console.log('Applying custom theme with primary color:', primaryColor);
       
       // If it's in HSL format, convert to hex and use consistently
       if (primaryColor.startsWith('hsl')) {
