@@ -110,10 +110,10 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Reset theme if not logged in
     if (!user) {
-      document.documentElement.style.setProperty('--primary', '#d946ef');
+      document.documentElement.style.setProperty('--primary', '308 100% 66%');
       document.documentElement.style.setProperty('--primary-color', '#d946ef');
-      document.documentElement.style.setProperty('--ring', '#d946ef');
-      document.documentElement.style.setProperty('--border', '#581c87');
+      document.documentElement.style.setProperty('--ring', '308 100% 66%');
+      document.documentElement.style.setProperty('--border', '308 100% 20%');
       return;
     }
     
@@ -146,26 +146,40 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
           document.documentElement.style.setProperty('--color-primary-hover', hexColor);
         }
       } else if (primaryColor.startsWith('#')) {
-        // For hex colors, use consistently across all variables
-        document.documentElement.style.setProperty('--primary', primaryColor);
+        // Convert hex to HSL for CSS variables while keeping hex for direct use
+        const r = parseInt(primaryColor.substring(1, 3), 16) / 255;
+        const g = parseInt(primaryColor.substring(3, 5), 16) / 255;
+        const b = parseInt(primaryColor.substring(5, 7), 16) / 255;
+        
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+        
+        if (max === min) {
+          h = s = 0; // achromatic
+        } else {
+          const d = max - min;
+          s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+          switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+            default: h = 0;
+          }
+          h /= 6;
+        }
+        
+        const hDeg = Math.round(h * 360);
+        const sPercent = Math.round(s * 100);
+        const lPercent = Math.round(l * 100);
+        
+        // Set CSS variables in HSL format for Tailwind compatibility
+        document.documentElement.style.setProperty('--primary', `${hDeg} ${sPercent}% ${lPercent}%`);
+        document.documentElement.style.setProperty('--ring', `${hDeg} ${sPercent}% ${lPercent}%`);
+        document.documentElement.style.setProperty('--border', `${hDeg} ${sPercent}% ${Math.max(20, lPercent - 20)}%`);
+        
+        // Also set hex versions for direct use
         document.documentElement.style.setProperty('--primary-color', primaryColor);
-        document.documentElement.style.setProperty('--ring', primaryColor);
-        document.documentElement.style.setProperty('--card-foreground', '#ffffff');
-        
-        // Create a darker version for borders
-        const rgb = parseInt(primaryColor.slice(1), 16);
-        const r = (rgb >> 16) & 255;
-        const g = (rgb >> 8) & 255;
-        const b = rgb & 255;
-        
-        // Darken by reducing each component by 30%
-        const darkerR = Math.max(0, Math.round(r * 0.7));
-        const darkerG = Math.max(0, Math.round(g * 0.7));
-        const darkerB = Math.max(0, Math.round(b * 0.7));
-        
-        const darkerHex = `#${darkerR.toString(16).padStart(2, '0')}${darkerG.toString(16).padStart(2, '0')}${darkerB.toString(16).padStart(2, '0')}`;
-        
-        document.documentElement.style.setProperty('--border', darkerHex);
         document.documentElement.style.setProperty('--color-primary', primaryColor);
         document.documentElement.style.setProperty('--color-primary-hover', primaryColor);
       } else {
