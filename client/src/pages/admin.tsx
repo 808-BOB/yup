@@ -231,20 +231,20 @@ export default function AdminDashboard() {
   return (
     <AdminGuard>
       <ErrorBoundary>
-        <div className="min-h-screen bg-slate-900 text-white p-6">
+        <div className="min-h-screen bg-slate-900 text-white p-4 sm:p-6">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center space-x-4">
-              <Shield className="w-8 h-8 text-[#84793d]" />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 space-y-4 sm:space-y-0">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-[#84793d]" />
               <div>
-                <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-                <p className="text-slate-400">YUP.RSVP System Management</p>
+                <h1 className="text-2xl sm:text-3xl font-bold">Admin Dashboard</h1>
+                <p className="text-slate-400 text-sm sm:text-base">YUP.RSVP System Management</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <Badge variant="outline" className="text-green-400 border-green-400">
-                Bob Admin Access
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <Badge variant="outline" className="text-green-400 border-green-400 text-xs sm:text-sm">
+                Admin Access
               </Badge>
               <Button 
                 onClick={refreshData}
@@ -259,52 +259,52 @@ export default function AdminDashboard() {
           </div>
 
           {/* Overview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
             <Card className="bg-slate-800 border-slate-700">
-              <CardContent className="p-6">
+              <CardContent className="p-3 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-slate-400 text-sm">Best Practices</p>
-                    <p className="text-2xl font-bold text-white">{completionPercentage}%</p>
+                    <p className="text-slate-400 text-xs sm:text-sm">Best Practices</p>
+                    <p className="text-xl sm:text-2xl font-bold text-white">{completionPercentage}%</p>
                   </div>
-                  <CheckCircle className="w-8 h-8 text-green-400" />
+                  <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-400" />
                 </div>
-                <Progress value={completionPercentage} className="mt-3" />
+                <Progress value={completionPercentage} className="mt-2 sm:mt-3" />
               </CardContent>
             </Card>
 
             <Card className="bg-slate-800 border-slate-700">
-              <CardContent className="p-6">
+              <CardContent className="p-3 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-slate-400 text-sm">Implemented</p>
-                    <p className="text-2xl font-bold text-green-400">{implementedCount}</p>
+                    <p className="text-slate-400 text-xs sm:text-sm">Implemented</p>
+                    <p className="text-xl sm:text-2xl font-bold text-green-400">{implementedCount}</p>
                   </div>
-                  <Code className="w-8 h-8 text-green-400" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-slate-800 border-slate-700">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-400 text-sm">Partial/In Progress</p>
-                    <p className="text-2xl font-bold text-yellow-400">{partialCount}</p>
-                  </div>
-                  <AlertTriangle className="w-8 h-8 text-yellow-400" />
+                  <Code className="w-6 h-6 sm:w-8 sm:h-8 text-green-400" />
                 </div>
               </CardContent>
             </Card>
 
             <Card className="bg-slate-800 border-slate-700">
-              <CardContent className="p-6">
+              <CardContent className="p-3 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-slate-400 text-sm">System Logs</p>
-                    <p className="text-2xl font-bold text-blue-400">{systemLogs.length}</p>
+                    <p className="text-slate-400 text-xs sm:text-sm">In Progress</p>
+                    <p className="text-xl sm:text-2xl font-bold text-yellow-400">{partialCount}</p>
                   </div>
-                  <Activity className="w-8 h-8 text-blue-400" />
+                  <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-400" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-slate-800 border-slate-700">
+              <CardContent className="p-3 sm:p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-400 text-xs sm:text-sm">System Logs</p>
+                    <p className="text-xl sm:text-2xl font-bold text-blue-400">{systemLogs.length}</p>
+                  </div>
+                  <Activity className="w-6 h-6 sm:w-8 sm:h-8 text-blue-400" />
                 </div>
               </CardContent>
             </Card>

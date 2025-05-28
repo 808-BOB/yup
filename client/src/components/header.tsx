@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Plus, User, LogOut, LogIn, UserPlus, Palette, Paintbrush, CreditCard } from "lucide-react";
+import { Plus, User, LogOut, LogIn, UserPlus, Palette, Paintbrush, CreditCard, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -40,24 +40,24 @@ export default function Header() {
   };
 
   return (
-    <header className="flex justify-between items-center mb-6 py-4 border-b border-gray-800 sticky top-0 z-50 bg-gray-950">
+    <header className="flex justify-between items-center mb-6 py-3 px-4 border-b border-gray-800 sticky top-0 z-50 bg-gray-950">
       <div className="flex items-center">
         <img
           src={getLogoUrl(branding)}
           alt="Yup.RSVP"
-          className="h-8 w-auto max-w-[144px] object-contain cursor-pointer"
+          className="h-6 sm:h-8 w-auto max-w-[120px] sm:max-w-[144px] object-contain cursor-pointer"
           onClick={() => setLocation(user ? "/my-events" : "/")}
         />
       </div>
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-2 sm:space-x-4">
         {user && (
           <Button
             variant="default"
-            size="icon"
+            size="sm"
             onClick={() => setLocation("/events/create")}
-            className="bg-primary text-white hover:bg-primary/90 hover:text-white rounded-sm"
+            className="bg-primary text-white hover:bg-primary/90 hover:text-white rounded-sm h-8 w-8 p-0 sm:h-10 sm:w-10"
           >
-            <Plus className="h-5 w-5" />
+            <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
         )}
 
@@ -117,15 +117,24 @@ export default function Header() {
                     <span>Branding</span>
                   </DropdownMenuItem>
                 )}
-                {/* Admin-only link to style guide */}
+                {/* Admin-only links */}
                 {user.is_admin && (
-                  <DropdownMenuItem
-                    onClick={() => setLocation("/style-guide")}
-                    className="cursor-pointer"
-                  >
-                    <Palette className="mr-2 h-4 w-4" />
-                    <span>Style Guide</span>
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuItem
+                      onClick={() => setLocation("/admin")}
+                      className="cursor-pointer"
+                    >
+                      <Shield className="mr-2 h-4 w-4" />
+                      <span>Admin Dashboard</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setLocation("/style-guide")}
+                      className="cursor-pointer"
+                    >
+                      <Palette className="mr-2 h-4 w-4" />
+                      <span>Style Guide</span>
+                    </DropdownMenuItem>
+                  </>
                 )}
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
