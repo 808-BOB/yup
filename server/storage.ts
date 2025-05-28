@@ -1072,6 +1072,7 @@ export class DatabaseStorage implements IStorage {
       ...result.responses,
       userName: result.users?.display_name || result.responses.guestName || 'Unknown',
       userEmail: result.users?.email || result.responses.guestEmail || '',
+      guestCount: result.responses.guestCount || 0,
     })) as Response[];
   }
 
