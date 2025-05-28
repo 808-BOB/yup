@@ -113,8 +113,11 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
 
   // Apply theme to CSS variables when theme changes
   useEffect(() => {
-    // Apply default YUP.RSVP magenta theme for non-logged-in users
-    if (!user) {
+    // Check if we're on admin pages - always use default theme
+    const isAdminPage = window.location.pathname.includes('/admin');
+    
+    // Apply default YUP.RSVP magenta theme for non-logged-in users or admin pages
+    if (!user || isAdminPage) {
       document.documentElement.style.setProperty('--primary', '308 100% 66%');
       document.documentElement.style.setProperty('--primary-color', 'hsl(308, 100%, 66%)');
       document.documentElement.style.setProperty('--ring', '308 100% 66%');
@@ -123,11 +126,11 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
       // Apply default YUP.RSVP branding colors
       document.documentElement.style.setProperty('--color-primary', 'hsl(308, 100%, 66%)');
       document.documentElement.style.setProperty('--color-primary-hover', 'hsl(308, 100%, 66%)');
-      console.log('Applied default YUP.RSVP magenta theme for login');
+      console.log(isAdminPage ? 'Applied default YUP.RSVP theme for admin pages' : 'Applied default YUP.RSVP magenta theme for login');
       return;
     }
     
-    // Apply custom themes only for logged-in premium users with custom branding set
+    // Apply custom themes only for logged-in premium users with custom branding set (not on admin pages)
     if (theme && theme.primary && isPremium && theme.primary !== defaultTheme.primary) {
       // Parse the HSL color to get its components
       let primaryColor = theme.primary;
