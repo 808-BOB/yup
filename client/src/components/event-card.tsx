@@ -36,12 +36,15 @@ export default function EventCard({
   });
   
   // Get response counts to determine if threshold is reached for visibility
-  const { data: responseCounts = { yupCount: 0, nopeCount: 0 } } = useQuery<{
+  const { data: responseCounts = { yupCount: 0, nopeCount: 0, maybeCount: 0 } } = useQuery<{
     yupCount: number;
     nopeCount: number;
+    maybeCount: number;
   }>({
     queryKey: [`/api/events/${event.id}/responses/count`],
     enabled: !!event.id,
+    staleTime: 0, // Force refresh to get latest count
+    cacheTime: 0, // Don't cache the result
   });
 
   // Query for user's response to this event if not provided and user is logged in
@@ -154,19 +157,19 @@ export default function EventCard({
               {showStats && (
                 <div className="flex items-center gap-2 mt-1 sm:mt-0">
                   <span className="text-sm text-white font-medium">
-                    {responses?.filter((r) => r.response === "yup").length || 0}{" "}
+                    {responseCounts.yupCount || 0}{" "}
                     yup
                   </span>
                   <span className="text-sm text-gray-600">|</span>
                   <span className="text-sm text-[var(--primary)] font-medium">
-                    {responses?.filter((r) => r.response === "nope").length || 0}{" "}
+                    {responseCounts.nopeCount || 0}{" "}
                     nope
                   </span>
-                  {responses?.filter((r) => r.response === "maybe").length > 0 && (
+                  {responseCounts.maybeCount > 0 && (
                     <>
                       <span className="text-sm text-gray-600">|</span>
                       <span className="text-sm text-gray-400 font-medium">
-                        {responses?.filter((r) => r.response === "maybe").length || 0}{" "}
+                        {responseCounts.maybeCount || 0}{" "}
                         maybe
                       </span>
                     </>
