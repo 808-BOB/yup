@@ -315,7 +315,7 @@ export default function EventPage() {
                   className="flex items-center gap-1 bg-gray-900 border-gray-800 hover:border-gray-700"
                   onClick={() => setLocation(`/events/${event.slug}/responses`)}
                 >
-                  <Edit className="w-4 h-4" /> Edit RSVPs
+                  <Eye className="w-4 h-4" /> View RSVPs
                 </Button>
               ) : null}
             </div>
