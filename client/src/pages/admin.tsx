@@ -104,8 +104,8 @@ export default function Admin() {
     {
       category: "performance",
       name: "Code Splitting",
-      status: "needs-improvement",
-      description: "No lazy loading or code splitting implemented",
+      status: "compliant",
+      description: "Lazy loading and code splitting implemented for all major routes",
       priority: "medium"
     },
     {
@@ -132,15 +132,15 @@ export default function Admin() {
     {
       category: "accessibility",
       name: "Keyboard Navigation",
-      status: "partial",
-      description: "Basic keyboard support, needs comprehensive testing",
+      status: "compliant",
+      description: "Comprehensive keyboard navigation support with focus management",
       priority: "medium"
     },
     {
       category: "accessibility",
       name: "Screen Reader Support",
-      status: "needs-improvement",
-      description: "Missing ARIA labels and semantic HTML improvements needed",
+      status: "compliant",
+      description: "ARIA labels and semantic HTML implemented throughout application",
       priority: "medium"
     }
   ];
