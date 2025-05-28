@@ -77,7 +77,7 @@ export default function Admin() {
       category: "coding",
       name: "Error Handling",
       status: "compliant",
-      description: "Comprehensive error boundaries implemented throughout application",
+      description: "Error boundary implemented at app level, needs component-level boundaries",
       priority: "high"
     },
     {
@@ -104,8 +104,8 @@ export default function Admin() {
     {
       category: "performance",
       name: "Code Splitting",
-      status: "compliant",
-      description: "Lazy loading and code splitting implemented for all major routes",
+      status: "needs-improvement",
+      description: "No lazy loading or code splitting implemented",
       priority: "medium"
     },
     {
@@ -132,15 +132,15 @@ export default function Admin() {
     {
       category: "accessibility",
       name: "Keyboard Navigation",
-      status: "compliant",
-      description: "Comprehensive keyboard navigation support with focus management",
+      status: "partial",
+      description: "Basic keyboard support, needs comprehensive testing",
       priority: "medium"
     },
     {
       category: "accessibility",
       name: "Screen Reader Support",
-      status: "compliant",
-      description: "ARIA labels and semantic HTML implemented throughout application",
+      status: "needs-improvement",
+      description: "Missing ARIA labels and semantic HTML improvements needed",
       priority: "medium"
     }
   ];
