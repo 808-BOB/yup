@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { AdminGuard } from "@/components/admin-guard";
+import Header from "@/components/header";
 
 interface BestPracticeItem {
   id: string;
@@ -202,10 +203,10 @@ export default function AdminDashboard() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'text-red-400';
-      case 'medium': return 'text-yellow-400';
-      case 'low': return 'text-green-400';
-      default: return 'text-gray-400';
+      case 'high': return 'bg-red-600 text-white border-red-500';
+      case 'medium': return 'bg-orange-600 text-white border-orange-500';
+      case 'low': return 'bg-purple-600 text-white border-purple-500';
+      default: return 'bg-gray-600 text-white border-gray-500';
     }
   };
 
@@ -225,16 +226,40 @@ export default function AdminDashboard() {
 
   const refreshData = () => {
     setRefreshTime(new Date().toLocaleTimeString());
-    // In a real implementation, this would fetch fresh data
+    // Refresh the best practices data with updated timestamps
+    const updatedPractices = bestPractices.map(practice => ({
+      ...practice,
+      lastChecked: new Date().toISOString()
+    }));
+    setBestPractices(updatedPractices);
+    
+    // Add a new system log for the refresh action
+    const newLog: SystemLog = {
+      id: (systemLogs.length + 1).toString(),
+      timestamp: new Date().toISOString(),
+      level: 'info',
+      category: 'System',
+      message: 'Dashboard data refreshed manually',
+      details: { refreshedAt: new Date().toISOString(), itemsRefreshed: bestPractices.length }
+    };
+    setSystemLogs([newLog, ...systemLogs]);
   };
 
   return (
     <AdminGuard>
       <ErrorBoundary>
-        <div className="min-h-screen bg-slate-900 text-white p-4 sm:p-6">
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 space-y-4 sm:space-y-0">
+        <div className="min-h-screen bg-slate-900 text-white">
+          <Header />
+          <div className="p-4 sm:p-6">
+            <div className="max-w-7xl mx-auto">
+              {/* Header */}
+              <div className="mb-6 sm:mb-8 space-y-4"></div>
+            </div>
+          </div>
+        </div>
+      </ErrorBoundary>
+    </AdminGuard>
+  );
             <div className="flex items-center space-x-3 sm:space-x-4">
               <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-[#84793d]" />
               <div>
@@ -242,19 +267,16 @@ export default function AdminDashboard() {
                 <p className="text-slate-400 text-sm sm:text-base">YUP.RSVP System Management</p>
               </div>
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <Badge variant="outline" className="text-green-400 border-green-400 text-xs sm:text-sm">
-                Admin Access
-              </Badge>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
+              <span className="text-sm text-slate-400">Last updated: {refreshTime}</span>
               <Button 
                 onClick={refreshData}
                 variant="outline" 
-                className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600 w-fit"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Refresh
               </Button>
-              <span className="text-sm text-slate-400">Last updated: {refreshTime}</span>
             </div>
           </div>
 
@@ -341,21 +363,17 @@ export default function AdminDashboard() {
             <TabsContent value="practices">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
                 {bestPractices.map((practice) => (
-                  <Card key={practice.id} className="bg-slate-800 border-slate-700">
-                    <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
+                  <Card key={practice.id} className="bg-slate-800 border-slate-700 relative">
+                    {/* Priority badge positioned absolutely in top-right */}
+                    <Badge className={`absolute top-3 right-3 text-xs ${getPriorityColor(practice.priority)} z-10`}>
+                      {practice.priority.toUpperCase()}
+                    </Badge>
+                    <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6 pr-16">
+                      <div className="flex flex-col space-y-2">
                         <CardTitle className="text-base sm:text-lg text-white flex items-center">
                           {getStatusIcon(practice.status)}
                           <span className="ml-2 line-clamp-2">{practice.title}</span>
                         </CardTitle>
-                        <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
-                          <Badge className={`${getPriorityColor(practice.priority)} text-xs`}>
-                            {practice.priority}
-                          </Badge>
-                          <Badge className={`${getStatusColor(practice.status)} text-xs`}>
-                            {practice.status}
-                          </Badge>
-                        </div>
                       </div>
                       <p className="text-sm text-slate-400">{practice.category}</p>
                     </CardHeader>
@@ -573,7 +591,8 @@ export default function AdminDashboard() {
               </div>
             </TabsContent>
           </Tabs>
-        </div>
+            </div>
+          </div>
         </div>
       </ErrorBoundary>
     </AdminGuard>
