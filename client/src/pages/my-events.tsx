@@ -95,9 +95,10 @@ export default function MyEvents() {
   const filteredEvents = events ? events.filter(event => {
     const response = userResponses[event.id];
     const eventDate = new Date(event.date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const isPastEvent = eventDate < today;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    const isPastEvent = eventDate < tomorrow;
 
     if (responseFilter === "archives") return isPastEvent;
     if (isPastEvent) return false;
