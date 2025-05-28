@@ -82,7 +82,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
       }
       
       // Handle both snake_case and camelCase field names for brandTheme
-      const brandTheme = user.brand_theme || user.brandTheme;
+      const brandTheme = user.brand_theme;
       
       // Parse brandTheme if it exists
       if (brandTheme) {
