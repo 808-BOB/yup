@@ -29,6 +29,12 @@ export default function MyEvents() {
   } = useQuery<Event[]>({
     queryKey: [`/api/users/${user?.id || 0}/events`],
     enabled: !!user,
+    onSuccess: (data) => {
+      console.log('Events fetched successfully:', data);
+    },
+    onError: (err) => {
+      console.error('Error fetching events:', err);
+    },
   });
 
   // Fetch all of the user's responses
