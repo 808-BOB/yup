@@ -201,19 +201,17 @@ export default function Admin() {
     setLastUpdated(new Date().toLocaleTimeString());
     
     try {
-      // Use existing working API endpoints
-      const [eventsRes, usersRes] = await Promise.all([
-        fetch('/api/events'),
-        fetch('/api/users')
-      ]);
+      console.log("Refreshing admin metrics...");
       
+      // Get events count
+      const eventsRes = await fetch('/api/events');
       let totalEvents = 0;
-      let totalUsers = 0;
       let totalResponses = 0;
       
       if (eventsRes.ok) {
         const events = await eventsRes.json();
         totalEvents = events.length;
+        console.log("Found events:", totalEvents);
         
         // Count responses from all events
         for (const event of events) {
@@ -224,15 +222,40 @@ export default function Admin() {
               totalResponses += counts.yupCount + counts.nopeCount + counts.maybeCount;
             }
           } catch (err) {
-            // Continue counting other events
+            console.log("Failed to get responses for event:", event.id);
           }
+        }
+        console.log("Total responses:", totalResponses);
+      }
+      
+      // Try to get user count from debug endpoint
+      let totalUsers = 0;
+      try {
+        const debugRes = await fetch('/api/debug/users');
+        if (debugRes.ok) {
+          const debugText = await debugRes.text();
+          // Parse the HTML response to extract user count
+          const match = debugText.match(/Total users in database:\s*(\d+)/);
+          if (match) {
+            totalUsers = parseInt(match[1]);
+            console.log("Found users from debug:", totalUsers);
+          }
+        }
+      } catch (err) {
+        console.log("Debug endpoint failed, trying admin endpoint");
+        // Fallback to admin endpoint
+        try {
+          const adminRes = await fetch('/api/admin/users/count');
+          if (adminRes.ok) {
+            const adminData = await adminRes.json();
+            totalUsers = adminData.count || 0;
+          }
+        } catch (adminErr) {
+          console.log("Admin endpoint also failed");
         }
       }
       
-      if (usersRes.ok) {
-        const users = await usersRes.json();
-        totalUsers = users.length;
-      }
+      console.log("Final metrics:", { totalUsers, totalEvents, totalResponses });
       
       setMetrics({
         totalUsers,
@@ -244,7 +267,6 @@ export default function Admin() {
       
     } catch (error) {
       console.error("Failed to fetch metrics:", error);
-      // Keep existing values if fetch fails
       setMetrics(prev => ({
         ...prev,
         lastUpdated: new Date().toLocaleTimeString()
