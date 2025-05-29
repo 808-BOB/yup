@@ -933,8 +933,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin routes for metrics
   app.get("/api/admin/users/count", async (req: Request, res: Response) => {
     try {
-      const users = await storage.getAllUsers();
-      res.json({ count: users.length });
+      const userCount = await db.select({ count: sql`count(*)` }).from(users);
+      res.json({ count: Number(userCount[0].count) });
     } catch (error) {
       console.error("Error getting user count:", error);
       res.status(500).json({ error: "Failed to get user count" });
@@ -943,8 +943,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/events/count", async (req: Request, res: Response) => {
     try {
-      const events = await storage.getAllEvents();
-      res.json({ count: events.length });
+      const eventCount = await db.select({ count: sql`count(*)` }).from(events);
+      res.json({ count: Number(eventCount[0].count) });
     } catch (error) {
       console.error("Error getting event count:", error);
       res.status(500).json({ error: "Failed to get event count" });
@@ -953,20 +953,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/metrics", async (req: Request, res: Response) => {
     try {
-      const [users, events, responses] = await Promise.all([
-        storage.getAllUsers(),
-        storage.getAllEvents(),
-        storage.getAllResponses()
+      const [userCountResult, eventCountResult, responseCountResult, guestCountResult] = await Promise.all([
+        db.select({ count: sql`count(*)` }).from(users),
+        db.select({ count: sql`count(*)` }).from(events),
+        db.select({ count: sql`count(*)` }).from(responses),
+        db.select({ total: sql`sum(coalesce(guest_count, 0))` }).from(responses)
       ]);
 
-      // Calculate total responses including guest counts
-      const totalResponses = responses.reduce((total, response) => {
-        return total + 1 + (response.guest_count || 0);
-      }, 0);
+      const totalUsers = Number(userCountResult[0].count);
+      const totalEvents = Number(eventCountResult[0].count);
+      const totalResponseCount = Number(responseCountResult[0].count);
+      const totalGuestCount = Number(guestCountResult[0].total || 0);
+      const totalResponses = totalResponseCount + totalGuestCount;
 
       res.json({
-        totalUsers: users.length,
-        totalEvents: events.length,
+        totalUsers,
+        totalEvents,
         totalResponses,
         systemUptime: "99.9%",
         lastUpdated: new Date().toISOString()
