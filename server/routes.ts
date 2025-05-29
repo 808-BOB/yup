@@ -933,46 +933,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin routes for metrics
   app.get("/api/admin/users/count", async (req: Request, res: Response) => {
     try {
-      console.log("Attempting to get user count from database...");
-      const userCount = await db.select({ count: sql<number>`count(*)` }).from(users);
-      console.log("User count query result:", userCount);
-      res.json({ count: Number(userCount[0].count) });
+      const allUsers = await db.select().from(users);
+      res.json({ count: allUsers.length });
     } catch (error) {
       console.error("Error getting user count:", error);
-      res.status(500).json({ error: "Failed to get user count", details: String(error) });
+      res.status(500).json({ error: "Failed to get user count" });
     }
   });
 
   app.get("/api/admin/events/count", async (req: Request, res: Response) => {
     try {
-      console.log("Attempting to get event count from database...");
-      const eventCount = await db.select({ count: sql<number>`count(*)` }).from(events);
-      console.log("Event count query result:", eventCount);
-      res.json({ count: Number(eventCount[0].count) });
+      const allEvents = await storage.getAllEvents();
+      res.json({ count: allEvents.length });
     } catch (error) {
       console.error("Error getting event count:", error);
-      res.status(500).json({ error: "Failed to get event count", details: String(error) });
+      res.status(500).json({ error: "Failed to get event count" });
     }
   });
 
   app.get("/api/admin/metrics", async (req: Request, res: Response) => {
     try {
-      const [userCountResult, eventCountResult, responseCountResult, guestCountResult] = await Promise.all([
-        db.select({ count: sql`count(*)` }).from(users),
-        db.select({ count: sql`count(*)` }).from(events),
-        db.select({ count: sql`count(*)` }).from(responses),
-        db.select({ total: sql`sum(coalesce(guest_count, 0))` }).from(responses)
+      const [allUsers, allEvents] = await Promise.all([
+        db.select().from(users),
+        storage.getAllEvents()
       ]);
 
-      const totalUsers = Number(userCountResult[0].count);
-      const totalEvents = Number(eventCountResult[0].count);
-      const totalResponseCount = Number(responseCountResult[0].count);
-      const totalGuestCount = Number(guestCountResult[0].total || 0);
-      const totalResponses = totalResponseCount + totalGuestCount;
+      // Get response counts from all events
+      let totalResponses = 0;
+      for (const event of allEvents) {
+        const responseCounts = await storage.getEventResponses(event.id);
+        totalResponses += responseCounts.yupCount + responseCounts.nopeCount + responseCounts.maybeCount;
+      }
 
       res.json({
-        totalUsers,
-        totalEvents,
+        totalUsers: allUsers.length,
+        totalEvents: allEvents.length,
         totalResponses,
         systemUptime: "99.9%",
         lastUpdated: new Date().toISOString()
