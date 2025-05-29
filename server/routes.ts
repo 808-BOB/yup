@@ -9,7 +9,7 @@ import { verifyFirebaseToken } from "./firebaseAdmin";
 import session from "express-session";
 import passport from "passport";
 import { generateUsername } from "@shared/utils";
-import { users } from "@shared/schema";
+import { users, events, responses } from "@shared/schema";
 
 import Stripe from "stripe";
 import { createCheckoutSession, createCustomerPortalSession } from "./stripe";
@@ -933,21 +933,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin routes for metrics
   app.get("/api/admin/users/count", async (req: Request, res: Response) => {
     try {
-      const userCount = await db.select({ count: sql`count(*)` }).from(users);
+      console.log("Attempting to get user count from database...");
+      const userCount = await db.select({ count: sql<number>`count(*)` }).from(users);
+      console.log("User count query result:", userCount);
       res.json({ count: Number(userCount[0].count) });
     } catch (error) {
       console.error("Error getting user count:", error);
-      res.status(500).json({ error: "Failed to get user count" });
+      res.status(500).json({ error: "Failed to get user count", details: String(error) });
     }
   });
 
   app.get("/api/admin/events/count", async (req: Request, res: Response) => {
     try {
-      const eventCount = await db.select({ count: sql`count(*)` }).from(events);
+      console.log("Attempting to get event count from database...");
+      const eventCount = await db.select({ count: sql<number>`count(*)` }).from(events);
+      console.log("Event count query result:", eventCount);
       res.json({ count: Number(eventCount[0].count) });
     } catch (error) {
       console.error("Error getting event count:", error);
-      res.status(500).json({ error: "Failed to get event count" });
+      res.status(500).json({ error: "Failed to get event count", details: String(error) });
     }
   });
 
