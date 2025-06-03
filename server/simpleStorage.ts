@@ -39,6 +39,32 @@ export class SimpleStorage {
     };
     this.users.set(adminUser.id, adminUser);
 
+    // Create Bob as premium user with branding
+    const bobUser: User = {
+      id: 'bob-premium',
+      username: 'bob',
+      password: 'events',
+      display_name: 'Bob Premium',
+      email: 'bob@example.com',
+      phone_number: null,
+      reset_token: null,
+      reset_token_expiry: null,
+      created_at: new Date(),
+      is_admin: false,
+      is_pro: true,
+      is_premium: true,
+      profile_image_url: null,
+      brand_theme: '#2563eb', // Blue theme for Bob
+      logo_url: null,
+      stripe_customer_id: null,
+      stripe_subscription_id: null,
+      linkedin_id: null,
+      linkedin_access_token: null,
+      linkedin_profile_url: null,
+      linkedin_connections: null
+    };
+    this.users.set(bobUser.id, bobUser);
+
     // Create sample event
     const sampleEvent: Event = {
       id: 1,
