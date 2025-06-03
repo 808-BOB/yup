@@ -117,7 +117,7 @@ export default function Header() {
                   <span>Plans</span>
                 </DropdownMenuItem>
                 {/* Premium users can access branding settings */}
-                {(user.isPremium || user.is_premium) && (
+                {user.is_premium && (
                   <DropdownMenuItem
                     onClick={() => setLocation("/branding")}
                     className="cursor-pointer"
@@ -127,7 +127,7 @@ export default function Header() {
                   </DropdownMenuItem>
                 )}
                 {/* Admin-only links */}
-                {(user.isAdmin || user.is_admin) && (
+                {user.is_admin && (
                   <>
                     <DropdownMenuItem
                       onClick={() => setLocation("/admin")}

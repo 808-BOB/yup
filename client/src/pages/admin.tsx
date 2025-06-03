@@ -216,7 +216,7 @@ export default function Admin() {
         // Count responses from all events
         for (const event of events) {
           try {
-            const responseRes = await fetch(`/api/events/${event.id}/responses/count`);
+            const responseRes = await fetch(`/api/events/${event.id}/responses/counts`);
             if (responseRes.ok) {
               const counts = await responseRes.json();
               totalResponses += counts.yupCount + counts.nopeCount + counts.maybeCount;
@@ -228,19 +228,31 @@ export default function Admin() {
         console.log("Total responses:", totalResponses);
       }
       
-      // Get user count from admin endpoint
+      // Try to get user count from debug endpoint
       let totalUsers = 0;
       try {
-        const adminRes = await fetch('/api/admin/users/count');
-        if (adminRes.ok) {
-          const adminData = await adminRes.json();
-          totalUsers = adminData.count || 0;
-          console.log("Found users from admin endpoint:", totalUsers);
-        } else {
-          console.log("Admin users endpoint failed with status:", adminRes.status);
+        const debugRes = await fetch('/api/debug/users');
+        if (debugRes.ok) {
+          const debugText = await debugRes.text();
+          // Parse the HTML response to extract user count
+          const match = debugText.match(/Total users in database:\s*(\d+)/);
+          if (match) {
+            totalUsers = parseInt(match[1]);
+            console.log("Found users from debug:", totalUsers);
+          }
         }
       } catch (err) {
-        console.log("Admin users endpoint error:", err);
+        console.log("Debug endpoint failed, trying admin endpoint");
+        // Fallback to admin endpoint
+        try {
+          const adminRes = await fetch('/api/admin/users/count');
+          if (adminRes.ok) {
+            const adminData = await adminRes.json();
+            totalUsers = adminData.count || 0;
+          }
+        } catch (adminErr) {
+          console.log("Admin endpoint also failed");
+        }
       }
       
       console.log("Final metrics:", { totalUsers, totalEvents, totalResponses });
