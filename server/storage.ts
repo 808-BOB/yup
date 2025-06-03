@@ -74,6 +74,11 @@ export interface IStorage {
   getResponseById(id: number): Promise<Response | undefined>;
   updateResponse(id: number, responseUpdate: Partial<InsertResponse>): Promise<Response | undefined>;
   deleteResponse(id: number): Promise<void>;
+
+  // Count operations for admin metrics
+  getUserCount(): Promise<number>;
+  getEventCount(): Promise<number>;
+  getResponseCount(): Promise<number>;
 }
 
 export class MemStorage implements IStorage {
@@ -803,6 +808,44 @@ export class MemStorage implements IStorage {
 
     return { yupCount, nopeCount, maybeCount };
   }
+
+  async getResponseById(id: number): Promise<Response | undefined> {
+    return this.responses.get(id);
+  }
+
+  async updateResponse(id: number, responseUpdate: Partial<InsertResponse>): Promise<Response | undefined> {
+    const existingResponse = this.responses.get(id);
+    if (!existingResponse) {
+      return undefined;
+    }
+
+    const updatedResponse: Response = {
+      ...existingResponse,
+      ...responseUpdate,
+    };
+
+    this.responses.set(id, updatedResponse);
+    this.saveToFile();
+    return updatedResponse;
+  }
+
+  async deleteResponse(id: number): Promise<void> {
+    this.responses.delete(id);
+    this.saveToFile();
+  }
+
+  // Count operations for admin metrics
+  async getUserCount(): Promise<number> {
+    return this.users.size;
+  }
+
+  async getEventCount(): Promise<number> {
+    return this.events.size;
+  }
+
+  async getResponseCount(): Promise<number> {
+    return this.responses.size;
+  }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1176,6 +1219,22 @@ export class DatabaseStorage implements IStorage {
 
   async deleteResponse(id: number): Promise<void> {
     await db.delete(responses).where(eq(responses.id, id));
+  }
+
+  // Count operations for admin metrics
+  async getUserCount(): Promise<number> {
+    const [result] = await db.select({ count: sql<number>`count(*)` }).from(users);
+    return result.count;
+  }
+
+  async getEventCount(): Promise<number> {
+    const [result] = await db.select({ count: sql<number>`count(*)` }).from(events);
+    return result.count;
+  }
+
+  async getResponseCount(): Promise<number> {
+    const [result] = await db.select({ count: sql<number>`count(*)` }).from(responses);
+    return result.count;
   }
 }
 
