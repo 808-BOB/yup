@@ -864,21 +864,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/metrics", async (req: Request, res: Response) => {
     try {
-      const [userCount, eventCount, responseCount] = await Promise.all([
-        storage.getUserCount(),
-        storage.getEventCount(),
-        storage.getResponseCount()
-      ]);
+      console.log("Admin metrics endpoint called");
+      console.log("Storage object:", typeof storage);
+      
+      const userCount = await storage.getUserCount();
+      console.log("User count:", userCount);
+      
+      const eventCount = await storage.getEventCount();
+      console.log("Event count:", eventCount);
+      
+      const responseCount = await storage.getResponseCount();
+      console.log("Response count:", responseCount);
 
-      res.json({
+      const result = {
         totalUsers: userCount,
         totalEvents: eventCount,
         totalResponses: responseCount,
         systemUptime: "99.9%",
         lastUpdated: new Date().toISOString()
-      });
+      };
+      
+      console.log("Sending metrics result:", result);
+      res.json(result);
     } catch (error) {
       console.error("Error getting metrics:", error);
+      console.error("Error stack:", error.stack);
       res.status(500).json({ error: "Failed to get metrics" });
     }
   });
