@@ -81,14 +81,21 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
         console.log('BrandingContext: No logo URL found');
       }
       
-      // Handle both snake_case and camelCase field names for brandTheme
+      // Handle brand_theme as hex color string
       const brandTheme = user.brand_theme;
       
-      // Parse brandTheme if it exists
-      if (brandTheme) {
+      if (brandTheme && brandTheme.startsWith('#')) {
+        console.log('User brand theme found:', brandTheme);
+        const newTheme = {
+          primary: brandTheme
+        };
+        console.log('Setting custom theme to:', newTheme);
+        setTheme(newTheme);
+      } else if (brandTheme) {
+        // Try to parse as JSON for backward compatibility
         try {
           const parsed = JSON.parse(brandTheme);
-          console.log('User brand theme loaded:', parsed);
+          console.log('User brand theme loaded from JSON:', parsed);
           const newTheme = {
             ...defaultTheme,
             ...parsed
@@ -96,7 +103,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
           console.log('Setting theme to:', newTheme);
           setTheme(newTheme);
         } catch (e) {
-          console.error('Failed to parse theme:', e);
+          console.error('Failed to parse theme, using default:', e);
           setTheme(defaultTheme);
         }
       } else {
