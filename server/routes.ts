@@ -392,12 +392,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error in login flow:", loginErr);
         return res.status(500).json({ message: "Login error", error: String(loginErr) });
       }
-          logoUrl: user.logo_url || null
-        });
-      } catch (standardErr) {
-        console.error("Error in standard login flow:", standardErr);
-        return res.status(500).json({ message: "Login error", error: String(standardErr) });
-      }
     } catch (error) {
       console.error("Login route error:", error);
       return res.status(500).json({ message: "Fatal error during login", error: String(error) });

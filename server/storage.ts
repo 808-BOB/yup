@@ -77,7 +77,7 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<number, User>;
+  private users: Map<string, User>;
   private events: Map<number, Event>;
   private responses: Map<number, Response>;
   private userIdCounter: number;
@@ -403,7 +403,7 @@ export class MemStorage implements IStorage {
   }
 
   // User operations
-  async getUser(id: number): Promise<User | undefined> {
+  async getUser(id: string): Promise<User | undefined> {
     return this.users.get(id);
   }
 
@@ -1179,6 +1179,6 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Use Supabase storage
-import { SupabaseStorage } from './supabaseStorage';
-export const storage = new SupabaseStorage();
+// Use simplified storage implementation
+import { storage } from './simpleStorage';
+export { storage };
