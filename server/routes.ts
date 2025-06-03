@@ -342,16 +342,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Username and password are required" });
       }
 
-      // Use memory storage for login instead of database
-      console.log("Using memory storage for login");
+      // Standard login flow
+      console.log("Using standard login flow");
       
       try {
-        // Find user by username using memory storage
+        // Find user by username using storage interface
         const user = await storage.getUserByUsername(username);
         console.log("User lookup result:", { found: !!user, username });
         
         if (!user) {
-          console.log("User not found in memory storage");
+          console.log("User not found");
           return res.status(401).json({ message: "Invalid credentials" });
         }
         
@@ -388,36 +388,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           brandTheme: user.brand_theme || null,
           logoUrl: user.logo_url || null
         });
-      } catch (memoryErr) {
-        console.error("Error in memory storage login flow:", memoryErr);
-        return res.status(500).json({ message: "Login error", error: String(memoryErr) });
+      } catch (loginErr) {
+        console.error("Error in login flow:", loginErr);
+        return res.status(500).json({ message: "Login error", error: String(loginErr) });
       }
-        
-        // Set session
-        req.session.userId = user.id;
-        
-        await new Promise<void>((resolve, reject) => {
-          req.session.save((err) => {
-            if (err) {
-              console.error("Session save error:", err);
-              reject(err);
-            } else {
-              console.log("Session saved successfully for user:", user.username);
-              resolve();
-            }
-          });
-        });
-        
-        // Return user data in the expected format, converting from snake_case db columns to camelCase response
-        return res.json({
-          id: user.id,
-          username: user.username,
-          displayName: user.display_name || "",
-          isAdmin: !!user.is_admin,
-          isPro: !!user.is_pro,
-          isPremium: !!user.is_premium,
-          profileImageUrl: user.profile_image_url || null,
-          brandTheme: user.brand_theme || "{}",
           logoUrl: user.logo_url || null
         });
       } catch (standardErr) {
