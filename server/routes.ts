@@ -342,106 +342,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Username and password are required" });
       }
 
-      // For the test user, use a special direct approach
-      if (username === "subourbon" && password === "events") {
-        console.log("Using special login flow for test user");
-        
-        // Create if not exists
-        try {
-          console.log("Checking for existing subourbon user");
-          const existingUsers = await db.select().from(users).where(eq(users.username, "subourbon"));
-          
-          console.log("Existing user check result:", { count: existingUsers.length });
-          
-          let userId = "";
-          
-          if (existingUsers.length === 0) {
-            console.log("Creating subourbon test user");
-            try {
-              // Use raw SQL to avoid type errors
-              await db.execute(sql`
-                INSERT INTO users (id, username, password, display_name, is_admin, is_pro, is_premium, profile_image_url)
-                VALUES ('1', 'subourbon', 'events', 'Sub Ourbon', true, true, true, null)
-              `);
-              
-              userId = "1";
-              console.log("Created user with ID:", userId);
-            } catch (insertErr) {
-              console.error("Error inserting test user:", insertErr);
-              return res.status(500).json({ message: "Error creating test user", error: String(insertErr) });
-            }
-          } else {
-            userId = existingUsers[0].id;
-            console.log("Found existing test user with ID:", userId);
-          }
-          
-          // Set the session
-          req.session.userId = userId;
-          console.log("Set session userId to:", userId);
-          
-          try {
-            await new Promise<void>((resolve, reject) => {
-              req.session.save((err) => {
-                if (err) {
-                  console.error("Session save error:", err);
-                  reject(err);
-                } else {
-                  console.log("Session saved successfully");
-                  resolve();
-                }
-              });
-            });
-            
-            // Get the complete user data including branding fields
-            const fullUser = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-            if (fullUser.length > 0) {
-              const userData = fullUser[0];
-              return res.json({
-                id: userData.id,
-                username: userData.username,
-                display_name: userData.display_name,
-                is_admin: userData.is_admin,
-                is_pro: userData.is_pro,
-                is_premium: userData.is_premium,
-                brand_theme: userData.brand_theme,
-                logo_url: userData.logo_url
-              });
-            } else {
-              return res.json({
-                id: userId,
-                username: "subourbon",
-                display_name: "Sub Ourbon",
-                is_admin: true,
-                is_pro: true,
-                is_premium: true,
-                brand_theme: null,
-                logo_url: null
-              });
-            }
-          } catch (sessionErr) {
-            console.error("Error saving session:", sessionErr);
-            return res.status(500).json({ message: "Session save error", error: String(sessionErr) });
-          }
-        } catch (testUserErr) {
-          console.error("Error in test user flow:", testUserErr);
-          return res.status(500).json({ message: "Test user error", error: String(testUserErr) });
-        }
-      }
-      
-      // Standard login flow for non-test users
-      console.log("Using standard login flow");
+      // Use memory storage for login instead of database
+      console.log("Using memory storage for login");
       
       try {
-        // Find user by username directly using raw SQL to avoid column mapping issues
-        const result = await db.execute(sql`
-          SELECT * FROM users WHERE username = ${username}
-        `);
-        
-        const user = result.rows && result.rows.length > 0 ? result.rows[0] : null;
-        console.log("User lookup result:", { found: !!user });
+        // Find user by username using memory storage
+        const user = await storage.getUserByUsername(username);
+        console.log("User lookup result:", { found: !!user, username });
         
         if (!user) {
-          console.log("User not found");
+          console.log("User not found in memory storage");
           return res.status(401).json({ message: "Invalid credentials" });
         }
         
@@ -449,6 +359,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log("Password mismatch");
           return res.status(401).json({ message: "Invalid credentials" });
         }
+        
+        // Set session
+        req.session.userId = user.id;
+        console.log("Set session userId to:", user.id);
+        
+        await new Promise<void>((resolve, reject) => {
+          req.session.save((err) => {
+            if (err) {
+              console.error("Session save error:", err);
+              reject(err);
+            } else {
+              console.log("Session saved successfully for user:", user.username);
+              resolve();
+            }
+          });
+        });
+        
+        // Return user data in the expected format, converting from snake_case to camelCase
+        return res.json({
+          id: user.id,
+          username: user.username,
+          displayName: user.display_name || "",
+          isAdmin: !!user.is_admin,
+          isPro: !!user.is_pro,
+          isPremium: !!user.is_premium,
+          profileImageUrl: user.profile_image_url || null,
+          brandTheme: user.brand_theme || null,
+          logoUrl: user.logo_url || null
+        });
+      } catch (memoryErr) {
+        console.error("Error in memory storage login flow:", memoryErr);
+        return res.status(500).json({ message: "Login error", error: String(memoryErr) });
+      }
         
         // Set session
         req.session.userId = user.id;

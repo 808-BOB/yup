@@ -205,12 +205,53 @@ export class MemStorage implements IStorage {
     this.eventIdCounter = 1;
     this.responseIdCounter = 1;
 
-    // Create initial admin user
-    this.createUser({
+    // Create initial admin user with proper ID
+    this.users.set(1, {
+      id: "1",
       username: "admin",
       password: "password",
       display_name: "Admin",
+      email: null,
+      phone_number: null,
+      reset_token: null,
+      reset_token_expiry: null,
+      created_at: new Date(),
+      is_admin: false,
+      is_premium: false,
+      brand_theme: null,
+      logo_url: null,
+      stripe_customer_id: null,
+      stripe_subscription_id: null,
+      linkedin_id: null,
+      linkedin_access_token: null,
+      linkedin_profile_url: null,
+      linkedin_connections: null
     });
+
+    // Create subourbon admin user with proper ID
+    this.users.set(2, {
+      id: "2",
+      username: "subourbon",
+      password: "events",
+      display_name: "Subourbon Admin",
+      email: null,
+      phone_number: null,
+      reset_token: null,
+      reset_token_expiry: null,
+      created_at: new Date(),
+      is_admin: true,
+      is_premium: true,
+      brand_theme: "#84793d",
+      logo_url: "https://example.com/subourbon-logo.png",
+      stripe_customer_id: null,
+      stripe_subscription_id: null,
+      linkedin_id: null,
+      linkedin_access_token: null,
+      linkedin_profile_url: null,
+      linkedin_connections: null
+    });
+
+    this.userIdCounter = 3;
 
     // Add sample responses after creating users and events
     this.createResponse({ eventId: 1, userId: 1, response: "yup" });
@@ -1138,5 +1179,5 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Change from MemStorage to DatabaseStorage
-export const storage = new DatabaseStorage();
+// Temporarily use MemStorage due to database connection issues
+export const storage = new MemStorage();
