@@ -77,16 +77,16 @@ export class SimpleStorage {
       status: 'open',
       slug: 'subourbon-launch-2025',
       imageUrl: null,
-      allow_guest_rsvp: true,
-      allow_plus_one: true,
-      max_guests_per_rsvp: 1,
+      allowGuestRsvp: true,
+      allowPlusOne: true,
+      maxGuestsPerRsvp: 1,
       capacity: null,
-      use_custom_rsvp_text: false,
-      custom_yup_text: null,
-      custom_nope_text: null,
-      custom_maybe_text: null,
-      rsvp_visibility: 'public',
-      waitlist_enabled: false
+      useCustomRsvpText: false,
+      customYupText: null,
+      customNopeText: null,
+      customMaybeText: null,
+      rsvpVisibility: 'public',
+      waitlistEnabled: false
     };
     this.events.set(sampleEvent.id, sampleEvent);
 
@@ -103,13 +103,13 @@ export class SimpleStorage {
         const sampleResponse: Response = {
           id: responseId++,
           eventId: 1,
-          user_id: `guest-user-${responseId}`,
+          userId: `guest-user-${responseId}`,
           response,
-          is_guest: false,
-          guest_name: null,
-          guest_email: null,
-          guest_count: 1,
-          created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
+          isGuest: false,
+          guestName: null,
+          guestEmail: null,
+          guestCount: 1,
+          createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
         };
         this.responses.set(sampleResponse.id, sampleResponse);
       }
