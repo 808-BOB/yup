@@ -343,7 +343,24 @@ export class SupabaseStorage implements IStorage {
     return data;
   }
 
-  async getEventResponses(eventId: number): Promise<Response[]> {
+  async getEventResponses(eventId: number): Promise<{ yupCount: number; nopeCount: number; maybeCount: number }> {
+    const { data, error } = await supabase
+      .from('responses')
+      .select('*')
+      .eq('event_id', eventId);
+    
+    if (error || !data) {
+      return { yupCount: 0, nopeCount: 0, maybeCount: 0 };
+    }
+
+    const yupCount = data.filter(r => r.response === 'yup').length;
+    const nopeCount = data.filter(r => r.response === 'nope').length;
+    const maybeCount = data.filter(r => r.response === 'maybe').length;
+
+    return { yupCount, nopeCount, maybeCount };
+  }
+
+  async getResponsesByEvent(eventId: number): Promise<Response[]> {
     const { data, error } = await supabase
       .from('responses')
       .select('*')
