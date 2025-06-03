@@ -978,30 +978,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update user privileges
-  app.get("/api/admin/update-user/:username", async (req: Request, res: Response) => {
-    try {
-      const { username } = req.params;
-      const { isAdmin, isPro, isPremium } = req.query;
-      
-      console.log(`Updating user ${username} with admin:${isAdmin} pro:${isPro} premium:${isPremium}`);
-      
-      // Use raw SQL to update user
-      await db.execute(sql`
-        UPDATE users 
-        SET is_admin = ${isAdmin === 'true'}, 
-            is_pro = ${isPro === 'true'}, 
-            is_premium = ${isPremium === 'true'}
-        WHERE username = ${username}
-      `);
-      
-      res.json({ success: true, message: `Updated user ${username}` });
-    } catch (error) {
-      console.error("Error updating user:", error);
-      res.status(500).json({ error: "Failed to update user" });
-    }
-  });
-
   // Events
   app.post("/api/events", async (req: Request, res: Response) => {
     try {
