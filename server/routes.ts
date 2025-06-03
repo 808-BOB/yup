@@ -844,8 +844,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin routes for metrics
   app.get("/api/admin/users/count", async (req: Request, res: Response) => {
     try {
-      const allUsers = await db.select().from(users);
-      res.json({ count: allUsers.length });
+      const userCount = await storage.getUserCount();
+      res.json({ count: userCount });
     } catch (error) {
       console.error("Error getting user count:", error);
       res.status(500).json({ error: "Failed to get user count" });
@@ -854,8 +854,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/events/count", async (req: Request, res: Response) => {
     try {
-      const allEvents = await storage.getAllEvents();
-      res.json({ count: allEvents.length });
+      const eventCount = await storage.getEventCount();
+      res.json({ count: eventCount });
     } catch (error) {
       console.error("Error getting event count:", error);
       res.status(500).json({ error: "Failed to get event count" });
@@ -864,22 +864,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/metrics", async (req: Request, res: Response) => {
     try {
-      const [allUsers, allEvents] = await Promise.all([
-        db.select().from(users),
-        storage.getAllEvents()
+      const [userCount, eventCount, responseCount] = await Promise.all([
+        storage.getUserCount(),
+        storage.getEventCount(),
+        storage.getResponseCount()
       ]);
 
-      // Get response counts from all events
-      let totalResponses = 0;
-      for (const event of allEvents) {
-        const responseCounts = await storage.getEventResponses(event.id);
-        totalResponses += responseCounts.yupCount + responseCounts.nopeCount + responseCounts.maybeCount;
-      }
-
       res.json({
-        totalUsers: allUsers.length,
-        totalEvents: allEvents.length,
-        totalResponses,
+        totalUsers: userCount,
+        totalEvents: eventCount,
+        totalResponses: responseCount,
         systemUptime: "99.9%",
         lastUpdated: new Date().toISOString()
       });
