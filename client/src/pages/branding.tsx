@@ -21,9 +21,10 @@ import PageTitle from "@/components/page-title";
 import { Paintbrush, Upload, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-// Schema for theme form - simplified to only include primary color
+// Schema for theme form - primary accent and background colors
 const themeFormSchema = z.object({
   primary: z.string().min(1, "Primary color is required"),
+  background: z.string().min(1, "Background color is required"),
 });
 
 type ThemeFormValues = z.infer<typeof themeFormSchema>;
@@ -40,11 +41,12 @@ export default function Branding() {
   }, [branding.logoUrl]);
   const [activeTab, setActiveTab] = useState("theme");
 
-  // Initialize form with YUP.RSVP magenta as default, regardless of user's current theme
+  // Initialize form with YUP.RSVP defaults, regardless of user's current theme
   const form = useForm<ThemeFormValues>({
     resolver: zodResolver(themeFormSchema),
     defaultValues: {
-      primary: "hsl(308, 100%, 66%)", // Always default to YUP.RSVP magenta
+      primary: "hsl(308, 100%, 66%)", // YUP.RSVP magenta
+      background: "hsl(222, 84%, 5%)", // Dark background
     },
   });
 
@@ -153,6 +155,7 @@ export default function Branding() {
     setLogoPreview(null);
     form.reset({
       primary: "hsl(308, 100%, 66%)", // Reset to YUP.RSVP magenta
+      background: "hsl(222, 84%, 5%)", // Reset to dark background
     });
     
     // Update the UI to reflect changes without reloading
@@ -209,7 +212,7 @@ export default function Branding() {
                   onSubmit={form.handleSubmit(handleThemeSubmit)}
                   className="space-y-6"
                 >
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     <div>
                       <Label htmlFor="primary">Primary Accent Color</Label>
                       <div className="flex gap-2 items-center mt-1">
@@ -234,8 +237,37 @@ export default function Branding() {
                         </p>
                       )}
                       <p className="text-sm text-gray-500 mt-2">
-                        This color will be used as the accent color throughout your RSVP pages.
+                        This bright color will be used for buttons, links, and highlights throughout your RSVP pages.
                         The default YUP.RSVP brand color is magenta (hsl(308, 100%, 66%)).
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="background">Background Color</Label>
+                      <div className="flex gap-2 items-center mt-1">
+                        <Input
+                          type="color"
+                          id="background-color-picker"
+                          className="w-12 h-10 p-1"
+                          value={form.watch("background")}
+                          onChange={(e) => {
+                            form.setValue("background", e.target.value);
+                          }}
+                        />
+                        <Input
+                          {...form.register("background")}
+                          placeholder="hsl(222, 84%, 5%)"
+                          className="flex-1"
+                        />
+                      </div>
+                      {form.formState.errors.background && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {form.formState.errors.background.message}
+                        </p>
+                      )}
+                      <p className="text-sm text-gray-500 mt-2">
+                        This darker color will be used as the main background throughout your RSVP pages.
+                        The default is a dark blue-gray (hsl(222, 84%, 5%)).
                       </p>
                     </div>
                   </div>
