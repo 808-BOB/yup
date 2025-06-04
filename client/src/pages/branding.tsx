@@ -40,11 +40,11 @@ export default function Branding() {
   }, [branding.logoUrl]);
   const [activeTab, setActiveTab] = useState("theme");
 
-  // Initialize form with current theme values, defaulting to YUP.RSVP magenta
+  // Initialize form with YUP.RSVP magenta as default, regardless of user's current theme
   const form = useForm<ThemeFormValues>({
     resolver: zodResolver(themeFormSchema),
     defaultValues: {
-      primary: branding.theme.primary === "hsl(308, 100%, 66%)" ? "hsl(308, 100%, 66%)" : branding.theme.primary,
+      primary: "hsl(308, 100%, 66%)", // Always default to YUP.RSVP magenta
     },
   });
 
@@ -152,7 +152,7 @@ export default function Branding() {
     await branding.resetToDefault();
     setLogoPreview(null);
     form.reset({
-      primary: "hsl(308, 100%, 66%)",
+      primary: "hsl(308, 100%, 66%)", // Reset to YUP.RSVP magenta
     });
     
     // Update the UI to reflect changes without reloading
