@@ -266,9 +266,9 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
     setLogoUrl(null);
     
     try {
-      // Save to user preferences on the server
+      // Save to user preferences on the server - save as hex color for consistency
       const response = await apiRequest('PUT', `/api/users/${user.id}/branding`, {
-        brandTheme: JSON.stringify(defaultTheme),
+        brandTheme: "#ff6bfc", // YUP.RSVP magenta in hex format
         logoUrl: null,
       });
       
