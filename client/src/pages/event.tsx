@@ -16,6 +16,7 @@ import PageTitle from "@/components/page-title";
 import { type Event as BaseEvent, type Response } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAccessibleColors } from "@/hooks/use-accessible-colors";
 import EventBrandingProvider, { getHostLogoUrl, HostBranding } from "@/components/event-branding-provider";
 
 // Extended Event type with host display name and branding
@@ -31,6 +32,7 @@ export default function EventPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { accessibleTextColor, primaryColor } = useAccessibleColors();
 
   // State management
   const [userResponse, setUserResponse] = useState<"yup" | "nope" | "maybe" | null>(null);
@@ -379,7 +381,8 @@ export default function EventPage() {
                       // Use client-side routing
                       setLocation(`/events/${event.slug}/edit`);
                     }}
-                    className="text-xs text-primary flex items-center gap-1 hover:text-primary/80"
+                    className="text-xs flex items-center gap-1 hover:opacity-80"
+                    style={{ color: accessibleTextColor }}
                   >
                     <Edit className="w-3.5 h-3.5" />
                     <span>Edit</span>
@@ -392,14 +395,20 @@ export default function EventPage() {
                 <div className="flex flex-wrap gap-2 mt-2 items-center">
                   <Badge
                     variant="outline"
-                    className="text-xs bg-primary/10 border-primary/20 text-primary"
+                    className="text-xs border-primary/20"
+                    style={{
+                      backgroundColor: `${primaryColor || 'hsl(308, 100%, 66%)'}10`,
+                      color: accessibleTextColor,
+                      borderColor: `${primaryColor || 'hsl(308, 100%, 66%)'}20`
+                    }}
                   >
                     Your Event
                   </Badge>
 
                   <Badge
                     variant="outline" 
-                    className="text-xs bg-gray-800 border-gray-700 text-primary font-mono uppercase"
+                    className="text-xs bg-gray-800 border-gray-700 font-mono uppercase"
+                    style={{ color: accessibleTextColor }}
                   >
                     {event.status === "open" ? "Public" : event.status}
                   </Badge>

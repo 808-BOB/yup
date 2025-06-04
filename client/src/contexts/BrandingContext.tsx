@@ -89,6 +89,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
       if (brandTheme && brandTheme.startsWith('#')) {
         console.log('User brand theme found:', brandTheme);
         const newTheme = {
+          ...defaultTheme,
           primary: brandTheme
         };
         console.log('Setting custom theme to:', newTheme);
