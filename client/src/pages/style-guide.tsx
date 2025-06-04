@@ -5,7 +5,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Check, Copy, Menu, X } from "lucide-react";
+import { Check, Copy, Menu, X, Palette, Type, Star, Puzzle } from "lucide-react";
 
 // Style Guide Dashboard
 export default function StyleGuide() {
@@ -33,21 +33,21 @@ export default function StyleGuide() {
 
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="colors" className="flex items-center justify-center">
+          <TabsTrigger value="colors" className="flex items-center justify-center gap-2">
+            <Palette className="h-4 w-4" />
             <span className="hidden sm:inline">Colors</span>
-            <span className="sm:hidden text-xs">🎨</span>
           </TabsTrigger>
-          <TabsTrigger value="typography" className="flex items-center justify-center">
+          <TabsTrigger value="typography" className="flex items-center justify-center gap-2">
+            <Type className="h-4 w-4" />
             <span className="hidden sm:inline">Typography</span>
-            <span className="sm:hidden text-xs">Aa</span>
           </TabsTrigger>
-          <TabsTrigger value="icons" className="flex items-center justify-center">
+          <TabsTrigger value="icons" className="flex items-center justify-center gap-2">
+            <Star className="h-4 w-4" />
             <span className="hidden sm:inline">Icons</span>
-            <span className="sm:hidden text-xs">⭐</span>
           </TabsTrigger>
-          <TabsTrigger value="components" className="flex items-center justify-center">
+          <TabsTrigger value="components" className="flex items-center justify-center gap-2">
+            <Puzzle className="h-4 w-4" />
             <span className="hidden sm:inline">Components</span>
-            <span className="sm:hidden text-xs">🧩</span>
           </TabsTrigger>
         </TabsList>
 
