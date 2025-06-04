@@ -26,9 +26,9 @@ export class SimpleStorage {
       if (fs.existsSync(this.dataFile)) {
         const data = JSON.parse(fs.readFileSync(this.dataFile, 'utf8'));
         
-        // Load users
+        // Load users - filter out null entries
         if (data.users) {
-          this.users = new Map(data.users);
+          this.users = new Map(data.users.filter(([key, value]: [any, any]) => key !== null && value !== null));
         }
         
         // Load events
@@ -256,6 +256,7 @@ export class SimpleStorage {
     if (!user) return undefined;
     const updatedUser = { ...user, ...userData };
     this.users.set(id, updatedUser);
+    this.saveData(); // Save after updating user
     return updatedUser;
   }
 
@@ -294,6 +295,7 @@ export class SimpleStorage {
       created_at: new Date()
     };
     this.events.set(event.id, event);
+    this.saveData(); // Save after creating event
     return event;
   }
 
