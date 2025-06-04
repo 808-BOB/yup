@@ -1,4 +1,5 @@
 import { useLocation } from "wouter";
+import { useAccessibleColors } from "@/hooks/use-accessible-colors";
 
 type MainTab = "hosting" | "invited";
 type ResponseFilter = "all" | "yup" | "nope" | "maybe" | "archives";
@@ -30,6 +31,7 @@ export default function ViewSelector({
   onTabChange,
 }: ViewSelectorProps) {
   const [, setLocation] = useLocation();
+  const { accessibleTextColor, primaryColor } = useAccessibleColors();
 
   // Convert legacy tab names to new tab names
   const derivedActiveMainTab = activeMainTab || (activeTab === "your-events" ? "hosting" : "invited");
@@ -67,9 +69,13 @@ export default function ViewSelector({
           onClick={() => handleTabChange("hosting")}
           className={`flex-1 py-2 px-4 rounded-sm font-bold text-center uppercase tracking-wider text-xs ${
             derivedActiveMainTab === "hosting"
-              ? "text-primary bg-gray-800 border-t-2 border-primary"
+              ? "bg-gray-800 border-t-2"
               : "text-gray-500"
           }`}
+          style={derivedActiveMainTab === "hosting" ? {
+            color: accessibleTextColor,
+            borderTopColor: primaryColor || 'hsl(308, 100%, 66%)'
+          } : {}}
         >
           Hosting
         </button>
@@ -77,9 +83,13 @@ export default function ViewSelector({
           onClick={() => handleTabChange("invited")}
           className={`flex-1 py-2 px-4 rounded-sm font-bold text-center uppercase tracking-wider text-xs ${
             derivedActiveMainTab === "invited"
-              ? "text-primary bg-gray-800 border-t-2 border-primary"
+              ? "bg-gray-800 border-t-2"
               : "text-gray-500"
           }`}
+          style={derivedActiveMainTab === "invited" ? {
+            color: accessibleTextColor,
+            borderTopColor: primaryColor || 'hsl(308, 100%, 66%)'
+          } : {}}
         >
           Invited To
         </button>
@@ -91,9 +101,13 @@ export default function ViewSelector({
           onClick={() => onResponseFilterChange("all")}
           className={`flex-1 py-1 px-2 font-medium text-center uppercase tracking-wider text-xs ${
             activeResponseFilter === "all"
-              ? "text-primary border-b border-primary"
+              ? "border-b"
               : "text-gray-500"
           }`}
+          style={activeResponseFilter === "all" ? {
+            color: accessibleTextColor,
+            borderBottomColor: primaryColor || 'hsl(308, 100%, 66%)'
+          } : {}}
         >
           All
         </button>
@@ -101,9 +115,13 @@ export default function ViewSelector({
           onClick={() => onResponseFilterChange("yup")}
           className={`flex-1 py-1 px-2 font-medium text-center uppercase tracking-wider text-xs ${
             activeResponseFilter === "yup"
-              ? "text-primary border-b border-primary"
+              ? "border-b"
               : "text-gray-500"
           }`}
+          style={activeResponseFilter === "yup" ? {
+            color: accessibleTextColor,
+            borderBottomColor: primaryColor || 'hsl(308, 100%, 66%)'
+          } : {}}
         >
           Yup
         </button>
@@ -111,9 +129,13 @@ export default function ViewSelector({
           onClick={() => onResponseFilterChange("nope")}
           className={`flex-1 py-1 px-2 font-medium text-center uppercase tracking-wider text-xs ${
             activeResponseFilter === "nope"
-              ? "text-primary border-b border-primary"
+              ? "border-b"
               : "text-gray-500"
           }`}
+          style={activeResponseFilter === "nope" ? {
+            color: accessibleTextColor,
+            borderBottomColor: primaryColor || 'hsl(308, 100%, 66%)'
+          } : {}}
         >
           Nope
         </button>
@@ -121,9 +143,13 @@ export default function ViewSelector({
           onClick={() => onResponseFilterChange("maybe")}
           className={`flex-1 py-1 px-2 font-medium text-center uppercase tracking-wider text-xs ${
             activeResponseFilter === "maybe"
-              ? "text-primary border-b border-primary"
+              ? "border-b"
               : "text-gray-500"
           }`}
+          style={activeResponseFilter === "maybe" ? {
+            color: accessibleTextColor,
+            borderBottomColor: primaryColor || 'hsl(308, 100%, 66%)'
+          } : {}}
         >
           Maybe
         </button>

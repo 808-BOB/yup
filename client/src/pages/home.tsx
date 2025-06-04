@@ -2,12 +2,14 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { useAccessibleColors } from "@/hooks/use-accessible-colors";
 import YupLogo from "@assets/Yup-logo.png";
 
 export default function Home() {
   const [, setLocation] = useLocation();
   const [question, setQuestion] = useState("Do you party?");
   const [showSecondary, setShowSecondary] = useState(false);
+  const { accessibleTextColor, primaryColor } = useAccessibleColors();
 
   const handleResponse = () => {
     if (!showSecondary) {
@@ -27,7 +29,11 @@ export default function Home() {
         <div className="space-x-4">
           <Button
             onClick={handleResponse}
-            className="bg-primary hover:bg-primary/90 text-xl px-8 py-6 h-auto"
+            className="hover:bg-primary/90 text-xl px-8 py-6 h-auto"
+            style={{
+              backgroundColor: primaryColor || 'hsl(308, 100%, 66%)',
+              color: accessibleTextColor
+            }}
           >
             Yup
           </Button>
