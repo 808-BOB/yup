@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAccessibleColors } from "@/hooks/use-accessible-colors";
+import Header from "@/components/header";
 
 const formSchema = z.object({
   title: z.string().min(1, "Event title is required"),
@@ -221,19 +222,20 @@ export default function CreateEvent() {
 
   if (isEditMode && isLoadingEvent) {
     return (
-      <div className="min-h-screen bg-slate-900 pt-16">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-2xl mx-auto">
-            <div className="animate-pulse">
-              <div className="h-8 bg-slate-800 rounded mb-6"></div>
-              <div className="space-y-4">
-                <div className="h-12 bg-slate-800 rounded"></div>
-                <div className="h-12 bg-slate-800 rounded"></div>
-                <div className="h-12 bg-slate-800 rounded"></div>
-              </div>
+      <div className="w-full max-w-md mx-auto px-8 pb-8 min-h-screen flex flex-col bg-gray-950">
+        <div className="sticky top-0 z-50 bg-gray-950 pt-8">
+          <Header />
+        </div>
+        <main className="flex-1 w-full animate-fade-in pb-32">
+          <div className="animate-pulse">
+            <div className="h-8 bg-slate-800 rounded mb-6"></div>
+            <div className="space-y-4">
+              <div className="h-12 bg-slate-800 rounded"></div>
+              <div className="h-12 bg-slate-800 rounded"></div>
+              <div className="h-12 bg-slate-800 rounded"></div>
             </div>
           </div>
-        </div>
+        </main>
       </div>
     );
   }
@@ -247,32 +249,35 @@ export default function CreateEvent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 pt-16">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">
-              {isEditMode ? "Edit Event" : "Create Event"}
-            </h1>
-            <p className="text-slate-400">
-              Step {currentStep} of 3
-            </p>
-            
-            {/* Progress bar */}
-            <div className="mt-4 w-full bg-slate-800 rounded-full h-2">
-              <div 
-                className="h-2 rounded-full transition-all duration-300"
-                style={{ 
-                  width: `${(currentStep / 3) * 100}%`,
-                  backgroundColor: primaryColor || 'hsl(308, 100%, 66%)'
-                }}
-              />
-            </div>
+    <div className="w-full max-w-md mx-auto px-8 pb-8 min-h-screen flex flex-col bg-gray-950">
+      <div className="sticky top-0 z-50 bg-gray-950 pt-8">
+        <Header />
+      </div>
+      
+      <main className="flex-1 w-full animate-fade-in pb-32">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">
+            {isEditMode ? "Edit Event" : "Create Event"}
+          </h1>
+          <p className="text-slate-400">
+            Step {currentStep} of 3
+          </p>
+          
+          {/* Progress bar */}
+          <div className="mt-4 w-full bg-slate-800 rounded-full h-2">
+            <div 
+              className="h-2 rounded-full transition-all duration-300"
+              style={{ 
+                width: `${(currentStep / 3) * 100}%`,
+                backgroundColor: primaryColor || 'hsl(308, 100%, 66%)'
+              }}
+            />
           </div>
+        </div>
 
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <Card className="bg-slate-800 border-slate-700">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <Card className="w-full bg-gray-900 border border-gray-800">
               <CardHeader>
                 <CardTitle className="text-white">
                   {currentStep === 1 && "Event Details"}
@@ -613,18 +618,17 @@ export default function CreateEvent() {
             </Card>
           </form>
 
-          {/* Cancel link */}
-          <div className="text-center mt-6">
-            <Button
-              variant="ghost"
-              onClick={() => navigate("/my-events")}
-              className="text-slate-400 hover:text-white"
-            >
-              Cancel and go back
-            </Button>
-          </div>
+        {/* Cancel link */}
+        <div className="text-center mt-6">
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/my-events")}
+            className="text-slate-400 hover:text-white"
+          >
+            Cancel and go back
+          </Button>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
