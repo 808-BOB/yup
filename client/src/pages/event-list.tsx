@@ -11,6 +11,7 @@ import { Loader2, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAccessibleColors } from "@/hooks/use-accessible-colors";
 
 type ResponseFilter = "all" | "yup" | "nope" | "maybe" | "archives";
 
@@ -20,6 +21,7 @@ export default function EventList() {
   const [responseFilter, setResponseFilter] = useState<ResponseFilter>("all");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { accessibleTextColor, primaryColor } = useAccessibleColors();
 
   // Initialize query (will only fetch if enabled)
   const {

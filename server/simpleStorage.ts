@@ -52,7 +52,7 @@ export class SimpleStorage {
       is_pro: true,
       is_premium: true,
       profile_image_url: null,
-      brand_theme: '#2563eb', // Blue theme for Bob
+      brand_theme: 'hsl(308, 100%, 66%)', // Default YUP.RSVP magenta theme
       logo_url: null,
       stripe_customer_id: null,
       stripe_subscription_id: null,
