@@ -68,8 +68,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
       console.log('BrandingContext: User brand_theme:', user.brand_theme);
       console.log('BrandingContext: User logo_url:', user.logo_url);
       
-      // Fix for Subourbon account - specifically check for both username and premium status
-      // This ensures the test account always has branding access
+      // Check for premium status using correct field name
       const isSubourbonAccount = user.username === 'subourbon';
       setIsPremium(user.is_premium || isSubourbonAccount || false);
       

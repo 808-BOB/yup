@@ -385,7 +385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isPro: !!user.is_pro,
           isPremium: !!user.is_premium,
           profileImageUrl: user.profile_image_url || null,
-          brand_theme: user.brand_theme || null,
+          brandTheme: user.brand_theme || null,
           logoUrl: user.logo_url || null
         });
       } catch (loginErr) {
