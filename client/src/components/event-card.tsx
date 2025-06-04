@@ -9,6 +9,7 @@ import { type Event, type Response } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import ShareEventModal from "./share-event-modal";
+import { useAccessibleColors } from "@/hooks/use-accessible-colors";
 
 interface EventCardProps {
   event: Event;
@@ -29,6 +30,7 @@ export default function EventCard({
   const userId = user?.id;
   const [_, setLocation] = useLocation(); // Not used, we use window.location.href for navigation
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const { accessibleTextColor, primaryColor } = useAccessibleColors();
 
   const { data: responses } = useQuery<Response[]>({
     queryKey: [`/api/events/${event.id}/responses`],
