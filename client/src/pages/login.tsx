@@ -63,7 +63,7 @@ export default function Login() {
       
       toast({
         title: "Login Failed",
-        description: "Invalid username or password. Please try again with 'subourbon' and 'events'.",
+        description: "Invalid username or password. Please check your credentials and try again.",
         variant: "destructive",
       });
     } finally {
