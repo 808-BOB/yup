@@ -116,25 +116,15 @@ export default function Header() {
                   <CreditCard className="mr-2 h-4 w-4" />
                   <span>Plans</span>
                 </DropdownMenuItem>
-                {/* Premium users can access branding settings */}
+                {/* Premium users can access branding settings and style guide */}
                 {user.is_premium && (
-                  <DropdownMenuItem
-                    onClick={() => setLocation("/branding")}
-                    className="cursor-pointer"
-                  >
-                    <Paintbrush className="mr-2 h-4 w-4" />
-                    <span>Branding</span>
-                  </DropdownMenuItem>
-                )}
-                {/* Admin-only links */}
-                {user.is_admin && (
                   <>
                     <DropdownMenuItem
-                      onClick={() => setLocation("/admin")}
+                      onClick={() => setLocation("/branding")}
                       className="cursor-pointer"
                     >
-                      <Shield className="mr-2 h-4 w-4" />
-                      <span>Admin Dashboard</span>
+                      <Paintbrush className="mr-2 h-4 w-4" />
+                      <span>Branding</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => setLocation("/style-guide")}
@@ -144,6 +134,16 @@ export default function Header() {
                       <span>Style Guide</span>
                     </DropdownMenuItem>
                   </>
+                )}
+                {/* Admin-only links */}
+                {user.is_admin && (
+                  <DropdownMenuItem
+                    onClick={() => setLocation("/admin")}
+                    className="cursor-pointer"
+                  >
+                    <Shield className="mr-2 h-4 w-4" />
+                    <span>Admin Dashboard</span>
+                  </DropdownMenuItem>
                 )}
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
