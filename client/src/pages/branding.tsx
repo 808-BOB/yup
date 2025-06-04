@@ -40,11 +40,11 @@ export default function Branding() {
   }, [branding.logoUrl]);
   const [activeTab, setActiveTab] = useState("theme");
 
-  // Initialize form with current theme values
+  // Initialize form with current theme values, defaulting to YUP.RSVP magenta
   const form = useForm<ThemeFormValues>({
     resolver: zodResolver(themeFormSchema),
     defaultValues: {
-      primary: branding.theme.primary,
+      primary: branding.theme.primary === "hsl(308, 100%, 66%)" ? "hsl(308, 100%, 66%)" : branding.theme.primary,
     },
   });
 
@@ -160,7 +160,7 @@ export default function Branding() {
     
     toast({
       title: "Branding reset",
-      description: "Your branding has been reset to the default settings.",
+      description: "Your branding has been reset to the default YUP.RSVP magenta.",
     });
   };
 
@@ -235,7 +235,7 @@ export default function Branding() {
                       )}
                       <p className="text-sm text-gray-500 mt-2">
                         This color will be used as the accent color throughout your RSVP pages.
-                        The default color is magenta (hsl(308, 100%, 66%)).
+                        The default YUP.RSVP brand color is magenta (hsl(308, 100%, 66%)).
                       </p>
                     </div>
                   </div>
