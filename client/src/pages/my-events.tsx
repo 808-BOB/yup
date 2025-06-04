@@ -12,6 +12,7 @@ import { Loader2, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { eventService } from "@/services";
 import { apiRequest } from "@/lib/queryClient";
+import { useAccessibleColors } from "@/hooks/use-accessible-colors";
 
 type ResponseFilter = "all" | "yup" | "nope" | "maybe" | "archives";
 
@@ -21,6 +22,7 @@ export default function MyEvents() {
   const [responseFilter, setResponseFilter] = useState<ResponseFilter>("all");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { accessibleTextColor, primaryColor } = useAccessibleColors();
 
   // Initialize query (will only fetch if enabled)
   const {
@@ -160,10 +162,10 @@ export default function MyEvents() {
 
             {isLoading ? (
               <div className="flex justify-center items-center py-10">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <Loader2 className="h-8 w-8 animate-spin" style={{ color: accessibleTextColor }} />
               </div>
             ) : error ? (
-              <p className="text-center py-4 text-primary tracking-tight">
+              <p className="text-center py-4 tracking-tight" style={{ color: accessibleTextColor }}>
                 ERROR LOADING EVENTS. PLEASE TRY AGAIN.
               </p>
             ) : filteredEvents.length > 0 ? (
