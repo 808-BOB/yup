@@ -14,6 +14,7 @@ import { ArrowLeft, ArrowRight, Upload } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useAccessibleColors } from "@/hooks/use-accessible-colors";
 
 const formSchema = z.object({
   title: z.string().min(1, "Event title is required"),
@@ -45,6 +46,7 @@ export default function CreateEvent() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { accessibleTextColor, primaryColor } = useAccessibleColors();
   
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -260,8 +262,11 @@ export default function CreateEvent() {
             {/* Progress bar */}
             <div className="mt-4 w-full bg-slate-800 rounded-full h-2">
               <div 
-                className="bg-amber-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${(currentStep / 3) * 100}%` }}
+                className="h-2 rounded-full transition-all duration-300"
+                style={{ 
+                  width: `${(currentStep / 3) * 100}%`,
+                  backgroundColor: primaryColor || 'hsl(308, 100%, 66%)'
+                }}
               />
             </div>
           </div>
@@ -300,7 +305,12 @@ export default function CreateEvent() {
                         
                         <Label
                           htmlFor="eventImage"
-                          className="relative cursor-pointer bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-md py-2 px-4"
+                          className="relative cursor-pointer font-medium rounded-md py-2 px-4"
+                          style={{
+                            backgroundColor: primaryColor || 'hsl(308, 100%, 66%)',
+                            color: accessibleTextColor,
+                            borderColor: primaryColor || 'hsl(308, 100%, 66%)'
+                          }}
                         >
                           Choose Photo
                           <Input
@@ -576,7 +586,11 @@ export default function CreateEvent() {
                     <Button
                       type="button"
                       onClick={nextStep}
-                      className="bg-amber-600 hover:bg-amber-700 text-white"
+                      style={{
+                        backgroundColor: primaryColor || 'hsl(308, 100%, 66%)',
+                        color: accessibleTextColor,
+                        borderColor: primaryColor || 'hsl(308, 100%, 66%)'
+                      }}
                     >
                       Continue
                       <ArrowRight className="h-4 w-4 ml-2" />
@@ -585,7 +599,11 @@ export default function CreateEvent() {
                     <Button
                       type="submit"
                       disabled={isSubmitting}
-                      className="bg-amber-600 hover:bg-amber-700 text-white"
+                      style={{
+                        backgroundColor: primaryColor || 'hsl(308, 100%, 66%)',
+                        color: accessibleTextColor,
+                        borderColor: primaryColor || 'hsl(308, 100%, 66%)'
+                      }}
                     >
                       {isSubmitting ? "Saving..." : isEditMode ? "Update Event" : "Create Event"}
                     </Button>
