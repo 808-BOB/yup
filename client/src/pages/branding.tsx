@@ -21,6 +21,47 @@ import PageTitle from "@/components/page-title";
 import { Paintbrush, Upload, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+// WCAG color contrast utilities
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
+function getLuminance(r: number, g: number, b: number): number {
+  const sRGB = [r, g, b].map(c => {
+    c = c / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * sRGB[0] + 0.7152 * sRGB[1] + 0.0722 * sRGB[2];
+}
+
+function getContrastRatio(color1: string, color2: string): number {
+  const rgb1 = hexToRgb(color1);
+  const rgb2 = hexToRgb(color2);
+  
+  if (!rgb1 || !rgb2) return 1;
+  
+  const lum1 = getLuminance(rgb1.r, rgb1.g, rgb1.b);
+  const lum2 = getLuminance(rgb2.r, rgb2.g, rgb2.b);
+  
+  const brightest = Math.max(lum1, lum2);
+  const darkest = Math.min(lum1, lum2);
+  
+  return (brightest + 0.05) / (darkest + 0.05);
+}
+
+function getAccessibleTextColor(backgroundColor: string): string {
+  const whiteContrast = getContrastRatio(backgroundColor, "#ffffff");
+  const blackContrast = getContrastRatio(backgroundColor, "#000000");
+  
+  // WCAG AA requires a contrast ratio of at least 4.5:1 for normal text
+  return whiteContrast >= 4.5 ? "#ffffff" : "#000000";
+}
+
 // Schema for theme form - primary accent and background colors
 const themeFormSchema = z.object({
   primary: z.string().min(1, "Primary color is required"),
@@ -272,7 +313,16 @@ export default function Branding() {
                     </div>
                   </div>
 
-                  <Button type="submit">Save Theme</Button>
+                  <Button 
+                    type="submit"
+                    style={{
+                      backgroundColor: form.watch("primary"),
+                      color: getAccessibleTextColor(form.watch("primary")),
+                      borderColor: form.watch("primary")
+                    }}
+                  >
+                    Save Theme
+                  </Button>
                 </form>
               </CardContent>
             </Card>
@@ -307,7 +357,12 @@ export default function Branding() {
 
                     <Label
                       htmlFor="logo-upload"
-                      className="relative cursor-pointer bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-md py-2 px-4"
+                      className="relative cursor-pointer font-medium rounded-md py-2 px-4"
+                      style={{
+                        backgroundColor: branding.theme.primary,
+                        color: getAccessibleTextColor(branding.theme.primary),
+                        borderColor: branding.theme.primary
+                      }}
                     >
                       Choose Logo
                       <Input
