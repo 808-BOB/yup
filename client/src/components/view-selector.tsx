@@ -73,7 +73,7 @@ export default function ViewSelector({
               : "text-gray-500"
           }`}
           style={derivedActiveMainTab === "hosting" ? {
-            color: accessibleTextColor,
+            color: primaryColor || 'hsl(308, 100%, 66%)',
             borderTopColor: primaryColor || 'hsl(308, 100%, 66%)'
           } : {}}
         >
@@ -87,7 +87,7 @@ export default function ViewSelector({
               : "text-gray-500"
           }`}
           style={derivedActiveMainTab === "invited" ? {
-            color: accessibleTextColor,
+            color: primaryColor || 'hsl(308, 100%, 66%)',
             borderTopColor: primaryColor || 'hsl(308, 100%, 66%)'
           } : {}}
         >
@@ -105,7 +105,7 @@ export default function ViewSelector({
               : "text-gray-500"
           }`}
           style={activeResponseFilter === "all" ? {
-            color: accessibleTextColor,
+            color: primaryColor || 'hsl(308, 100%, 66%)',
             borderBottomColor: primaryColor || 'hsl(308, 100%, 66%)'
           } : {}}
         >
@@ -119,7 +119,7 @@ export default function ViewSelector({
               : "text-gray-500"
           }`}
           style={activeResponseFilter === "yup" ? {
-            color: accessibleTextColor,
+            color: primaryColor || 'hsl(308, 100%, 66%)',
             borderBottomColor: primaryColor || 'hsl(308, 100%, 66%)'
           } : {}}
         >
@@ -133,7 +133,7 @@ export default function ViewSelector({
               : "text-gray-500"
           }`}
           style={activeResponseFilter === "nope" ? {
-            color: accessibleTextColor,
+            color: primaryColor || 'hsl(308, 100%, 66%)',
             borderBottomColor: primaryColor || 'hsl(308, 100%, 66%)'
           } : {}}
         >
@@ -147,7 +147,7 @@ export default function ViewSelector({
               : "text-gray-500"
           }`}
           style={activeResponseFilter === "maybe" ? {
-            color: accessibleTextColor,
+            color: primaryColor || 'hsl(308, 100%, 66%)',
             borderBottomColor: primaryColor || 'hsl(308, 100%, 66%)'
           } : {}}
         >
