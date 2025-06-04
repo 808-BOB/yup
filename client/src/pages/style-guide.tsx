@@ -23,7 +23,7 @@ export default function StyleGuide() {
   return (
     <div className="container mx-auto py-8 px-4">
       <PageTitle title="Style Guide" />
-      
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Style Guide</h1>
         <p className="text-muted-foreground">
@@ -32,17 +32,29 @@ export default function StyleGuide() {
       </div>
 
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full mb-8 grid grid-cols-2 md:grid-cols-4">
-          <TabsTrigger value="colors">Colors</TabsTrigger>
-          <TabsTrigger value="typography">Typography</TabsTrigger>
-          <TabsTrigger value="icons">Icons</TabsTrigger>
-          <TabsTrigger value="components">Components</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="colors" className="flex items-center justify-center">
+            <span className="hidden sm:inline">Colors</span>
+            <span className="sm:hidden text-xs">🎨</span>
+          </TabsTrigger>
+          <TabsTrigger value="typography" className="flex items-center justify-center">
+            <span className="hidden sm:inline">Typography</span>
+            <span className="sm:hidden text-xs">Aa</span>
+          </TabsTrigger>
+          <TabsTrigger value="icons" className="flex items-center justify-center">
+            <span className="hidden sm:inline">Icons</span>
+            <span className="sm:hidden text-xs">⭐</span>
+          </TabsTrigger>
+          <TabsTrigger value="components" className="flex items-center justify-center">
+            <span className="hidden sm:inline">Components</span>
+            <span className="sm:hidden text-xs">🧩</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* Colors Section */}
         <TabsContent value="colors" className="space-y-6">
           <h2 className="text-2xl font-bold mb-4">Color Palette</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Primary Colors */}
             <Card>
@@ -252,7 +264,7 @@ export default function StyleGuide() {
         {/* Typography Section */}
         <TabsContent value="typography" className="space-y-6">
           <h2 className="text-2xl font-bold mb-4">Typography</h2>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Headings</CardTitle>
@@ -332,7 +344,7 @@ export default function StyleGuide() {
         {/* Icons Section */}
         <TabsContent value="icons" className="space-y-6">
           <h2 className="text-2xl font-bold mb-4">Icons</h2>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Lucide Icons</CardTitle>
@@ -378,7 +390,7 @@ export default function StyleGuide() {
         {/* Components Section */}
         <TabsContent value="components" className="space-y-6">
           <h2 className="text-2xl font-bold mb-4">Components</h2>
-          
+
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="buttons">
               <AccordionTrigger>Buttons</AccordionTrigger>
@@ -435,7 +447,7 @@ export default function StyleGuide() {
                       <p>This is the content of the card.</p>
                     </CardContent>
                   </Card>
-                  
+
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">Components:</p>
                     <ul className="list-disc pl-5 space-y-1 text-sm">
