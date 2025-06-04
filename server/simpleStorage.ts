@@ -1,83 +1,16 @@
 import type { User, Event, Response } from "@shared/schema";
-import * as fs from 'fs';
-import * as path from 'path';
 
-// Simplified storage implementation with file persistence
+// Simplified storage implementation to get the application running
 export class SimpleStorage {
   private users: Map<string, User> = new Map();
   private events: Map<number, Event> = new Map();
   private responses: Map<number, Response> = new Map();
   private eventIdCounter = 1;
   private responseIdCounter = 1;
-  private dataFile = path.join(process.cwd(), 'data', 'storage.json');
+  private savedThemes: Map<string, string> = new Map(); // Store custom themes
 
   constructor() {
-    this.loadData();
-  }
-
-  private loadData() {
-    try {
-      // Ensure data directory exists
-      const dataDir = path.dirname(this.dataFile);
-      if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
-      }
-
-      if (fs.existsSync(this.dataFile)) {
-        const data = JSON.parse(fs.readFileSync(this.dataFile, 'utf8'));
-        
-        // Load users - filter out null entries
-        if (data.users) {
-          this.users = new Map(data.users.filter(([key, value]: [any, any]) => key !== null && value !== null));
-        }
-        
-        // Load events
-        if (data.events) {
-          this.events = new Map(data.events.map(([id, event]: [number, any]) => [id, {
-            ...event,
-            created_at: new Date(event.created_at)
-          }]));
-        }
-        
-        // Load responses
-        if (data.responses) {
-          this.responses = new Map(data.responses.map(([id, response]: [number, any]) => [id, {
-            ...response,
-            createdAt: new Date(response.createdAt)
-          }]));
-        }
-        
-        // Load counters
-        this.eventIdCounter = data.eventIdCounter || 1;
-        this.responseIdCounter = data.responseIdCounter || 1;
-        
-        console.log('Data loaded from file successfully');
-        return;
-      }
-    } catch (error) {
-      console.error('Error loading data from file:', error);
-    }
-    
-    // If no file exists or loading failed, initialize with sample data
     this.initializeSampleData();
-    this.saveData();
-  }
-
-  private saveData() {
-    try {
-      const data = {
-        users: Array.from(this.users.entries()),
-        events: Array.from(this.events.entries()),
-        responses: Array.from(this.responses.entries()),
-        eventIdCounter: this.eventIdCounter,
-        responseIdCounter: this.responseIdCounter
-      };
-      
-      fs.writeFileSync(this.dataFile, JSON.stringify(data, null, 2));
-      console.log('Data saved to file successfully');
-    } catch (error) {
-      console.error('Error saving data to file:', error);
-    }
   }
 
   private initializeSampleData() {
@@ -106,7 +39,8 @@ export class SimpleStorage {
     };
     this.users.set(adminUser.id, adminUser);
 
-    // Create Bob as premium user with branding
+    // Create Bob as premium user with branding - check for saved theme first
+    const savedBobTheme = this.savedThemes.get('bob-premium');
     const bobUser: User = {
       id: 'bob-premium',
       username: 'bob',
@@ -120,7 +54,7 @@ export class SimpleStorage {
       is_pro: true,
       is_premium: true,
       profile_image_url: null,
-      brand_theme: '{"primary":"hsl(308, 100%, 66%)","background":"hsl(222, 84%, 5%)"}', // Default YUP.RSVP theme as JSON
+      brand_theme: savedBobTheme || '{"primary":"hsl(308, 100%, 66%)","background":"hsl(222, 84%, 5%)"}', // Use saved theme or default
       logo_url: null,
       stripe_customer_id: null,
       stripe_subscription_id: null,
@@ -256,7 +190,12 @@ export class SimpleStorage {
     if (!user) return undefined;
     const updatedUser = { ...user, ...userData };
     this.users.set(id, updatedUser);
-    this.saveData(); // Save after updating user
+    
+    // Save theme data to persistent storage
+    if (userData.brand_theme) {
+      this.savedThemes.set(id, userData.brand_theme);
+    }
+    
     return updatedUser;
   }
 
@@ -295,7 +234,6 @@ export class SimpleStorage {
       created_at: new Date()
     };
     this.events.set(event.id, event);
-    this.saveData(); // Save after creating event
     return event;
   }
 
