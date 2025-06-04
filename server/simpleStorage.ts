@@ -10,6 +10,8 @@ export class SimpleStorage {
   private savedThemes: Map<string, string> = new Map(); // Store custom themes
 
   constructor() {
+    // Initialize with persistent theme data for Bob
+    this.savedThemes.set('bob-premium', '{"primary":"#11d5ee","background":"hsl(222, 84%, 5%)"}'); // Cyan theme
     this.initializeSampleData();
   }
 
