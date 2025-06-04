@@ -145,10 +145,10 @@ export default function EventList() {
 
             {isLoading ? (
               <div className="flex justify-center items-center py-10">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <Loader2 className="h-8 w-8 animate-spin" style={{ color: accessibleTextColor }} />
               </div>
             ) : error ? (
-              <p className="text-center py-4 text-primary tracking-tight">
+              <p className="text-center py-4 tracking-tight" style={{ color: accessibleTextColor }}>
                 ERROR LOADING EVENTS. PLEASE TRY AGAIN.
               </p>
             ) : filteredEvents.length > 0 ? (
