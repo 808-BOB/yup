@@ -376,17 +376,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         });
         
-        // Return user data in the expected format, converting from snake_case to camelCase
+        // Return user data matching the schema field names exactly
         return res.json({
           id: user.id,
           username: user.username,
-          displayName: user.display_name || "",
-          isAdmin: !!user.is_admin,
-          isPro: !!user.is_pro,
-          isPremium: !!user.is_premium,
-          profileImageUrl: user.profile_image_url || null,
-          brandTheme: user.brand_theme || null,
-          logoUrl: user.logo_url || null
+          display_name: user.display_name || "",
+          is_admin: !!user.is_admin,
+          is_pro: !!user.is_pro,
+          is_premium: !!user.is_premium,
+          profile_image_url: user.profile_image_url || null,
+          brand_theme: user.brand_theme || null,
+          logo_url: user.logo_url || null
         });
       } catch (loginErr) {
         console.error("Error in login flow:", loginErr);
