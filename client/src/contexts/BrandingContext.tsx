@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { apiRequest } from '@/lib/queryClient';
+import { getAccessibleTextColor } from '@/hooks/use-accessible-colors';
 import defaultLogo from '@assets/Yup-logo.png';
 // Make sure the import path is correct for the assets
 
@@ -236,10 +237,17 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
         const sPercent = Math.round(s * 100);
         const lPercent = Math.round(l * 100);
         
+        // Calculate accessible text color for WCAG compliance
+        const accessibleTextColor = getAccessibleTextColor(primaryColor);
+        
         // Set CSS variables in HSL format for Tailwind compatibility
         document.documentElement.style.setProperty('--primary', `${hDeg} ${sPercent}% ${lPercent}%`);
         document.documentElement.style.setProperty('--ring', `${hDeg} ${sPercent}% ${lPercent}%`);
         document.documentElement.style.setProperty('--border', `${hDeg} ${sPercent}% ${Math.max(20, lPercent - 20)}%`);
+        
+        // Set accessible text color for all primary-colored elements
+        const textColorHsl = accessibleTextColor === '#ffffff' ? '0 0% 100%' : '0 0% 0%';
+        document.documentElement.style.setProperty('--primary-foreground', textColorHsl);
         
         // Also set hex versions for direct use
         document.documentElement.style.setProperty('--primary-color', primaryColor);
