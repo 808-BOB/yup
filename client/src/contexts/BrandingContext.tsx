@@ -34,9 +34,10 @@ function adjustHexBrightness(hex: string, factor: number): string {
   return `#${newR}${newG}${newB}`;
 }
 
-// Define the structure of our theme - simplified to only use primary accent color
+// Define the structure of our theme - primary accent and background colors
 export interface BrandTheme {
   primary: string;
+  background: string;
 }
 
 export interface BrandingContextType {
@@ -50,7 +51,8 @@ export interface BrandingContextType {
 
 // Default YUP.RSVP theme values - magenta brand colors
 const defaultTheme: BrandTheme = {
-  primary: 'hsl(308, 100%, 66%)' // YUP.RSVP magenta
+  primary: 'hsl(308, 100%, 66%)', // YUP.RSVP magenta
+  background: 'hsl(222, 84%, 5%)' // Dark background
 };
 
 const BrandingContext = createContext<BrandingContextType | undefined>(undefined);
@@ -137,12 +139,53 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
     }
     
     // Apply custom themes only for logged-in premium users with custom branding set (not on admin pages)
-    if (theme && theme.primary && isPremium && theme.primary !== defaultTheme.primary) {
+    if (theme && theme.primary && isPremium && (theme.primary !== defaultTheme.primary || theme.background !== defaultTheme.background)) {
       // Parse the HSL color to get its components
       let primaryColor = theme.primary;
-      console.log('Applying custom theme with primary color:', primaryColor);
+      let backgroundColor = theme.background;
+      console.log('Applying custom theme with primary color:', primaryColor, 'background color:', backgroundColor);
       
-      // If it's in HSL format, convert to hex and use consistently
+      // Apply background color first
+      if (backgroundColor) {
+        if (backgroundColor.startsWith('hsl')) {
+          const hslMatch = backgroundColor.match(/hsl\(([^,]+),\s*([^,]+),\s*([^)]+)\)/);
+          if (hslMatch) {
+            const [_, h, s, l] = hslMatch;
+            document.documentElement.style.setProperty('--background', `${h} ${s}% ${l}%`);
+          }
+        } else if (backgroundColor.startsWith('#')) {
+          // Convert hex to HSL for CSS variables
+          const r = parseInt(backgroundColor.substring(1, 3), 16) / 255;
+          const g = parseInt(backgroundColor.substring(3, 5), 16) / 255;
+          const b = parseInt(backgroundColor.substring(5, 7), 16) / 255;
+          
+          const max = Math.max(r, g, b);
+          const min = Math.min(r, g, b);
+          let h, s, l = (max + min) / 2;
+          
+          if (max === min) {
+            h = s = 0; // achromatic
+          } else {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+              case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+              case g: h = (b - r) / d + 2; break;
+              case b: h = (r - g) / d + 4; break;
+              default: h = 0;
+            }
+            h /= 6;
+          }
+          
+          const hDeg = Math.round(h * 360);
+          const sPercent = Math.round(s * 100);
+          const lPercent = Math.round(l * 100);
+          
+          document.documentElement.style.setProperty('--background', `${hDeg} ${sPercent}% ${lPercent}%`);
+        }
+      }
+      
+      // Apply primary color
       if (primaryColor.startsWith('hsl')) {
         const hslMatch = primaryColor.match(/hsl\(([^,]+),\s*([^,]+),\s*([^)]+)\)/);
         if (hslMatch) {
@@ -266,9 +309,9 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
     setLogoUrl(null);
     
     try {
-      // Save to user preferences on the server - save as hex color for consistency
+      // Save to user preferences on the server - save theme object as JSON
       const response = await apiRequest('PUT', `/api/users/${user.id}/branding`, {
-        brandTheme: "#ff6bfc", // YUP.RSVP magenta in hex format
+        brandTheme: JSON.stringify(defaultTheme),
         logoUrl: null,
       });
       
