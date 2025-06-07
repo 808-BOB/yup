@@ -1334,12 +1334,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/events/:eventId/invitations/:userId",
     async (req: Request, res: Response) => {
       try {
-        await storage.createInvitation(
-          parseInt(req.params.eventId),
-          parseInt(req.params.userId)
-        );
+        const eventId = parseInt(req.params.eventId);
+        const userId = req.params.userId;
+        console.log("Creating invitation for event:", eventId, "user:", userId);
+        await storage.createInvitation(eventId, userId);
         res.status(201).json({ success: true });
       } catch (error) {
+        console.error("Error creating invitation:", error);
         res.status(500).json({ error: "Failed to create invitation" });
       }
     }
