@@ -1118,9 +1118,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User events
   app.get("/api/users/:userId/events", async (req: Request, res: Response) => {
     try {
-      const events = await storage.getUserEvents(parseInt(req.params.userId));
+      const userId = req.params.userId;
+      console.log("Getting events for user:", userId);
+      const events = await storage.getUserEvents(userId);
+      console.log("Found events:", events.length);
       res.json(events);
     } catch (error) {
+      console.error("Error getting user events:", error);
       res.status(500).json({ error: "Failed to get user events" });
     }
   });
@@ -1128,11 +1132,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Invitations
   app.get("/api/users/:userId/invites", async (req: Request, res: Response) => {
     try {
-      const events = await storage.getEventsUserInvitedTo(
-        parseInt(req.params.userId)
-      );
+      const userId = req.params.userId;
+      console.log("Getting invites for user:", userId);
+      const events = await storage.getEventsUserInvitedTo(userId);
+      console.log("Found invited events:", events.length);
       res.json(events);
     } catch (error) {
+      console.error("Error getting user invites:", error);
       res.status(500).json({ error: "Failed to get invites" });
     }
   });
