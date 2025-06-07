@@ -263,7 +263,7 @@ export class SimpleStorage {
   }
 
   async getUserEvents(userId: string): Promise<Event[]> {
-    return Array.from(this.events.values()).filter(event => event.host_id === userId);
+    return Array.from(this.events.values()).filter(event => event.hostId === userId);
   }
 
   async getAllEvents(): Promise<Event[]> {
