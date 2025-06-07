@@ -120,14 +120,24 @@ export default function Branding() {
   }, [branding.logoUrl]);
   const [activeTab, setActiveTab] = useState("theme");
 
-  // Initialize form with YUP.RSVP defaults, regardless of user's current theme
+  // Initialize form with user's current theme or YUP.RSVP defaults
   const form = useForm<ThemeFormValues>({
     resolver: zodResolver(themeFormSchema),
     defaultValues: {
-      primary: "hsl(308, 100%, 66%)", // YUP.RSVP magenta
-      background: "hsl(222, 84%, 5%)", // Dark background
+      primary: branding.theme.primary || "hsl(308, 100%, 66%)",
+      background: branding.theme.background || "hsl(222, 84%, 5%)",
     },
   });
+
+  // Update form values when branding context changes
+  useEffect(() => {
+    if (branding.theme.primary) {
+      form.setValue("primary", branding.theme.primary);
+    }
+    if (branding.theme.background) {
+      form.setValue("background", branding.theme.background);
+    }
+  }, [branding.theme, form]);
 
   // If user is not premium, show restricted access message
   if (!branding.isPremium) {

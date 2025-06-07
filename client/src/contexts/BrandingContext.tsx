@@ -140,8 +140,8 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
       return;
     }
     
-    // Apply custom themes only for logged-in premium users with custom branding set (not on admin pages)
-    if (theme && theme.primary && isPremium && (theme.primary !== defaultTheme.primary || theme.background !== defaultTheme.background)) {
+    // Apply custom themes for logged-in premium users (not on admin pages)
+    if (theme && theme.primary && isPremium) {
       // Parse the HSL color to get its components
       let primaryColor = theme.primary;
       let backgroundColor = theme.background;
@@ -260,7 +260,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
         document.documentElement.style.setProperty('--color-primary', primaryColor);
       }
     }
-  }, [theme, isPremium]);
+  }, [theme, isPremium, user]);
 
   // Update theme values
   const updateTheme = async (newTheme: Partial<BrandTheme>) => {
