@@ -241,6 +241,25 @@ export default function CreateEvent() {
   }
 
   const nextStep = () => {
+    // Validate current step before proceeding
+    if (currentStep === 1) {
+      // Validate required fields for step 1
+      const title = form.getValues("title");
+      const date = form.getValues("date");
+      const startTime = form.getValues("startTime");
+      const endTime = form.getValues("endTime");
+      const location = form.getValues("location");
+      
+      if (!title || !date || !startTime || !endTime || !location) {
+        toast({
+          title: "Missing Information",
+          description: "Please fill in all required fields before continuing.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     if (currentStep < 3) setCurrentStep(currentStep + 1);
   };
 
@@ -276,16 +295,15 @@ export default function CreateEvent() {
           </div>
         </div>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <Card className="w-full bg-gray-900 border border-gray-800">
-              <CardHeader>
-                <CardTitle className="text-white">
-                  {currentStep === 1 && "Event Details"}
-                  {currentStep === 2 && "Event Settings"}
-                  {currentStep === 3 && "Review & Publish"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
+        <Card className="w-full bg-gray-900 border border-gray-800">
+          <CardHeader>
+            <CardTitle className="text-white">
+              {currentStep === 1 && "Event Details"}
+              {currentStep === 2 && "Event Settings"}
+              {currentStep === 3 && "Review & Publish"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
                 
                 {/* Step 1: Basic Details */}
                 {currentStep === 1 && (
@@ -602,7 +620,8 @@ export default function CreateEvent() {
                     </Button>
                   ) : (
                     <Button
-                      type="submit"
+                      type="button"
+                      onClick={form.handleSubmit(onSubmit)}
                       disabled={isSubmitting}
                       style={{
                         backgroundColor: primaryColor || 'hsl(308, 100%, 66%)',
@@ -613,10 +632,9 @@ export default function CreateEvent() {
                       {isSubmitting ? "Saving..." : isEditMode ? "Update Event" : "Create Event"}
                     </Button>
                   )}
-                </div>
-              </CardContent>
-            </Card>
-          </form>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Cancel link */}
         <div className="text-center mt-6">
