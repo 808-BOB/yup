@@ -15,6 +15,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get my events (current user's events)
+  app.get("/api/events/my-events", async (req: Request, res: Response) => {
+    try {
+      // For now, return all events since we don't have session management
+      // In a real app, this would filter by the current user's ID
+      const events = await storage.getAllEvents();
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching my events:", error);
+      res.status(500).json({ error: "Failed to get my events", details: String(error) });
+    }
+  });
+
   app.get("/api/events/:id", async (req: Request, res: Response) => {
     try {
       const eventId = parseInt(req.params.id);
@@ -47,6 +60,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching users:", error);
       res.status(500).json({ error: "Failed to get users", details: String(error) });
+    }
+  });
+
+  // Get responses endpoint
+  app.get("/api/responses", async (req: Request, res: Response) => {
+    try {
+      // Return empty responses for now since we don't have session management
+      res.json({});
+    } catch (error) {
+      console.error("Error fetching responses:", error);
+      res.status(500).json({ error: "Failed to get responses", details: String(error) });
     }
   });
 

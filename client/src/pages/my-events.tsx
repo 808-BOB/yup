@@ -30,7 +30,7 @@ export default function MyEvents() {
     isLoading: eventsLoading,
     error,
   } = useQuery<Event[]>({
-    queryKey: [`/api/users/${user?.id || 0}/events`],
+    queryKey: ['/api/events/my-events'],
     enabled: !!user,
   });
 
@@ -48,7 +48,7 @@ export default function MyEvents() {
 
   // Fetch all of the user's responses
   const { data: userResponses = {} } = useQuery<Record<string, "yup" | "nope">>({
-    queryKey: [`/api/users/${user?.id || 0}/responses`],
+    queryKey: ['/api/responses'],
     enabled: !!user,
   });
 
