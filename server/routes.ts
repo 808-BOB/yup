@@ -28,6 +28,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get invited events (events user is invited to)
+  app.get("/api/events/invited", async (req: Request, res: Response) => {
+    try {
+      // For now, return a subset of events to simulate invited events
+      // In a real app, this would query the invitations table
+      const allEvents = await storage.getAllEvents();
+      // Return first event as an example of invited events
+      const invitedEvents = allEvents.slice(0, 1);
+      res.json(invitedEvents);
+    } catch (error) {
+      console.error("Error fetching invited events:", error);
+      res.status(500).json({ error: "Failed to get invited events", details: String(error) });
+    }
+  });
+
   app.get("/api/events/:id", async (req: Request, res: Response) => {
     try {
       const eventId = parseInt(req.params.id);

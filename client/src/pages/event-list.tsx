@@ -29,13 +29,13 @@ export default function EventList() {
     isLoading: eventsLoading,
     error,
   } = useQuery<Event[]>({
-    queryKey: [`/api/users/${user?.id || 0}/invites`],
+    queryKey: ['/api/events/invited'],
     enabled: !!user,
   });
 
   // Prefetch user responses for all events using our new API endpoint
   const { data: userResponses = {} } = useQuery<Record<string, "yup" | "nope">>({
-    queryKey: [`/api/users/${user?.id || 0}/responses`],
+    queryKey: ['/api/responses'],
     enabled: !!user,
   });
 
