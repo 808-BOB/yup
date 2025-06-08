@@ -321,15 +321,28 @@ export class SimpleStorage {
 
   // Invitation operations
   async createInvitation(eventId: number, userId: string): Promise<void> {
-    // Simplified implementation
+    const invitationId = this.invitationIdCounter++;
+    this.invitations.set(invitationId, {
+      id: invitationId,
+      eventId: eventId,
+      userId: userId,
+      status: "pending",
+    });
   }
 
   async getEventInvitations(eventId: number): Promise<string[]> {
-    return [];
+    return Array.from(this.invitations.values())
+      .filter(invitation => invitation.eventId === eventId)
+      .map(invitation => invitation.userId);
   }
 
   async getEventsUserInvitedTo(userId: string): Promise<Event[]> {
-    return [];
+    const invitedEventIds = Array.from(this.invitations.values())
+      .filter(invitation => invitation.userId === userId)
+      .map(invitation => invitation.eventId);
+    
+    return Array.from(this.events.values())
+      .filter(event => invitedEventIds.includes(event.id));
   }
 
   // Admin metrics
