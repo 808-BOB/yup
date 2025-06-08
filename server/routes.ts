@@ -1,8 +1,6 @@
 import express, { type Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
-import { SupabaseStorage } from "./supabaseStorage";
-
-const storage = new SupabaseStorage();
+import { storage } from "./storage";
 import { db } from "./db";
 import { eq, sql } from "drizzle-orm";
 // Import auth systems
