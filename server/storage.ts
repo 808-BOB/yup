@@ -1239,6 +1239,5 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Use simplified storage implementation
-import { storage } from './simpleStorage';
-export { storage };
+// Use Supabase storage implementation
+export const storage = new SupabaseStorage();
