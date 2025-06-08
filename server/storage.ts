@@ -16,6 +16,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, sql, desc, asc, inArray } from "drizzle-orm";
+import { SupabaseStorage } from "./supabaseStorage";
 
 export interface IStorage {
   // Invitation operations
