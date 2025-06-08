@@ -7,6 +7,11 @@ export const eventService = {
     return apiRequest("GET", "/api/events");
   },
 
+  // Alias for getAllEvents (used by frontend hooks)
+  getEvents: (): Promise<Event[]> => {
+    return apiRequest("GET", "/api/events");
+  },
+
   // Get single event by ID
   getEvent: (id: number): Promise<Event> => {
     return apiRequest("GET", `/api/events/${id}`);
@@ -35,6 +40,11 @@ export const eventService = {
   // Get user's events
   getUserEvents: (userId: string): Promise<Event[]> => {
     return apiRequest("GET", `/api/users/${userId}/events`);
+  },
+
+  // Get my events (current user's events)
+  getMyEvents: (): Promise<Event[]> => {
+    return apiRequest("GET", "/api/events/my-events");
   },
 
   // Get events user is invited to

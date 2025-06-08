@@ -50,6 +50,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Authentication endpoints
+  app.post("/api/auth/login", express.json(), async (req: Request, res: Response) => {
+    try {
+      const { username, password } = req.body;
+
+      if (!username || !password) {
+        return res.status(400).json({ error: "Username and password are required" });
+      }
+
+      // Simple authentication for demo - check against known users
+      if (username === "bob" && password === "events") {
+        const user = {
+          id: "bob-premium",
+          username: "bob",
+          display_name: "Bob Premium",
+          is_premium: true,
+          brand_theme: "cyan"
+        };
+        
+        return res.json({ 
+          success: true, 
+          user,
+          message: "Login successful" 
+        });
+      }
+
+      return res.status(401).json({ error: "Invalid credentials" });
+    } catch (error) {
+      console.error("Login error:", error);
+      return res.status(500).json({ error: "Login failed" });
+    }
+  });
+
+  app.post("/api/auth/logout", (req: Request, res: Response) => {
+    res.json({ success: true, message: "Logged out successfully" });
+  });
+
   // Health check endpoint
   app.get("/api/health", (req: Request, res: Response) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
