@@ -2,23 +2,31 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from "@shared/schema";
 
-// Use Supabase connection string from environment
+// Check for Supabase credentials first
 const supabaseUrl = process.env.SUPABASE_PROJECT_URL;
 const supabaseKey = process.env.SUPABASE_API_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
+// Use direct DATABASE_URL if available, otherwise construct from Supabase
+let connectionString = process.env.DATABASE_URL;
+
+if (!connectionString && supabaseUrl && supabaseKey) {
+  // Extract project reference and use connection pooler
+  const projectRef = supabaseUrl.replace('https://', '').replace('.supabase.co', '');
+  connectionString = `postgresql://postgres.${projectRef}:${supabaseKey}@aws-0-us-east-1.pooler.supabase.com:6543/postgres`;
+}
+
+if (!connectionString) {
   throw new Error(
-    "SUPABASE_PROJECT_URL and SUPABASE_API_KEY must be set. Please configure your Supabase credentials.",
+    "DATABASE_URL or Supabase credentials (SUPABASE_PROJECT_URL and SUPABASE_API_KEY) must be set.",
   );
 }
 
-// Extract the database URL from Supabase project URL
-// Format: https://xxx.supabase.co -> postgresql://postgres:[password]@db.xxx.supabase.co:5432/postgres
-const projectRef = supabaseUrl.replace('https://', '').replace('.supabase.co', '');
-const connectionString = `postgresql://postgres:${supabaseKey}@db.${projectRef}.supabase.co:5432/postgres`;
+console.log('Database connection configured');
 
 export const client = postgres(connectionString, { 
   prepare: false,
-  ssl: 'require'
+  ssl: 'require',
+  idle_timeout: 20,
+  max_lifetime: 60 * 30
 });
 export const db = drizzle(client, { schema });
