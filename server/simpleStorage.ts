@@ -5,8 +5,10 @@ export class SimpleStorage {
   private users: Map<string, User> = new Map();
   private events: Map<number, Event> = new Map();
   private responses: Map<number, Response> = new Map();
+  private invitations: Map<number, { id: number; eventId: number; userId: string; status: string }> = new Map();
   private eventIdCounter = 1;
   private responseIdCounter = 1;
+  private invitationIdCounter = 1;
   private savedThemes: Map<string, string> = new Map(); // Store custom themes
 
   constructor() {
