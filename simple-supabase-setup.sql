@@ -1,5 +1,5 @@
--- Complete YUP.RSVP Database Schema
--- Copy and paste this entire SQL into your Supabase SQL Editor and run it
+-- Simplified YUP.RSVP Database Setup (No Foreign Keys for easier setup)
+-- Copy and paste this into your Supabase SQL Editor
 
 -- Create users table
 CREATE TABLE IF NOT EXISTS users (
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS events (
   end_time TEXT NOT NULL,
   location TEXT NOT NULL,
   address TEXT,
-  host_id TEXT NOT NULL REFERENCES users(id),
+  host_id TEXT NOT NULL,
   status TEXT DEFAULT 'open',
   slug TEXT UNIQUE NOT NULL,
   image_url TEXT,
@@ -56,9 +56,9 @@ CREATE TABLE IF NOT EXISTS events (
 -- Create responses table
 CREATE TABLE IF NOT EXISTS responses (
   id BIGSERIAL PRIMARY KEY,
-  event_id BIGINT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-  user_id TEXT REFERENCES users(id),
-  response TEXT NOT NULL CHECK (response IN ('yup', 'nope', 'maybe')),
+  event_id BIGINT NOT NULL,
+  user_id TEXT,
+  response TEXT NOT NULL,
   is_guest BOOLEAN DEFAULT FALSE,
   guest_name TEXT,
   guest_email TEXT,
@@ -69,13 +69,12 @@ CREATE TABLE IF NOT EXISTS responses (
 -- Create invitations table
 CREATE TABLE IF NOT EXISTS invitations (
   id BIGSERIAL PRIMARY KEY,
-  event_id BIGINT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-  user_id TEXT NOT NULL REFERENCES users(id),
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(event_id, user_id)
+  event_id BIGINT NOT NULL,
+  user_id TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Insert sample users
+-- Insert users
 INSERT INTO users (id, username, password, display_name, is_admin, is_premium, brand_theme) VALUES
 ('subourbon-admin', 'subourbon', 'events', 'Subourbon Admin', TRUE, TRUE, '#84793d'),
 ('bob-premium', 'bob', 'events', 'Bob Premium', FALSE, TRUE, '{"primary":"#11d5ee","background":"hsl(222, 84%, 5%)"}')
@@ -86,17 +85,13 @@ ON CONFLICT (username) DO UPDATE SET
   is_premium = EXCLUDED.is_premium,
   brand_theme = EXCLUDED.brand_theme;
 
--- Insert sample event
+-- Insert events
 INSERT INTO events (title, description, date, start_time, end_time, location, address, host_id, slug) VALUES
-('Subourbon Launch Event', 'Join us for the official launch of our premium event platform', '2025-06-15', '18:00', '22:00', 'The Grand Ballroom', '123 Main Street, Downtown', 'subourbon-admin', 'subourbon-launch-2025')
-ON CONFLICT (slug) DO NOTHING;
-
--- Create your Summer of Bob event
-INSERT INTO events (title, description, date, start_time, end_time, location, address, host_id, slug) VALUES
+('Subourbon Launch Event', 'Join us for the official launch of our premium event platform', '2025-06-15', '18:00', '22:00', 'The Grand Ballroom', '123 Main Street, Downtown', 'subourbon-admin', 'subourbon-launch-2025'),
 ('Summer of Bob', 'Photography workshop and networking event', '2025-07-15', '14:00', '18:00', 'Central Park', 'Central Park, New York, NY', 'bob-premium', 'summer-of-bob-2025')
 ON CONFLICT (slug) DO NOTHING;
 
--- Create sample responses for metrics (guest responses without user_id)
+-- Insert sample guest responses
 INSERT INTO responses (event_id, user_id, response, is_guest, guest_name, guest_email) 
 SELECT e.id, NULL, 
   CASE WHEN gs % 3 = 0 THEN 'yup' WHEN gs % 3 = 1 THEN 'nope' ELSE 'maybe' END,
@@ -104,9 +99,8 @@ SELECT e.id, NULL,
   'Guest User ' || gs,
   'guest' || gs || '@example.com'
 FROM events e, generate_series(1, 15) gs 
-WHERE e.slug = 'subourbon-launch-2025'
-ON CONFLICT DO NOTHING;
+WHERE e.slug = 'subourbon-launch-2025';
 
--- Grant permissions
+-- Set permissions
 GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO authenticated;
