@@ -54,7 +54,7 @@ export default function EventPage() {
     isLoading,
     error,
   } = useQuery<Event>({
-    queryKey: [`/api/events/slug/${params?.slug}`],
+    queryKey: [`/api/events/${params?.slug}`],
     enabled: !!params?.slug,
   });
 
