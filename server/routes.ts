@@ -43,14 +43,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/events/:id", async (req: Request, res: Response) => {
+  // Get event by slug
+  app.get("/api/events/:slug", async (req: Request, res: Response) => {
     try {
-      const eventId = parseInt(req.params.id);
-      const event = await storage.getEvent(eventId);
-      if (!event) {
-        return res.status(404).json({ error: "Event not found" });
+      const { slug } = req.params;
+      
+      // Try to get by slug first
+      const event = await storage.getEventBySlug(slug);
+      if (event) {
+        return res.json(event);
       }
-      res.json(event);
+      
+      // If not found by slug, try by numeric ID (for backward compatibility)
+      const eventId = parseInt(slug);
+      if (!isNaN(eventId)) {
+        const eventById = await storage.getEvent(eventId);
+        if (eventById) {
+          return res.json(eventById);
+        }
+      }
+      
+      return res.status(404).json({ error: "Event not found" });
     } catch (error) {
       console.error("Error fetching event:", error);
       res.status(500).json({ error: "Failed to get event", details: String(error) });
