@@ -76,7 +76,7 @@ export default function EventPage() {
   // Update state when existing response is loaded
   useEffect(() => {
     if (existingResponse) {
-      setUserResponse(existingResponse.response as "yup" | "nope" | "maybe");
+      setUserResponse(existingResponse.response_type as "yup" | "nope" | "maybe");
     } else if (user) {
       // Clear response when user is logged in but no response exists
       setUserResponse(null);

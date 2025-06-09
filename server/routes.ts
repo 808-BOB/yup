@@ -81,6 +81,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update event by ID
+  app.put("/api/events/:id", express.json(), async (req: Request, res: Response) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const eventData = req.body;
+      const updatedEvent = await storage.updateEvent(eventId, eventData);
+      if (!updatedEvent) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      res.json(updatedEvent);
+    } catch (error) {
+      console.error("Error updating event:", error);
+      res.status(500).json({ error: "Failed to update event", details: String(error) });
+    }
+  });
+
   app.get("/api/users", async (req: Request, res: Response) => {
     try {
       const userCount = await storage.getUserCount();
@@ -99,6 +115,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching responses:", error);
       res.status(500).json({ error: "Failed to get responses", details: String(error) });
+    }
+  });
+
+  // Event RSVP endpoints
+  app.post("/api/events/:id/respond", express.json(), async (req: Request, res: Response) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const { response, userId } = req.body;
+      
+      const responseData = {
+        event_id: eventId,
+        user_id: userId,
+        response_type: response,
+        is_guest: false,
+        guest_name: null,
+        guest_email: null,
+        guest_count: 1
+      };
+
+      const newResponse = await storage.createResponse(responseData);
+      res.status(201).json(newResponse);
+    } catch (error) {
+      console.error("Error creating response:", error);
+      res.status(500).json({ error: "Failed to create response", details: String(error) });
+    }
+  });
+
+  // Get user's response for an event
+  app.get("/api/events/:id/users/:userId/response", async (req: Request, res: Response) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const userId = req.params.userId;
+      
+      const response = await storage.getUserEventResponse(eventId, userId);
+      if (!response) {
+        return res.status(404).json({ error: "Response not found" });
+      }
+      res.json(response);
+    } catch (error) {
+      console.error("Error fetching user response:", error);
+      res.status(500).json({ error: "Failed to get user response", details: String(error) });
+    }
+  });
+
+  // Get response counts for an event
+  app.get("/api/events/:id/responses/count", async (req: Request, res: Response) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const counts = await storage.getEventResponses(eventId);
+      res.json(counts);
+    } catch (error) {
+      console.error("Error fetching response counts:", error);
+      res.status(500).json({ error: "Failed to get response counts", details: String(error) });
     }
   });
 
