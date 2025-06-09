@@ -58,81 +58,69 @@ export const sessions = pgTable(
 
 export const events = pgTable("events", {
   id: serial("id").primaryKey(),
-  imageUrl: text("image_url"),
+  image_url: text("image_url"),
   title: text("title").notNull(),
   date: text("date").notNull(),
-  startTime: text("start_time").notNull(),
-  endTime: text("end_time").notNull(),
+  start_time: text("start_time").notNull(),
+  end_time: text("end_time").notNull(),
   location: text("location").notNull(),
   address: text("address"),
   description: text("description"),
-  hostId: text("host_id").notNull(),
-  hostDisplayText: text("host_display_text"),
+  host_id: text("host_id").notNull(),
   status: text("status").notNull().default("open"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  created_at: timestamp("created_at").notNull().defaultNow(),
   slug: text("slug").notNull().unique(),
-  allowGuestRsvp: boolean("allow_guest_rsvp").notNull().default(true),
-  allowPlusOne: boolean("allow_plus_one").notNull().default(true),
-  maxGuestsPerRsvp: integer("max_guests_per_rsvp").notNull().default(3),
-  maxAttendees: integer("max_attendees"), // null means unlimited
-  showRsvpsToInvitees: boolean("show_rsvps_to_invitees").notNull().default(true),
-  showYupRsvpsToInvitees: boolean("show_yup_rsvps_to_invitees").notNull().default(true),
-  showNopeRsvpsToInvitees: boolean("show_nope_rsvps_to_invitees").notNull().default(true),
-  showRsvpsAfterThreshold: boolean("show_rsvps_after_threshold").notNull().default(false),
-  rsvpVisibilityThreshold: integer("rsvp_visibility_threshold").notNull().default(5),
-  // Custom RSVP button text options (for premium users)
-  customYesText: text("custom_yes_text"), // If set, replaces "Yup" with this text
-  customNoText: text("custom_no_text"), // If set, replaces "Nope" with this text
-  useCustomRsvpText: boolean("use_custom_rsvp_text").notNull().default(false),
+  allow_guest_rsvp: boolean("allow_guest_rsvp").notNull().default(true),
+  allow_plus_one: boolean("allow_plus_one").notNull().default(true),
+  max_guests_per_rsvp: integer("max_guests_per_rsvp").notNull().default(1),
+  capacity: integer("capacity"), // null means unlimited
+  use_custom_rsvp_text: boolean("use_custom_rsvp_text").notNull().default(false),
+  custom_yup_text: text("custom_yup_text"),
+  custom_nope_text: text("custom_nope_text"),
+  custom_maybe_text: text("custom_maybe_text"),
+  rsvp_visibility: text("rsvp_visibility").notNull().default("public"),
+  waitlist_enabled: boolean("waitlist_enabled").notNull().default(false),
 });
 
 // Create the insert schema and refine it
-export const insertEventSchema = createInsertSchema(events)
-  .omit({
-    id: true,
-    createdAt: true,
-  })
-  .transform((data) => ({
-    ...data,
-    // Handle potentially null or undefined values with defaults
-    address: data.address || "",
-    description: data.description || "",
-  }));
+export const insertEventSchema = createInsertSchema(events).omit({
+  id: true,
+  created_at: true,
+});
 
 export const invitations = pgTable("invitations", {
   id: serial("id").primaryKey(),
-  eventId: integer("event_id").notNull(),
-  userId: text("user_id").notNull(), // Changed to text to match user ID format
-  status: text("status").notNull().default("pending"), // pending, accepted, declined
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  event_id: integer("event_id").notNull(),
+  user_id: text("user_id").notNull(),
+  status: text("status").notNull().default("pending"),
+  created_at: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const responses = pgTable("responses", {
   id: serial("id").primaryKey(),
-  eventId: integer("event_id").notNull(),
-  userId: text("user_id"), // Optional for guest responses, changed to text for Firebase auth
-  response: text("response").notNull(), // 'yup', 'nope', or 'maybe'
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  // Guest information
-  isGuest: boolean("is_guest").default(false),
-  guestName: text("guest_name"), // For guest responses
-  guestEmail: text("guest_email"), // For guest responses
-  guestCount: integer("guest_count").default(0), // Number of additional guests (+1, +2, etc.)
+  event_id: integer("event_id").notNull(),
+  user_id: text("user_id"),
+  response_type: text("response_type").notNull(), // 'yup', 'nope', or 'maybe'
+  created_at: timestamp("created_at").notNull().defaultNow(),
+  is_guest: boolean("is_guest").default(false),
+  guest_name: text("guest_name"),
+  guest_email: text("guest_email"),
+  guest_count: integer("guest_count").default(0),
 });
 
 export const insertResponseSchema = createInsertSchema(responses).omit({
   id: true,
-  createdAt: true,
+  created_at: true,
 });
 
 // Schema for guest responses
 export const guestResponseSchema = z.object({
-  eventId: z.number(),
-  response: z.enum(["yup", "nope", "maybe"]),
-  isGuest: z.literal(true),
-  guestName: z.string().min(1, "Name is required"),
-  guestEmail: z.string().email("Valid email is required"),
-  guestCount: z.number().min(0).default(0),
+  event_id: z.number(),
+  response_type: z.enum(["yup", "nope", "maybe"]),
+  is_guest: z.literal(true),
+  guest_name: z.string().min(1, "Name is required"),
+  guest_email: z.string().email("Valid email is required"),
+  guest_count: z.number().min(0).default(0),
 });
 
 export type User = typeof users.$inferSelect;
