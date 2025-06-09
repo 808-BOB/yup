@@ -16,7 +16,7 @@ import Login from "@/pages/login";
 // Lazy load non-critical components
 const NotFound = lazy(() => import("@/pages/not-found"));
 const Event = lazy(() => import("@/pages/event"));
-const CreateEvent = lazy(() => import("@/pages/create-event"));
+const CreateEvent = lazy(() => import("@/pages/create-event-simple"));
 const EditEvent = lazy(() => import("@/pages/edit-event"));
 const MyEvents = lazy(() => import("@/pages/my-events"));
 const EventList = lazy(() => import("@/pages/event-list"));

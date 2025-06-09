@@ -1,43 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useLocation, useParams } from "wouter";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, ArrowRight, Upload } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAccessibleColors } from "@/hooks/use-accessible-colors";
 import Header from "@/components/header";
-
-const formSchema = z.object({
-  title: z.string().min(1, "Event title is required"),
-  date: z.string().min(1, "Date is required"),
-  startTime: z.string().min(1, "Start time is required"),
-  endTime: z.string().min(1, "End time is required"),
-  location: z.string().min(1, "Location is required"),
-  address: z.string().optional(),
-  description: z.string().optional(),
-  imageUrl: z.string().optional(),
-  allowGuestRsvp: z.boolean().default(true),
-  allowPlusOne: z.boolean().default(true),
-  maxGuestsPerRsvp: z.number().min(1).max(10).default(3),
-  maxAttendees: z.number().optional(),
-  showRsvpsToInvitees: z.boolean().default(true),
-
-  showRsvpsAfterThreshold: z.boolean().default(false),
-  rsvpVisibilityThreshold: z.number().min(1).default(5),
-  customYesText: z.string().optional(),
-  customNoText: z.string().optional(),
-  useCustomRsvpText: z.boolean().default(false),
-});
+import { insertEventSchema, type InsertEvent } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -146,9 +123,9 @@ export default function CreateEvent() {
 
       const eventPayload = {
         ...data,
-        hostId: user.id,
+        host_id: user.id,
         slug,
-        status: "active",
+        status: "open",
       };
 
       if (isEditMode && eventData) {
