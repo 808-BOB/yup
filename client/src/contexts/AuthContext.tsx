@@ -110,8 +110,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(`${response.status}: ${errorText}`);
       }
       
-      const userData = await response.json();
-      console.log("AuthContext: Login successful, user data:", userData);
+      const responseData = await response.json();
+      console.log("AuthContext: Login successful, response data:", responseData);
+      
+      // Extract user from response structure {success: true, user: {...}, message: "..."}
+      const userData = responseData.user || responseData;
       setUser(userData);
     } catch (err) {
       console.error("AuthContext: Login error:", err instanceof Error ? err.message : err);

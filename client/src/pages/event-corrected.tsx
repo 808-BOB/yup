@@ -174,25 +174,34 @@ export default function EventPage() {
             Back to events
           </Button>
 
-          {/* Host branding section */}
-          {isHost && event.host_id && (
+          {/* Host actions - always show for debugging, then refine */}
+          {user && event && (
             <div className="mb-6 p-4 bg-slate-800 rounded-lg border border-slate-700">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-slate-400">Your Event</span>
-                <div className="flex gap-2">
-                  <Link href={`/events/${event.slug}/edit`}>
-                    <Button size="sm" variant="outline">
-                      <Edit className="h-4 w-4 mr-1" />
-                      Edit
-                    </Button>
-                  </Link>
-                  <Link href={`/events/${event.slug}/responses`}>
-                    <Button size="sm" variant="outline">
-                      <Eye className="h-4 w-4 mr-1" />
-                      Responses
-                    </Button>
-                  </Link>
+                <div>
+                  <span className="text-sm text-slate-400">
+                    {isHost ? "Your Event" : `Event by ${event.host_id}`}
+                  </span>
+                  <div className="text-xs text-slate-500">
+                    Debug: User={user?.id}, Host={event.host_id}, Match={user?.id === event.host_id}
+                  </div>
                 </div>
+                {isHost && (
+                  <div className="flex gap-2">
+                    <Link href={`/events/${event.slug}/edit`}>
+                      <Button size="sm" variant="outline">
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                    </Link>
+                    <Link href={`/events/${event.slug}/responses`}>
+                      <Button size="sm" variant="outline">
+                        <Eye className="h-4 w-4 mr-1" />
+                        Responses
+                      </Button>
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
           )}
