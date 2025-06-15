@@ -165,37 +165,32 @@ export default function EventPage() {
 
       <main className="flex-1 w-full animate-fade-in pb-32">
         <div className="mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => setLocation("/my-events")}
-            className="mb-4 p-0 h-auto font-normal text-gray-400 hover:text-white"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to events
-          </Button>
+          <div className="flex items-center justify-between mb-4">
+            <Button
+              variant="ghost"
+              onClick={() => setLocation("/my-events")}
+              className="p-0 h-auto font-normal text-gray-400 hover:text-white"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to events
+            </Button>
 
-          {/* Host actions */}
-          {isHost && (
-            <div className="mb-6 p-4 bg-slate-800 rounded-lg border border-slate-700">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-slate-400">Your Event</span>
-                <div className="flex gap-2">
-                  <Link href={`/events/${event.slug}/edit`}>
-                    <Button size="sm" variant="outline">
-                      <Edit className="h-4 w-4 mr-1" />
-                      Edit
-                    </Button>
-                  </Link>
-                  <Link href={`/events/${event.slug}/responses`}>
-                    <Button size="sm" variant="outline">
-                      <Eye className="h-4 w-4 mr-1" />
-                      Responses
-                    </Button>
-                  </Link>
-                </div>
+            {/* Host actions - simple icons */}
+            {isHost && (
+              <div className="flex gap-2">
+                <Link href={`/events/${event.slug}/edit`}>
+                  <Button size="sm" variant="ghost" className="p-2 h-8 w-8">
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href={`/events/${event.slug}/responses`}>
+                  <Button size="sm" variant="ghost" className="p-2 h-8 w-8">
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                </Link>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Event image */}
           {event.image_url && (
@@ -279,23 +274,7 @@ export default function EventPage() {
             </Button>
           )}
 
-          {/* Additional Edit button in action area for better visibility */}
-          {isHost && (
-            <div className="flex gap-2">
-              <Link href={`/events/${event.slug}/edit`} className="flex-1">
-                <Button variant="outline" className="w-full">
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Event
-                </Button>
-              </Link>
-              <Link href={`/events/${event.slug}/responses`} className="flex-1">
-                <Button variant="outline" className="w-full">
-                  <Eye className="h-4 w-4 mr-2" />
-                  View Responses
-                </Button>
-              </Link>
-            </div>
-          )}
+
 
           {/* RSVP buttons */}
           <div className="grid grid-cols-3 gap-3">
@@ -333,26 +312,7 @@ export default function EventPage() {
           </div>
         </div>
 
-        {/* Host actions */}
-        {isHost && (
-          <div className="mt-8 p-4 bg-slate-800 rounded-lg border border-slate-700">
-            <h3 className="text-white font-medium mb-3">Host Actions</h3>
-            <div className="flex gap-2">
-              <Link href={`/events/${event.slug}/edit`} className="flex-1">
-                <Button variant="outline" className="w-full">
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Event
-                </Button>
-              </Link>
-              <Link href={`/events/${event.slug}/responses`} className="flex-1">
-                <Button variant="outline" className="w-full">
-                  <Eye className="h-4 w-4 mr-2" />
-                  View Responses
-                </Button>
-              </Link>
-            </div>
-          </div>
-        )}
+
       </main>
 
       {/* Simplified modals - removing complex props that cause TypeScript errors */}
