@@ -124,6 +124,15 @@ export default function EventPage() {
   };
 
   const isHost = user && event && user.id === event.host_id;
+  
+  // Debug authentication state
+  console.log("Auth debug:", {
+    userExists: !!user,
+    userId: user?.id,
+    eventExists: !!event,
+    hostId: event?.host_id,
+    isHost
+  });
 
   // Early returns for loading and error states
   if (isLoading) {
@@ -286,6 +295,24 @@ export default function EventPage() {
               <Plus className="h-4 w-4 mr-2" />
               Invite Others
             </Button>
+          )}
+
+          {/* Additional Edit button in action area for better visibility */}
+          {isHost && (
+            <div className="flex gap-2">
+              <Link href={`/events/${event.slug}/edit`} className="flex-1">
+                <Button variant="outline" className="w-full">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Event
+                </Button>
+              </Link>
+              <Link href={`/events/${event.slug}/responses`} className="flex-1">
+                <Button variant="outline" className="w-full">
+                  <Eye className="h-4 w-4 mr-2" />
+                  View Responses
+                </Button>
+              </Link>
+            </div>
           )}
 
           {/* RSVP buttons */}

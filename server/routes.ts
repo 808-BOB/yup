@@ -190,6 +190,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           brand_theme: "cyan"
         };
         
+        // Store user in session
+        (req as any).session = (req as any).session || {};
+        (req as any).session.user = user;
+        
         return res.json({ 
           success: true, 
           user,
@@ -204,8 +208,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get current user endpoint
+  app.get("/api/auth/me", (req: Request, res: Response) => {
+    try {
+      const user = (req as any).session?.user;
+      if (user) {
+        return res.json(user);
+      }
+      return res.status(401).json({ error: "Not authenticated" });
+    } catch (error) {
+      console.error("Auth check error:", error);
+      return res.status(500).json({ error: "Authentication check failed" });
+    }
+  });
+
   app.post("/api/auth/logout", (req: Request, res: Response) => {
-    res.json({ success: true, message: "Logged out successfully" });
+    try {
+      (req as any).session = null;
+      res.json({ success: true, message: "Logged out successfully" });
+    } catch (error) {
+      console.error("Logout error:", error);
+      res.status(500).json({ error: "Logout failed" });
+    }
   });
 
   // Health check endpoint
