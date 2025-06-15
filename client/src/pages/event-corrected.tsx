@@ -124,15 +124,6 @@ export default function EventPage() {
   };
 
   const isHost = user && event && user.id === event.host_id;
-  
-  // Debug authentication state
-  console.log("Auth debug:", {
-    userExists: !!user,
-    userId: user?.id,
-    eventExists: !!event,
-    hostId: event?.host_id,
-    isHost
-  });
 
   // Early returns for loading and error states
   if (isLoading) {
@@ -183,34 +174,25 @@ export default function EventPage() {
             Back to events
           </Button>
 
-          {/* Host actions - always show for debugging, then refine */}
-          {user && event && (
+          {/* Host actions */}
+          {isHost && (
             <div className="mb-6 p-4 bg-slate-800 rounded-lg border border-slate-700">
               <div className="flex items-center justify-between mb-2">
-                <div>
-                  <span className="text-sm text-slate-400">
-                    {isHost ? "Your Event" : `Event by ${event.host_id}`}
-                  </span>
-                  <div className="text-xs text-slate-500">
-                    Debug: User={user?.id}, Host={event.host_id}, Match={user?.id === event.host_id}
-                  </div>
+                <span className="text-sm text-slate-400">Your Event</span>
+                <div className="flex gap-2">
+                  <Link href={`/events/${event.slug}/edit`}>
+                    <Button size="sm" variant="outline">
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
+                  </Link>
+                  <Link href={`/events/${event.slug}/responses`}>
+                    <Button size="sm" variant="outline">
+                      <Eye className="h-4 w-4 mr-1" />
+                      Responses
+                    </Button>
+                  </Link>
                 </div>
-                {isHost && (
-                  <div className="flex gap-2">
-                    <Link href={`/events/${event.slug}/edit`}>
-                      <Button size="sm" variant="outline">
-                        <Edit className="h-4 w-4 mr-1" />
-                        Edit
-                      </Button>
-                    </Link>
-                    <Link href={`/events/${event.slug}/responses`}>
-                      <Button size="sm" variant="outline">
-                        <Eye className="h-4 w-4 mr-1" />
-                        Responses
-                      </Button>
-                    </Link>
-                  </div>
-                )}
               </div>
             </div>
           )}
