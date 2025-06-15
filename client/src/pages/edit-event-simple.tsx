@@ -256,17 +256,6 @@ export default function EditEventSimple() {
                 )}
               </div>
 
-              <div>
-                <Label htmlFor="description" className="text-white">Description</Label>
-                <Textarea
-                  id="description"
-                  {...form.register("description")}
-                  className="bg-slate-700 border-slate-600 text-white"
-                  placeholder="Event description (optional)"
-                  rows={3}
-                />
-              </div>
-
               {/* Image Upload Section */}
               <div>
                 <Label className="text-white">Event Image</Label>
@@ -318,6 +307,17 @@ export default function EditEventSimple() {
                     </Button>
                   )}
                 </div>
+              </div>
+
+              <div>
+                <Label htmlFor="description" className="text-white">Description</Label>
+                <Textarea
+                  id="description"
+                  {...form.register("description")}
+                  className="bg-slate-700 border-slate-600 text-white"
+                  placeholder="Event description (optional)"
+                  rows={3}
+                />
               </div>
 
               <div>
