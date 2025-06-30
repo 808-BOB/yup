@@ -201,6 +201,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      if (username === "subourbon" && password === "events") {
+        const user = {
+          id: "subourbon-admin",
+          username: "subourbon",
+          display_name: "Subourbon Admin",
+          is_premium: true,
+          is_admin: true,
+          brand_theme: "#84793d"
+        };
+        
+        // Store user in session
+        (req as any).session = (req as any).session || {};
+        (req as any).session.user = user;
+        
+        return res.json({ 
+          success: true, 
+          user,
+          message: "Login successful" 
+        });
+      }
+
       return res.status(401).json({ error: "Invalid credentials" });
     } catch (error) {
       console.error("Login error:", error);
