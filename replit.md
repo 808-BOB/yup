@@ -51,6 +51,8 @@ All major functionality now operational:
 - Event hosts can see edit buttons when viewing their own events
 - Image upload/editing capability added to event edit form with Base64 storage
 - Complete event CRUD operations with proper database field mapping
+- Subourbon admin user (subourbon/events) authentication working
+- Bob premium user (bob/events) authentication working
 
 ## Technical Notes
 - All components updated to use corrected database schema
