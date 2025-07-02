@@ -1,0 +1,51 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# App Service & API Agent Guidelines
+
+**(Yup.RSVP, Next.js Monorepo, Migrating to Supabase, Vercel)**
+
+---
+
+## 1. Code Quality & Modularity
+- Write modular, readable, and well-documented TypeScript code.
+- Place shared logic (such as email invites, analytics, or data validation) in monorepo packages (e.g., `/packages/common`).
+- Avoid duplication between agent and backend—use shared packages.
+
+## 2. Environment & Secrets Management
+- Store all secrets and config in `.env.local` files (never in source).
+- Use Vercel project environment variables for all staging and production secrets.
+
+## 3. Asynchronous Logic & Error Handling
+- Use `async/await` for all asynchronous operations—no callbacks.
+- All API agent routes use a central error handler (middleware or utility).
+- Validate input with Zod or Yup before processing any user/event data.
+
+## 4. API Client Integration
+- All API clients must be typed (tRPC or OpenAPI for API calls).
+- Keep internal API logic isolated from page rendering logic.
+
+## 5. Performance & Efficiency
+- Optimize agents for fast cold starts (Vercel serverless best practices).
+- Minimize memory use; avoid in-memory state for scalability.
+
+## 6. Testing & Reliability
+- Write and maintain tests for all critical agent logic.
+- Use Vitest or Jest for isolated tests inside the monorepo.
+- Mock all external calls (Supabase, Stripe, email) in tests.
+
+## 7. Documentation
+- Document every exported function (JSDoc or Markdown).
+- Keep an `AGENT_GUIDELINES.md` in the monorepo root.
+
+## 8. CI/CD & Deployment
+- Ensure agent logic is covered by automated CI checks (type check, lint, test).
+- No PR is merged without a passing Vercel preview.
+
+## 9. Supabase Migration
+- Move all data operations to Supabase Postgres (managed via Supabase dashboard).
+- Use Supabase Auth for user authentication; migrate session logic from express-session or NextAuth to Supabase Auth.
+- Use Supabase Edge Functions for custom server-side logic.
+- Use Supabase storage for file and image uploads.

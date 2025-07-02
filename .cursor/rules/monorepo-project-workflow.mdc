@@ -1,0 +1,58 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Monorepo & Project Workflow Standards
+
+**(Yup.RSVP, PNPM, Next.js, Supabase, Vercel)**
+
+---
+
+## 1. Structure & Tooling
+
+- Recommended layout for all new features/packages/apps:
+
+starter-app/
+├── apps/
+│ ├── web/ # Public-facing Next.js app
+│ └── admin/ # Admin dashboard (optional)
+├── packages/
+│ ├── ui/ # Shared UI components (Shadcn-based)
+│ ├── utils/ # Supabase, Stripe, SendGrid, Twilio helpers
+│ └── config/ # Shared Tailwind config, tokens, OpenAI setup
+├── pnpm-workspace.yaml
+├── turbo.json
+├── package.json
+└── README.md
+
+- All apps (public, admin, etc.) go in `/apps`
+- Shared code and configs go in `/packages`
+- Use pnpm and TurboRepo for efficient, scalable monorepo development
+- Environment variables and sensitive configs are managed per Vercel/Supabase/Stripe docs
+
+## 2. Consistent Formatting & Linting
+- Enforce Prettier and ESLint (auto-fix on commit, CI required).
+- All code in TypeScript.
+
+## 3. Version Control
+- All code and config tracked in Git, with main, dev, and feature branches as needed.
+- Use Pull Requests with required review for merges.
+
+## 4. Dependency Management
+- Use `pnpm` for all installs; no NPM/Yarn. Document any workspace linking needed.
+- Keep all dependencies up to date (renovate, npm-check-updates, etc).
+
+## 5. Documentation
+- Setup instructions, features, and deployment documented in `/docs` and `README.md`.
+- New devs must be able to clone, `pnpm install`, and `pnpm dev` to start.
+
+## 6. Testing & CI
+- Automated tests (unit/integration) required for all critical features.
+- All commits/PRs must pass CI, with Vercel preview before merge.
+
+## 7. Supabase Migration
+- Document and automate the process of migrating data/models to Supabase.
+- Store all Supabase API keys and configs in Vercel environment variables.
+- Use Supabase CLI for migrations and local development when possible.
+

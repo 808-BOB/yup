@@ -1,0 +1,40 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Event Domain & Data Model Principles
+
+**(Yup.RSVP, Next.js, Supabase Migration, Vercel Deploy)**
+
+---
+
+## 1. Data Consistency
+- Supabase Postgres is the single source of truth for all event, user, and RSVP data.
+- All updates (event, user, RSVP) are atomic and validated via Supabase RLS (Row Level Security) and schema constraints.
+
+## 2. Authorization
+- Only event owners or admins (Supabase roles) can mutate their events or branding.
+- All mutations are protected by Supabase policies (RLS and API middleware).
+
+## 3. Auditability
+- Track all significant changes (event updates, RSVP changes, payments) via event tables or Supabase triggers.
+
+## 4. Input Validation
+- All input is validated in the frontend (Zod/Yup) and re-validated on the backend (Supabase or Edge Function).
+
+## 5. Error Feedback
+- Return actionable, clear error messages for data validation, event creation, and RSVP logic.
+
+## 6. Documentation
+- Maintain `EVENT_MODEL.md` or similar, documenting table structure and business rules as data models evolve.
+
+## 7. Reliability & Testing
+- Automated tests for all event and RSVP logic.
+- Mock Supabase in test environments.
+
+## 8. Supabase Migration
+- Migrate all event, RSVP, and user tables to Supabase Postgres.
+- Use Supabase Storage for event images and attachments.
+- Enforce all user and event logic through Supabase policies, functions, and triggers.
+
