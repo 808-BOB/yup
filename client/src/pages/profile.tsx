@@ -6,7 +6,8 @@ import { z } from "zod";
 import { User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { supabase } from "@/lib/supabase";
+import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,9 +31,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import Footer from "@/components/footer";
-import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 // Define the schema for form validation
 const profileSchema = z
@@ -40,43 +39,15 @@ const profileSchema = z
     displayName: z
       .string()
       .min(2, "Display name must be at least 2 characters"),
-    currentPassword: z.string().optional(),
-    newPassword: z
+    username: z
       .string()
-      .min(6, "Password must be at least 6 characters")
-      .optional(),
-    confirmPassword: z.string().optional(),
-  })
-  .refine(
-    (data) => {
-      if (data.newPassword && !data.currentPassword) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Current password is required to set new password",
-      path: ["currentPassword"],
-    },
-  )
-  .refine(
-    (data) => {
-      if (
-        data.newPassword &&
-        data.confirmPassword &&
-        data.newPassword !== data.confirmPassword
-      ) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Passwords do not match",
-      path: ["confirmPassword"],
-    },
-  );
+      .min(2, "Username must be at least 2 characters"),
+    password: z
+      .string()
+      .min(6, "Password must be at least 6 characters"),
+  });
 
-type ProfileFormValues = z.infer<typeof profileSchema>;
+type ProfileFormValues = z.infer<typeof profileSchema> & { profileImageFile?: File | null };
 
 export default function Profile() {
   const [, setLocation] = useLocation();
@@ -95,43 +66,87 @@ export default function Profile() {
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      displayName: user?.displayName || "",
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
+      displayName: user?.display_name || "",
+      username: user?.username || "",
+      password: "",
+      profileImageFile: null,
     },
   });
 
   // Handle form submission
   const onSubmit = async (data: ProfileFormValues) => {
+    if (!user) return;
+
     setIsSubmitting(true);
+
     try {
-      // Only include password fields if user wants to update password
-      const updateData: any = { displayName: data.displayName };
-      if (data.newPassword && data.currentPassword) {
-        updateData.currentPassword = data.currentPassword;
-        updateData.newPassword = data.newPassword;
+      // Verify current password by signing in again
+      if (!user.email) throw new Error("Email missing on user account");
+
+      const { error: verifyErr } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: data.password,
+      });
+      if (verifyErr) throw new Error("Incorrect password");
+
+      // Handle profile image upload (optional)
+      let profileImageUrl: string | undefined;
+      const file = (data as any).profileImageFile as File | null | undefined;
+      if (file) {
+        const filePath = `${user.id}/${Date.now()}_${file.name}`;
+        const { error: uploadErr } = await supabase.storage
+          .from("avatars")
+          .upload(filePath, file, {
+            cacheControl: "3600",
+            upsert: true,
+            contentType: file.type,
+          });
+        if (uploadErr) throw uploadErr;
+
+        const { data: publicUrlData } = supabase.storage
+          .from("avatars")
+          .getPublicUrl(filePath);
+        profileImageUrl = publicUrlData.publicUrl;
       }
 
-      await apiRequest("PUT", `/api/users/${user?.id}`, updateData);
+      // Prepare updates
+      const updates: Record<string, any> = {};
+      if (data.displayName && data.displayName !== user.display_name) {
+        updates.display_name = data.displayName;
+      }
+      if (data.username && data.username !== user.username) {
+        updates.username = data.username;
+      }
+      if (profileImageUrl) {
+        updates.profile_image_url = profileImageUrl;
+      }
 
-      // Invalidate user data cache
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      if (Object.keys(updates).length > 0) {
+        const { error: updateErr } = await supabase
+          .from("users")
+          .update(updates)
+          .eq("id", user.id);
+        if (updateErr) throw updateErr;
+
+        // Also update auth user metadata
+        await supabase.auth.updateUser({
+          data: {
+            display_name: data.displayName,
+            username: data.username,
+            profile_image_url: profileImageUrl,
+          },
+        });
+      }
 
       toast({
         title: "Profile Updated",
         description: "Your profile has been updated successfully.",
       });
 
-      setIsEditing(false);
-
-      // Reset password fields
-      form.setValue("currentPassword", "");
-      form.setValue("newPassword", "");
-      form.setValue("confirmPassword", "");
+      // Refresh page to pick up new changes
+      window.location.reload();
     } catch (error: any) {
-      const errorMessage =
-        error?.message || "Something went wrong. Please try again.";
+      const errorMessage = error?.message || "Something went wrong. Please try again.";
       toast({
         title: "Update Failed",
         description: errorMessage,
@@ -181,13 +196,16 @@ export default function Profile() {
             <CardHeader className="pb-2">
               <div className="flex items-center space-x-4">
                 <Avatar className="h-16 w-16 border border-primary bg-gray-900">
+                  {user?.profile_image_url ? (
+                    <AvatarImage src={user.profile_image_url} alt={user.display_name} />
+                  ) : null}
                   <AvatarFallback className="bg-gray-900 text-primary text-xl">
-                    {getInitials(user?.displayName || "")}
+                    {getInitials(user?.display_name || "")}
                   </AvatarFallback>
                 </Avatar>
 
                 <div>
-                  <CardTitle>{user?.displayName}</CardTitle>
+                  <CardTitle>{user?.display_name}</CardTitle>
                   <CardDescription className="text-gray-400">
                     @{user?.username}
                   </CardDescription>
@@ -224,79 +242,59 @@ export default function Profile() {
                       )}
                     />
 
-                    <div className="pt-2">
-                      <h3 className="text-sm font-medium mb-3">
-                        Change Password
-                      </h3>
-                      <Separator className="bg-gray-800 mb-4" />
+                    <FormField
+                      control={form.control}
+                      name="username"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-400">Username</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Your username"
+                              className={inputClasses}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage className="text-primary" />
+                        </FormItem>
+                      )}
+                    />
 
-                      <div className="space-y-4">
-                        <FormField
-                          control={form.control}
-                          name="currentPassword"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-400">
-                                Current Password
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="password"
-                                  placeholder="••••••••"
-                                  className={inputClasses}
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage className="text-primary" />
-                              <FormDescription className="text-xs text-gray-500">
-                                Required to change your password
-                              </FormDescription>
-                            </FormItem>
-                          )}
-                        />
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-400">
+                            Confirm Password
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="password"
+                              placeholder="••••••••"
+                              className={inputClasses}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage className="text-primary" />
+                          <FormDescription className="text-xs text-gray-500">
+                            Required to update profile details
+                          </FormDescription>
+                        </FormItem>
+                      )}
+                    />
 
-                        <FormField
-                          control={form.control}
-                          name="newPassword"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-400">
-                                New Password
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="password"
-                                  placeholder="••••••••"
-                                  className={inputClasses}
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage className="text-primary" />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="confirmPassword"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-gray-400">
-                                Confirm New Password
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="password"
-                                  placeholder="••••••••"
-                                  className={inputClasses}
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage className="text-primary" />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
+                    <div>
+                      <FormLabel className="text-gray-400">Profile Picture</FormLabel>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        className={inputClasses}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          form.setValue("profileImageFile", file as any);
+                        }}
+                      />
                     </div>
 
                     <div className="flex justify-end space-x-2 pt-2">
@@ -325,7 +323,7 @@ export default function Profile() {
                     <h3 className="text-sm font-medium text-gray-400 mb-1">
                       Display Name
                     </h3>
-                    <p>{user?.displayName}</p>
+                    <p>{user?.display_name}</p>
                   </div>
 
                   <div>
@@ -340,6 +338,14 @@ export default function Profile() {
                       Password
                     </h3>
                     <p>••••••••</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 bg-transparent border-gray-700 hover:bg-gray-800"
+                      onClick={() => setLocation("/change-password")}
+                    >
+                      Change Password
+                    </Button>
                   </div>
 
                   <div className="pt-2">
@@ -386,12 +392,12 @@ export default function Profile() {
               <div className="space-y-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-400 mb-1">Current Plan</h3>
-                  {user?.isPremium ? (
+                  {user?.is_premium ? (
                     <p className="flex items-center">
                       <span className="flex h-2 w-2 bg-primary rounded-full mr-2"></span>
                       Premium Plan
                     </p>
-                  ) : user?.isPro ? (
+                  ) : user?.is_pro ? (
                     <p className="flex items-center">
                       <span className="flex h-2 w-2 bg-primary rounded-full mr-2"></span>
                       Pro Plan
@@ -407,14 +413,14 @@ export default function Profile() {
                 <div>
                   <h3 className="text-sm font-medium text-gray-400 mb-1">Features</h3>
                   <ul className="space-y-1 text-sm">
-                    {user?.isPremium ? (
+                    {user?.is_premium ? (
                       <>
                         <li>• Unlimited events</li>
                         <li>• Advanced analytics</li>
                         <li>• Custom branding</li>
                         <li>• White-label events</li>
                       </>
-                    ) : user?.isPro ? (
+                    ) : user?.is_pro ? (
                       <>
                         <li>• Unlimited events</li>
                         <li>• Advanced analytics</li>
@@ -433,12 +439,11 @@ export default function Profile() {
                 </div>
                 
                 <div className="pt-2">
-                  {(user?.isPro || user?.isPremium) && user?.stripeCustomerId ? (
+                  {(user?.is_pro || user?.is_premium) && user?.stripe_customer_id ? (
                     <Button
                       onClick={async () => {
                         try {
-                          const response = await apiRequest("POST", "/api/create-customer-portal", {});
-                          const data = await response.json();
+                          const data = await apiRequest<{ url: string }>("POST", "/api/create-customer-portal", {});
                           window.location.href = data.url;
                         } catch (error) {
                           toast({

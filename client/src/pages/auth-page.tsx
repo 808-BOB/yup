@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import YupLogo from "@assets/Yup-logo.png";
+import { FcGoogle } from "react-icons/fc";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -41,7 +42,7 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [location, setLocation] = useLocation();
-  const { login, signup, user } = useAuth();
+  const { login, signup, user, loginWithGoogle } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -293,6 +294,23 @@ export default function AuthPage() {
               Sign in to your account
             </h2>
             <LoginForm />
+            <div className="mt-6 text-center">
+              <p className="text-gray-400 mb-4">Or continue with</p>
+              <Button
+                variant="outline"
+                className="border border-gray-700 rounded-none h-12 hover:bg-gray-800 flex items-center justify-center gap-2 mx-auto"
+                onClick={async () => {
+                  try {
+                    await loginWithGoogle();
+                    setLocation('/my-events');
+                  } catch (e) {
+                    toast({ title: 'Google sign-in failed', variant: 'destructive' });
+                  }
+                }}>
+                <FcGoogle className="h-5 w-5" />
+                <span>Google</span>
+              </Button>
+            </div>
           </TabsContent>
           <TabsContent value="signup">
             <h2 className="text-xl font-semibold text-gray-200 mb-6 text-center">

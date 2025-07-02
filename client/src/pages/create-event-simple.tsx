@@ -14,7 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAccessibleColors } from "@/hooks/use-accessible-colors";
 import Header from "@/components/header";
 import { insertEventSchema, type InsertEvent } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
+import { eventService } from "@/services";
+import { queryClient } from "@/lib/queryClient";
 
 export default function CreateEventSimple() {
   const [, navigate] = useLocation();
@@ -63,7 +64,8 @@ export default function CreateEventSimple() {
 
       console.log("Submitting event:", eventPayload);
 
-      const newEvent = await apiRequest<any>("POST", "/api/events", eventPayload);
+      await eventService.createEvent(eventPayload);
+      queryClient.invalidateQueries({ queryKey: ['my-events'] });
       
       toast({
         title: "Event Created!",

@@ -10,9 +10,10 @@ import { type Event } from "@shared/schema";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { eventService } from "@/services";
+import { eventService } from "@/services/eventService";
 import { apiRequest } from "@/lib/queryClient";
 import { useAccessibleColors } from "@/hooks/use-accessible-colors";
+import { useRequireAuth } from "@/hooks/use-require-auth";
 
 type ResponseFilter = "all" | "yup" | "nope" | "maybe" | "archives";
 
@@ -23,6 +24,7 @@ export default function MyEvents() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { accessibleTextColor, primaryColor } = useAccessibleColors();
+  useRequireAuth();
 
   // Initialize query (will only fetch if enabled)
   const {
@@ -30,8 +32,9 @@ export default function MyEvents() {
     isLoading: eventsLoading,
     error,
   } = useQuery<Event[]>({
-    queryKey: ['/api/events/my-events'],
-    enabled: !!user,
+    queryKey: ['my-events'],
+    enabled: !authLoading && !!user,
+    queryFn: () => eventService.getMyEvents(),
   });
 
   // Debug logging
@@ -48,8 +51,12 @@ export default function MyEvents() {
 
   // Fetch all of the user's responses
   const { data: userResponses = {} } = useQuery<Record<string, "yup" | "nope">>({
-    queryKey: ['/api/responses'],
-    enabled: !!user,
+    queryKey: ['my-responses'],
+    enabled: !authLoading && !!user,
+    queryFn: async () => {
+      // Placeholder empty map until responses service migrated
+      return {};
+    },
   });
 
   // Mutation for creating test events
@@ -73,25 +80,6 @@ export default function MyEvents() {
       });
     }
   });
-
-  // Using useEffect for navigation to avoid React update during render warnings
-  useEffect(() => {
-    if (!authLoading && !user) {
-      setLocation("/login");
-    }
-  }, [authLoading, user, setLocation]);
-
-  // Early return if still loading or no user
-  if (authLoading || !user) {
-    return (
-      <div className="w-full max-w-md mx-auto p-8 h-screen flex flex-col bg-gray-950">
-        <Header />
-        <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </div>
-    );
-  }
 
   const isLoading = authLoading || eventsLoading;
 

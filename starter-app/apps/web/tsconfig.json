@@ -1,0 +1,55 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "baseUrl": ".",
+    "paths": {
+      "@/ui/*": [
+        "../../packages/ui/*"
+      ],
+      "@/utils": ["../../packages/utils/utils.ts"],
+      "@/utils/*": ["../../packages/utils/*"],
+      "@/lib/*": ["../../packages/utils/*"],
+      "@/lib/utils/*": ["../../packages/utils/*"],
+      "@/hooks/*": ["../../packages/hooks/*"],
+      "@/components/ui/*": ["../../packages/ui/*"],
+      "@/dash/*": ["../../packages/dash/*"],
+      "@/contexts/*": ["../../packages/utils/*"],
+      "@/components/*": ["../../packages/dash/*"],
+      "@/components/ui/*": ["../../packages/ui-full/*"],
+      "@/contexts/*": ["../../packages/contexts/*"],
+      "@/types": ["../../packages/types/index.ts"],
+      "@/types/*": ["../../packages/types/*"]
+    },
+    "incremental": true,
+    "esModuleInterop": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

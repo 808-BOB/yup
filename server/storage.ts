@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import {
   type User,
   type InsertUser,
@@ -275,3 +276,4 @@ class SupabaseStorage implements IStorage {
 }
 
 export const storage = new SupabaseStorage();
+export { supabase };

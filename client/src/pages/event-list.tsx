@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAccessibleColors } from "@/hooks/use-accessible-colors";
+import { useRequireAuth } from "@/hooks/use-require-auth";
+import { eventService } from "@/services/eventService";
 
 type ResponseFilter = "all" | "yup" | "nope" | "maybe" | "archives";
 
@@ -29,8 +31,9 @@ export default function EventList() {
     isLoading: eventsLoading,
     error,
   } = useQuery<Event[]>({
-    queryKey: ['/api/events/invited'],
-    enabled: !!user,
+    queryKey: ['invited-events'],
+    enabled: !authLoading && !!user,
+    queryFn: () => eventService.getUserInvites(user!.id),
   });
 
   // Prefetch user responses for all events using our new API endpoint
@@ -60,12 +63,7 @@ export default function EventList() {
     }
   });
 
-  // Using useEffect for navigation to avoid React update during render warnings
-  useEffect(() => {
-    if (!authLoading && !user) {
-      setLocation("/login");
-    }
-  }, [authLoading, user, setLocation]);
+  useRequireAuth();
 
   // Early return if still loading or no user
   if (authLoading || !user) {

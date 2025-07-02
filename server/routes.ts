@@ -1,6 +1,6 @@
 import express, { type Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage, supabase } from "./storage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
@@ -253,9 +253,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Signup endpoint (migrated to Supabase Auth)
+  app.post("/api/auth/signup", express.json(), async (req: Request, res: Response) => {
+    try {
+      const { username, displayName, password, phoneNumber, email } = req.body ?? {};
+
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+
+      if (!password) {
+        return res.status(400).json({ error: "Password is required" });
+      }
+
+      // Create user in Supabase Auth via service-role key
+      const { data: authUser, error: authErr } = await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          username,
+          display_name: displayName,
+          phone_number: phoneNumber,
+        },
+      });
+
+      if (authErr) {
+        if (authErr.message.includes("User already registered")) {
+          return res.status(409).json({ error: "Username or email already taken" });
+        }
+        throw authErr;
+      }
+
+      // Insert profile row via storage abstraction
+      await storage.upsertUser({
+        id: authUser.user?.id!,
+        username,
+        display_name: displayName,
+        email,
+        phone_number: phoneNumber,
+      });
+
+      return res.status(201).json({ success: true });
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      return res.status(500).json({ error: error.message || "Signup failed" });
+    }
+  });
+
   // Health check endpoint
   app.get("/api/health", (req: Request, res: Response) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+  // ---- Google OAuth via Supabase ----
+  app.get("/auth/google", async (req: Request, res: Response) => {
+    const origin = `${req.protocol}://${req.get("host")}`;
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${origin}/auth/callback` },
+    });
+    if (error) {
+      console.error("Google OAuth error", error);
+      return res.status(500).send("OAuth init failed");
+    }
+    // Redirect user to provider URL
+    return res.redirect(data.url);
+  });
+
+  // OAuth callback to finish login and redirect to app
+  app.get("/auth/callback", (_req: Request, res: Response) => {
+    // Supabase sets session cookie, just forward to desired page
+    return res.redirect("/my-events");
   });
 
   const httpServer = createServer(app);

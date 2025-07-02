@@ -7,13 +7,8 @@ import React, {
 } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { type User } from "@shared/schema";
-import { 
-  signInWithGoogle, 
-  signInWithApple, 
-  signOut, 
-  onAuthStateChange
-} from "@/lib/firebase";
-import { User as FirebaseUser } from "firebase/auth";
+import { supabase } from "@/lib/supabase";
+import { useLocation } from "wouter";
 
 interface AuthContextType {
   user: User | null;
@@ -39,83 +34,127 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [, setLocation] = useLocation();
 
-  // Check for traditional session auth on startup
+  // Initial load: hydrate user from persisted session
   useEffect(() => {
-    const checkAuth = async () => {
+    const init = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session?.user) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        // Try to get user from traditional auth
-        const userData = await apiRequest<User>("GET", "/api/auth/me", undefined, { credentials: 'include' });
-        setUser(userData);
-        console.log("User session found:", userData?.username);
-      } catch (err) {
-        // User is not logged in
-        setUser(null);
-        console.log("Not logged in");
+        const { data: profileRow, error: profileErr } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", data.session.user.id)
+          .single();
+
+        if (profileErr && profileErr.code === "PGRST116") {
+          // Profile row missing — create it
+          const defaultUsername = data.session.user.email?.split("@")[0] ?? data.session.user.id.slice(0, 8);
+          const { data: inserted } = await supabase
+            .from("users")
+            .insert({
+              id: data.session.user.id,
+              username: defaultUsername,
+              display_name: data.session.user.user_metadata.full_name ?? defaultUsername,
+              email: data.session.user.email,
+            })
+            .select()
+            .single();
+          setUser(inserted as User);
+        } else {
+          setUser(profileRow as User);
+        }
       } finally {
         setIsLoading(false);
       }
     };
-    
-    checkAuth();
+
+    init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sync Firebase user data with our backend
-  const syncUserWithBackend = async (firebaseUser: FirebaseUser) => {
-    try {
-      setIsLoading(true);
-      // Send Firebase token to backend to verify and create/update user
-      const idToken = await firebaseUser.getIdToken();
-      
-      // Call our backend to handle the Firebase token
-      const userData = await apiRequest<User>("POST", "/api/auth/firebase", {
-        idToken,
-        displayName: firebaseUser.displayName || 'User',
-        email: firebaseUser.email,
-        photoURL: firebaseUser.photoURL,
-        uid: firebaseUser.uid,
-        provider: firebaseUser.providerData[0]?.providerId
-      });
-      
-      setUser(userData);
-    } catch (err) {
-      console.error("Error syncing with backend:", err);
-      setError("Failed to authenticate with server");
-    } finally {
+  // Supabase listener to keep profile in sync
+  useEffect(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        // fetch profile row from backend (or directly from Supabase if you expose RLS)
+        try {
+          const { data: profileRow, error: profileErr } = await supabase
+            .from("users")
+            .select("*")
+            .eq("id", session.user.id)
+            .single();
+
+          if (profileErr && profileErr.code === "PGRST116") {
+            // No profile yet – create one
+            const defaultUsername = session.user.email?.split("@")[0] ?? session.user.id.slice(0, 8);
+            const { data: inserted } = await supabase
+              .from("users")
+              .insert({
+                id: session.user.id,
+                username: defaultUsername,
+                display_name: session.user.user_metadata.full_name ?? defaultUsername,
+                email: session.user.email,
+              })
+              .select()
+              .single();
+            setUser(inserted as User);
+            // Do not force redirect; stay on current page
+          } else {
+            setUser(profileRow as User);
+          }
+        } catch {
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
       setIsLoading(false);
-    }
-  };
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
 
   const login = async (username: string, password: string) => {
     setIsLoading(true);
     setError(null);
-    console.log("AuthContext: Attempting login with username:", username);
 
     try {
-      // Simple direct endpoint call with debug logging
-      console.log("Sending login request to /api/auth/login");
-      
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-        credentials: "include"
-      });
-      
-      console.log("Login response status:", response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Login failed:", response.status, errorText);
-        throw new Error(`${response.status}: ${errorText}`);
+      let signInEmail = username;
+      if (!signInEmail.includes("@")) {
+        // treat as username, resolve to email
+        const { data: row, error: uErr } = await supabase
+          .from("users")
+          .select("email")
+          .eq("username", signInEmail)
+          .single();
+
+        if (uErr || !row?.email) {
+          setError("User not found");
+          return;
+        }
+        signInEmail = row.email;
       }
-      
-      const responseData = await response.json();
-      console.log("AuthContext: Login successful, response data:", responseData);
-      
-      // Extract user from response structure {success: true, user: {...}, message: "..."}
-      const userData = responseData.user || responseData;
-      setUser(userData);
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: signInEmail,
+        password,
+      });
+      if (error) throw error;
+
+      const { data: profile } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", data.user!.id)
+        .single();
+
+      setUser(profile as User);
+      setLocation("/my-events");
     } catch (err) {
       console.error("AuthContext: Login error:", err instanceof Error ? err.message : err);
       setError("Invalid username or password");
@@ -136,15 +175,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
 
     try {
-      const userData = await apiRequest<User>("POST", "/api/auth/signup", {
-        username,
-        displayName,
+      // 1. create auth user
+      const { data, error } = await supabase.auth.signUp({
+        email: email!,
         password,
-        phoneNumber,
-        email,
+        options: {
+          data: { username, display_name: displayName, phone_number: phoneNumber },
+        },
       });
+      if (error) throw error;
 
-      setUser(userData);
+      // 2. insert profile row (will succeed via RLS)
+      const { data: profile } = await supabase
+        .from("users")
+        .insert({
+          id: data.user!.id,
+          username,
+          display_name: displayName,
+          email,
+          phone_number: phoneNumber,
+        })
+        .select()
+        .single();
+
+      setUser(profile as User);
+      setLocation("/my-events");
     } catch (err) {
       setError("Failed to create account. Username may already be taken.");
       throw err;
@@ -156,10 +211,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginWithGoogle = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      await signInWithGoogle();
-      // User state will be updated by the auth state listener
+      const { error } = await supabase.auth.signInWithOAuth({ provider: "google" });
+      if (error) throw error;
     } catch (err) {
       console.error("Google sign-in error:", err);
       setError("Failed to sign in with Google");
@@ -172,10 +227,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginWithApple = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      await signInWithApple();
-      // User state will be updated by the auth state listener
+      const { error } = await supabase.auth.signInWithOAuth({ provider: "apple" });
+      if (error) throw error;
     } catch (err) {
       console.error("Apple sign-in error:", err);
       setError("Failed to sign in with Apple");
@@ -190,14 +245,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
 
     try {
-      // First try to sign out from Firebase
-      await signOut();
-      
-      // Also sign out from our backend session
-      await apiRequest("POST", "/api/auth/logout");
-      
-      // Clear user state
-      setUser(null);
+      await supabase.auth.signOut();
     } catch (err) {
       console.error("Logout error:", err);
       setError("Failed to logout");
@@ -214,6 +262,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const userData = await apiRequest<User>("GET", "/api/auth/me", undefined, { credentials: 'include' });
       setUser(userData);
+      setLocation("/my-events");
     } catch (err) {
       // If we can't get the user data, they might be logged out
       setUser(null);

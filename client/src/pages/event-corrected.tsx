@@ -12,6 +12,7 @@ import { type Event as BaseEvent, type Response } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAccessibleColors } from "@/hooks/use-accessible-colors";
+import { supabase } from "@/lib/supabase";
 
 // Extended Event type with host display name
 type Event = BaseEvent & {
@@ -63,6 +64,21 @@ export default function EventPage() {
     queryKey: [`/api/events/${event?.id}/responses/count`],
     enabled: !!event?.id,
   });
+
+  // Host name query
+  const { data: hostProfile } = useQuery({
+    queryKey: ['host', event?.host_id],
+    enabled: !!event?.host_id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('users')
+        .select('display_name')
+        .eq('id', event!.host_id)
+        .single();
+      return data as { display_name: string } | null;
+    },
+  });
+  const hostName = hostProfile?.display_name || `User ${event?.host_id}`;
 
   // Update state when existing response is loaded
   useEffect(() => {
@@ -238,7 +254,7 @@ export default function EventPage() {
               <User className="h-5 w-5 text-slate-400 mt-0.5" />
               <div>
                 <p className="text-white font-medium">
-                  Hosted by {event.hostDisplayName || `User ${event.host_id}`}
+                  Hosted by {hostName}
                 </p>
               </div>
             </div>
@@ -274,8 +290,6 @@ export default function EventPage() {
             </Button>
           )}
 
-
-
           {/* RSVP buttons */}
           <div className="grid grid-cols-3 gap-3">
             <Button
@@ -286,6 +300,7 @@ export default function EventPage() {
                 backgroundColor: primaryColor || 'hsl(308, 100%, 66%)',
                 color: accessibleTextColor 
               } : {}}
+              disabled={isHost}
             >
               {event.use_custom_rsvp_text && event.custom_yup_text 
                 ? event.custom_yup_text
@@ -296,6 +311,7 @@ export default function EventPage() {
               onClick={() => handleResponse("maybe")}
               variant={userResponse === "maybe" ? "default" : "outline"}
               className="flex-1"
+              disabled={isHost}
             >
               MAYBE
             </Button>
@@ -304,6 +320,7 @@ export default function EventPage() {
               onClick={() => handleResponse("nope")}
               variant={userResponse === "nope" ? "default" : "outline"}
               className="flex-1"
+              disabled={isHost}
             >
               {event.use_custom_rsvp_text && event.custom_nope_text 
                 ? event.custom_nope_text
@@ -311,7 +328,6 @@ export default function EventPage() {
             </Button>
           </div>
         </div>
-
 
       </main>
 
