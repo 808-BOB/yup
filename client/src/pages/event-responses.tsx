@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import PageTitle from "@/components/page-title";
 import EventGuestManager from "@/components/event-guest-manager";
+import { eventService } from "@/services/eventService";
 
 // Extended Response type that includes user info added by the API
 type ResponseWithUserInfo = Response & {
@@ -38,21 +39,15 @@ export default function EventResponses() {
   const isSlugRoute = matchBySlug && paramsBySlug?.slug;
 
   // Try to fetch event by slug if that route matched
-  const { data: eventBySlug } = useQuery<Event>({
-    queryKey: [`/api/events/slug/${paramsBySlug?.slug}`],
-    enabled: !!isSlugRoute && !!paramsBySlug?.slug,
-    retry: 1,
+  const {
+    data: event,
+    isLoading,
+    error,
+  } = useQuery<Event>({
+    queryKey: ["event", paramsBySlug?.slug ?? paramsById?.id],
+    enabled: !!paramsBySlug?.slug || !!paramsById?.id,
+    queryFn: () => eventService.getEventBySlug(paramsBySlug?.slug ?? paramsById?.id),
   });
-
-  // Try to fetch event by ID if that route matched
-  const { data: eventById } = useQuery<Event>({
-    queryKey: [`/api/events/${paramsById?.id}`],
-    enabled: !!isIdRoute && !!paramsById?.id,
-    retry: 1,
-  });
-
-  // Use whichever event was found
-  const event = eventBySlug || eventById;
 
   // Get the eventId to prevent dependency issue
   const eventId = event?.id;
@@ -72,12 +67,12 @@ export default function EventResponses() {
   });
 
   // Loading state
-  if (!event) {
+  if (isLoading || !event) {
     return (
       <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col bg-gray-950">
         <Header />
         <main className="flex-1 flex items-center justify-center">
-          <p className="text-gray-400">Event not found</p>
+          <p className="text-gray-400">Loading event...</p>
         </main>
       </div>
     );
@@ -106,7 +101,7 @@ export default function EventResponses() {
     numberComparison: user?.id?.toString() === event?.hostId
   });
   
-  const isHost = user && event && (user.id === event.hostId || user.id === event.hostId.toString() || user.id.toString() === event.hostId);
+  const isHost = !!user && !!event && user.id === event.host_id;
 
   // Calculate if threshold is reached for showing responses
   const hasYupThresholdReached = 
@@ -394,8 +389,8 @@ export default function EventResponses() {
                             </>
                           )}
                         </div>
-                        <div className="text-xs text-yellow-500 font-medium uppercase">
-                          Maybe
+                        <div className="text-xs text-gray-400">
+                          {response.userEmail || (response.userId ? `user${response.userId}@example.com` : 'unknown email')}
                         </div>
                       </div>
                     ))}

@@ -11,7 +11,6 @@ import { BrandingProvider } from "@/contexts/BrandingContext";
 
 // Immediate load components (critical path)
 import Home from "@/pages/home";
-import Login from "@/pages/login";
 
 // Lazy load non-critical components
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -21,7 +20,6 @@ const EditEvent = lazy(() => import("@/pages/edit-event-simple"));
 const MyEvents = lazy(() => import("@/pages/my-events"));
 const EventList = lazy(() => import("@/pages/event-list"));
 const EventResponses = lazy(() => import("@/pages/event-responses"));
-const Signup = lazy(() => import("@/pages/signup"));
 const AuthPage = lazy(() => import("@/pages/auth-page"));
 const Profile = lazy(() => import("@/pages/profile"));
 const StyleGuide = lazy(() => import("@/pages/style-guide"));
@@ -33,6 +31,7 @@ const SubscriptionSuccess = lazy(() => import("@/pages/subscription-success"));
 const LinkedInTest = lazy(() => import("@/pages/linkedin-test"));
 const LoginTest = lazy(() => import("@/pages/login-test"));
 const ForgotPassword = lazy(() => import("@/pages/forgot-password"));
+const ChangePassword = lazy(() => import("@/pages/change-password"));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -48,7 +47,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/login" component={Login} />
+      <Route path="/login" component={() => { window.location.href='/auth?mode=login'; return null; }} />
       <Route path="/event-list">
         <Suspense fallback={<LoadingSpinner />}>
           <EventList />
@@ -94,14 +93,15 @@ function Router() {
           <Profile />
         </Suspense>
       </Route>
-      <Route path="/signup">
-        <Suspense fallback={<LoadingSpinner />}>
-          <Signup />
-        </Suspense>
-      </Route>
+      <Route path="/signup" component={() => { window.location.href='/auth?mode=signup'; return null; }} />
       <Route path="/forgot-password">
         <Suspense fallback={<LoadingSpinner />}>
           <ForgotPassword />
+        </Suspense>
+      </Route>
+      <Route path="/change-password">
+        <Suspense fallback={<LoadingSpinner />}>
+          <ChangePassword />
         </Suspense>
       </Route>
       <Route path="/auth">

@@ -1,0 +1,47 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Server & API Best Practices
+
+**(Yup.RSVP Monorepo, Next.js API, Migrating to Supabase, Vercel)**
+
+---
+
+## 1. Consistent API Design
+- Use RESTful or RPC endpoints—typed, documented, and consistent.
+- Route all Next.js API endpoints through `/api/`, sharing types via `/packages/types`.
+
+## 2. Validation and Security
+- Validate every input using Zod or Yup (for event creation, RSVP, profiles, etc).
+- Sanitize all user input and escape database queries.
+
+## 3. Authentication & Authorization
+- Use Supabase Auth for user authentication and session management.
+- Protect premium endpoints (Pro/Premium features) with authorization middleware checking Supabase user roles/flags.
+
+## 4. Database Layer
+- Migrate all data access to Supabase Postgres (via the Supabase client SDK).
+- Store shared queries and DB utilities in `/packages/db` with strict TypeScript types.
+
+## 5. Stripe & External Integrations
+- Place all Stripe integration code in `/packages/stripe` or `/api/stripe`.
+- Never log or expose secrets—store in Supabase or Vercel environment variables.
+
+## 6. Error & Logging
+- Centralize error handling and logging (e.g., use Sentry for prod, console in dev).
+- Return user-friendly errors to the frontend (never expose stack traces).
+
+## 7. Testing
+- Write unit and integration tests for all critical endpoints.
+
+## 8. Deployment
+- Ensure API routes are fully compatible with Vercel’s Edge or Serverless runtimes.
+- Use Supabase Edge Functions where advanced server-side logic is required.
+
+## 9. Supabase Migration
+- All event, RSVP, and user data is migrated to Supabase.
+- Replace any legacy PostgreSQL/Drizzle/ORM usage with Supabase client methods.
+- Use Supabase Storage for uploads and file storage.
+

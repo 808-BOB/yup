@@ -1,0 +1,46 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Next.js Frontend Standards
+
+**(Yup.RSVP, Monorepo, Tailwind CSS, Supabase, Vercel)**
+
+---
+
+## 1. Component Structure
+- Use functional components (with hooks and server components as appropriate).
+- Organize components under `/components`; hooks under `/hooks`.
+- Extract common UI and logic into Shadcn/UI components and custom hooks.
+
+## 2. Type Safety
+- All code and props typed with TypeScript.
+- Share types via `/packages/types` across frontend and backend.
+
+## 3. State Management
+- Use React Context and TanStack Query for global and server state (e.g., user, events, RSVPs).
+- Prefer local state for UI-specific concerns.
+
+## 4. Styling
+- Use Tailwind CSS for all styling (utility-first, responsive, themeable).
+- Use Shadcn/UI and Radix primitives for accessible, consistent UI.
+
+## 5. Accessibility
+- Ensure all components are accessible; leverage Radix and ARIA best practices.
+
+## 6. Performance
+- Memoize expensive components/functions, leverage SSR, ISR, Suspense as needed for performance.
+- Optimize assets and lazy-load where possible.
+
+## 7. Testing
+- Use React Testing Library and Vitest/Jest for all component and page tests.
+
+## 8. Error Boundaries
+- Use error boundaries to gracefully handle UI errors and provide user feedback.
+
+## 9. Supabase Migration
+- Move all data fetching (user, events, RSVPs) to Supabase client libraries.
+- Use Supabase Auth for authentication; store session in Supabase.
+- Store uploads (event images, files) in Supabase Storage.
+
