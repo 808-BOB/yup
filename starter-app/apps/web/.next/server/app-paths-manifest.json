@@ -1,9 +1,1 @@
-{
-  "/not-found": "app/not-found.js",
-  "/admin/page": "app/admin/page.js",
-  "/my-events/page": "app/my-events/page.js",
-  "/events/page": "app/events/page.js",
-  "/page": "app/page.js",
-  "/api/events/route": "app/api/events/route.js",
-  "/auth/login/page": "app/auth/login/page.js"
-}
+{}
