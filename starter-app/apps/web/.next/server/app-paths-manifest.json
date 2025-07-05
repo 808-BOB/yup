@@ -1,1 +1,4 @@
-{}
+{
+  "/upgrade/page": "app/upgrade/page.js",
+  "/branding/page": "app/branding/page.js"
+}

@@ -28,7 +28,6 @@
       "@/hooks/*": ["../../packages/hooks/*"],
       "@/components/ui/*": ["../../packages/ui/*"],
       "@/dash/*": ["../../packages/dash/*"],
-      "@/contexts/*": ["../../packages/utils/*"],
       "@/components/*": ["../../packages/dash/*"],
       "@/components/ui/*": ["../../packages/ui-full/*"],
       "@/contexts/*": ["../../packages/contexts/*"],

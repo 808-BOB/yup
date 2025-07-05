@@ -12,6 +12,7 @@ import { useAuth } from "@/utils/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import MakeAdmin from "./make-admin";
+import MakePremium from "./make-premium";
 
 interface SystemMetrics {
   totalUsers: number;
@@ -71,7 +72,7 @@ export default function Page() {
 
   React.useEffect(() => {
     if (isLoading) return;
-    
+
     if (!user) {
       toast({
         title: "Access Denied",
@@ -90,12 +91,12 @@ export default function Page() {
       const { data: users, error: userError } = await supabase
         .from('users')
         .select('id');
-      
+
       // Get events count
       const { data: events, error: eventError } = await supabase
         .from('events')
         .select('id');
-      
+
       // Get responses count
       const { data: responses, error: responseError } = await supabase
         .from('responses')
@@ -127,7 +128,7 @@ export default function Page() {
 
   const makePremium = async () => {
     if (!user) return;
-    
+
     try {
       const { error } = await supabase
         .from('users')
@@ -175,7 +176,7 @@ export default function Page() {
   return (
     <div className="min-h-screen bg-gray-950">
       <Header />
-      
+
       <main className="container mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-8">
           <Shield className="h-8 w-8 text-primary" />
@@ -226,8 +227,8 @@ export default function Page() {
                     <div className="text-xs text-gray-400">Uptime</div>
                   </div>
                 </div>
-                
-                <Button 
+
+                <Button
                   onClick={refreshData}
                   className="w-full bg-gray-800 hover:bg-gray-700 text-white"
                 >
@@ -247,13 +248,7 @@ export default function Page() {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-400 mb-4">Make your account premium to test branding features:</p>
-                <Button 
-                  onClick={makePremium}
-                  className="w-full bg-primary hover:bg-primary/90 text-white"
-                >
-                  <Crown className="w-4 h-4 mr-2" />
-                  Make Account Premium
-                </Button>
+                <MakePremium />
               </CardContent>
             </Card>
           </div>
@@ -261,4 +256,4 @@ export default function Page() {
       </main>
     </div>
   );
-} 
+}
