@@ -55,17 +55,18 @@ export interface BrandingContextType {
   logoUrl: string | null;
   theme: BrandTheme;
   customRSVPText: CustomRSVPText;
-  updateTheme: (newTheme: Partial<BrandTheme>) => void;
-  updateCustomRSVPText: (newText: Partial<CustomRSVPText>) => void;
-  updateLogo: (logoUrl: string) => void;
-  resetToDefault: () => void;
+  updateTheme: (newTheme: Partial<BrandTheme>) => Promise<void>;
+  updateCustomRSVPText: (newRSVPText: Partial<CustomRSVPText>) => Promise<void>;
+  updateLogo: (logoUrl: string) => Promise<void>;
+  resetToDefault: () => Promise<void>;
+  isLoading: boolean;
 }
 
-// Default YUP.RSVP theme values - magenta brand colors
+// Default YUP.RSVP theme values - Pink, Black, White (from actual app CSS)
 const defaultTheme: BrandTheme = {
-  primary: 'hsl(308, 100%, 66%)', // YUP.RSVP magenta
-  secondary: 'hsl(308, 100%, 76%)', // Lighter magenta
-  tertiary: 'hsl(308, 100%, 86%)', // Even lighter magenta
+  primary: '#ec4899', // YUP logo pink (hsl(308, 100%, 66%))
+  secondary: '#0a0a14', // Page background black (hsl(222, 84%, 5%))
+  tertiary: '#fafafa', // Foreground white (hsl(0, 0%, 98%))
   background: 'hsl(222, 84%, 5%)' // Dark background
 };
 
@@ -78,165 +79,120 @@ const defaultCustomRSVPText: CustomRSVPText = {
 const BrandingContext = createContext<BrandingContextType | undefined>(undefined);
 
 export function BrandingProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [isPremium, setIsPremium] = useState(false);
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(defaultLogo);
   const [theme, setTheme] = useState<BrandTheme>(defaultTheme);
   const [customRSVPText, setCustomRSVPText] = useState<CustomRSVPText>(defaultCustomRSVPText);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Update branding when user changes
+  // Load user branding data when user changes
   useEffect(() => {
-    if (user) {
-      console.log('BrandingContext: User loaded:', user);
-      console.log('BrandingContext: User brand_theme:', user.brand_theme);
-      console.log('BrandingContext: User logo_url:', user.logo_url);
+    async function loadUserBranding() {
+      console.log('Loading user branding for user:', user?.id);
 
-      // Check for premium status using correct field name
-      const isSubourbonAccount = user.username === 'subourbon';
-      setIsPremium(user.is_premium || isSubourbonAccount || false);
-
-      if (user.logo_url) {
-        setLogoUrl(user.logo_url);
-        console.log('BrandingContext: Logo URL set to:', user.logo_url);
-      } else {
-        setLogoUrl(null);
-        console.log('BrandingContext: No logo URL found');
+      if (!user) {
+        console.log('No user, resetting to defaults');
+        setIsPremium(false);
+        setLogoUrl(defaultLogo);
+        setTheme(defaultTheme);
+        setCustomRSVPText(defaultCustomRSVPText);
+        setIsLoading(false);
+        return;
       }
 
-            // Load comprehensive branding data
-      const newTheme = {
-        primary: user.brand_primary_color || defaultTheme.primary,
-        secondary: user.brand_secondary_color || defaultTheme.secondary,
-        tertiary: user.brand_tertiary_color || defaultTheme.tertiary,
-        background: defaultTheme.background // Keep background consistent for now
-      };
+      setIsLoading(true);
 
-      const newCustomRSVPText = {
-        yup: user.custom_yup_text || defaultCustomRSVPText.yup,
-        nope: user.custom_nope_text || defaultCustomRSVPText.nope,
-        maybe: user.custom_maybe_text || defaultCustomRSVPText.maybe
-      };
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select(`
+            is_premium,
+            logo_url,
+            brand_primary_color,
+            brand_secondary_color,
+            brand_tertiary_color,
+            custom_yup_text,
+            custom_nope_text,
+            custom_maybe_text
+          `)
+          .eq('id', user.id)
+          .single();
 
-      console.log('Setting custom theme to:', newTheme);
-      console.log('Setting custom RSVP text to:', newCustomRSVPText);
-      setTheme(newTheme);
-      setCustomRSVPText(newCustomRSVPText);
-
-      // Handle legacy brand_theme field for backward compatibility
-      const brandTheme = user.brand_theme;
-      if (brandTheme && !user.brand_primary_color) {
-        if (brandTheme.startsWith('#')) {
-          setTheme(prev => ({ ...prev, primary: brandTheme }));
-        } else {
-          try {
-            const parsed = JSON.parse(brandTheme);
-            setTheme(prev => ({ ...prev, ...parsed }));
-          } catch (e) {
-            console.error('Failed to parse legacy theme:', e);
-          }
+        if (error) {
+          console.error('Error loading user branding:', error);
+          // On error, check user object directly for premium status
+          const userIsPremium = (user as any)?.is_premium ||
+                               (user as any)?.user_metadata?.is_premium ||
+                               user.username === 'subourbon' ||
+                               false;
+          setIsPremium(userIsPremium);
+          setIsLoading(false);
+          return;
         }
+
+        console.log('User branding data loaded:', data);
+
+        // Check premium status from multiple sources for backwards compatibility
+        const userIsPremium = data.is_premium ||
+                             (user as any)?.is_premium ||
+                             (user as any)?.user_metadata?.is_premium ||
+                             user.username === 'subourbon' || // Special admin account
+                             false;
+
+        console.log('Premium status check:', {
+          dbIsPremium: data.is_premium,
+          userIsPremium: (user as any)?.is_premium,
+          metadataIsPremium: (user as any)?.user_metadata?.is_premium,
+          username: user.username,
+          finalIsPremium: userIsPremium
+        });
+
+        setIsPremium(userIsPremium);
+
+        // Set logo URL
+        setLogoUrl(data.logo_url || defaultLogo);
+
+        // Set theme colors (with fallbacks to defaults)
+        const newTheme: BrandTheme = {
+          primary: data.brand_primary_color || defaultTheme.primary,
+          secondary: data.brand_secondary_color || defaultTheme.secondary,
+          tertiary: data.brand_tertiary_color || defaultTheme.tertiary,
+          background: defaultTheme.background, // Keep consistent background
+        };
+        setTheme(newTheme);
+
+        // Set custom RSVP text (with fallbacks to defaults)
+        const newRSVPText: CustomRSVPText = {
+          yup: data.custom_yup_text || defaultCustomRSVPText.yup,
+          nope: data.custom_nope_text || defaultCustomRSVPText.nope,
+          maybe: data.custom_maybe_text || defaultCustomRSVPText.maybe,
+        };
+        setCustomRSVPText(newRSVPText);
+
+      } catch (error) {
+        console.error('Error in loadUserBranding:', error);
+      } finally {
+        setIsLoading(false);
       }
-    } else {
-      // Reset to defaults if no user
-      setIsPremium(false);
-      setLogoUrl(null);
-      setTheme(defaultTheme);
-      setCustomRSVPText(defaultCustomRSVPText);
     }
+
+    loadUserBranding();
   }, [user]);
 
-  // Apply theme to CSS variables when theme changes
+  // Apply theme to CSS variables whenever theme changes
   useEffect(() => {
-    // Check if we're on admin pages - always use default theme (only in browser)
-    const isAdminPage = typeof window !== 'undefined' && window.location.pathname.includes('/admin');
+    console.log('Applying custom theme with colors:', theme);
 
-    // Apply default YUP.RSVP magenta theme for non-logged-in users or admin pages
-    if (!user || isAdminPage) {
-      document.documentElement.style.setProperty('--primary', '308 100% 66%');
-      document.documentElement.style.setProperty('--primary-color', 'hsl(308, 100%, 66%)');
-      document.documentElement.style.setProperty('--ring', '308 100% 66%');
-      document.documentElement.style.setProperty('--border', '308 100% 20%');
-
-      // Apply default YUP.RSVP branding colors
-      document.documentElement.style.setProperty('--color-primary', 'hsl(308, 100%, 66%)');
-      document.documentElement.style.setProperty('--color-primary-hover', 'hsl(308, 100%, 66%)');
-      console.log(isAdminPage ? 'Applied default YUP.RSVP theme for admin pages' : 'Applied default YUP.RSVP magenta theme for login');
-      return;
-    }
-
-    // Apply custom themes for logged-in premium users (not on admin pages)
-    if (theme && theme.primary && isPremium) {
-      // Parse the HSL color to get its components
+    // Always apply the theme, regardless of premium status for preview purposes
+    if (theme) {
       let primaryColor = theme.primary;
       let secondaryColor = theme.secondary;
       let tertiaryColor = theme.tertiary;
       let backgroundColor = theme.background;
-      console.log('Applying custom theme with colors:', { primaryColor, secondaryColor, tertiaryColor, backgroundColor });
-
-      // Apply background color first
-      if (backgroundColor) {
-        if (backgroundColor.startsWith('hsl')) {
-          const hslMatch = backgroundColor.match(/hsl\(([^,]+),\s*([^,]+),\s*([^)]+)\)/);
-          if (hslMatch) {
-            const [_, h, s, l] = hslMatch;
-            document.documentElement.style.setProperty('--background', `${h} ${s}% ${l}%`);
-          }
-        } else if (backgroundColor.startsWith('#')) {
-          // Convert hex to HSL for CSS variables
-          const r = parseInt(backgroundColor.substring(1, 3), 16) / 255;
-          const g = parseInt(backgroundColor.substring(3, 5), 16) / 255;
-          const b = parseInt(backgroundColor.substring(5, 7), 16) / 255;
-
-          const max = Math.max(r, g, b);
-          const min = Math.min(r, g, b);
-          let h, s, l = (max + min) / 2;
-
-          if (max === min) {
-            h = s = 0; // achromatic
-          } else {
-            const d = max - min;
-            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-            switch (max) {
-              case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-              case g: h = (b - r) / d + 2; break;
-              case b: h = (r - g) / d + 4; break;
-              default: h = 0;
-            }
-            h /= 6;
-          }
-
-          const hDeg = Math.round(h * 360);
-          const sPercent = Math.round(s * 100);
-          const lPercent = Math.round(l * 100);
-
-          document.documentElement.style.setProperty('--background', `${hDeg} ${sPercent}% ${lPercent}%`);
-        }
-      }
 
       // Apply primary color
-      if (primaryColor.startsWith('hsl')) {
-        const hslMatch = primaryColor.match(/hsl\(([^,]+),\s*([^,]+),\s*([^)]+)\)/);
-        if (hslMatch) {
-          const [_, h, s, l] = hslMatch;
-
-          // Convert HSL to hex for consistent representation
-          const hexColor = hslToHex(parseInt(h), parseInt(s), parseInt(l));
-
-          // Set all variables to use hex format
-          document.documentElement.style.setProperty('--primary', hexColor);
-          document.documentElement.style.setProperty('--primary-color', hexColor);
-          document.documentElement.style.setProperty('--ring', hexColor);
-          document.documentElement.style.setProperty('--card-foreground', '#ffffff');
-
-          // Create darker version for borders
-          const darkerHex = adjustHexBrightness(hexColor, -0.3);
-          document.documentElement.style.setProperty('--border', darkerHex);
-
-          // For custom components using CSS variables
-          document.documentElement.style.setProperty('--color-primary', hexColor);
-          document.documentElement.style.setProperty('--color-primary-hover', hexColor);
-        }
-      } else if (primaryColor.startsWith('#')) {
+      if (primaryColor.startsWith('#')) {
         // Convert hex to HSL for CSS variables while keeping hex for direct use
         const r = parseInt(primaryColor.substring(1, 3), 16) / 255;
         const g = parseInt(primaryColor.substring(3, 5), 16) / 255;
@@ -270,7 +226,6 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
         // Set CSS variables in HSL format for Tailwind compatibility
         document.documentElement.style.setProperty('--primary', `${hDeg} ${sPercent}% ${lPercent}%`);
         document.documentElement.style.setProperty('--ring', `${hDeg} ${sPercent}% ${lPercent}%`);
-        document.documentElement.style.setProperty('--border', `${hDeg} ${sPercent}% ${Math.max(20, lPercent - 20)}%`);
 
         // Set accessible text color for all primary-colored elements
         const textColorHsl = accessibleTextColor === '#ffffff' ? '0 0% 100%' : '0 0% 0%';
@@ -280,18 +235,36 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
         document.documentElement.style.setProperty('--primary-color', primaryColor);
         document.documentElement.style.setProperty('--color-primary', primaryColor);
         document.documentElement.style.setProperty('--color-primary-hover', primaryColor);
-      } else {
-        // For other color formats, use as is
-        document.documentElement.style.setProperty('--primary-color', primaryColor);
-        document.documentElement.style.setProperty('--color-primary', primaryColor);
       }
+
+      // Apply secondary color
+      if (secondaryColor.startsWith('#')) {
+        document.documentElement.style.setProperty('--secondary-color', secondaryColor);
+        document.documentElement.style.setProperty('--color-secondary', secondaryColor);
+      }
+
+      // Apply tertiary color
+      if (tertiaryColor.startsWith('#')) {
+        document.documentElement.style.setProperty('--tertiary-color', tertiaryColor);
+        document.documentElement.style.setProperty('--color-tertiary', tertiaryColor);
+      }
+
+      // Ensure consistent background across all pages
+      document.documentElement.style.setProperty('--page-background', 'hsl(222, 84%, 5%)');
+      document.body.style.backgroundColor = 'hsl(222, 84%, 5%)';
     }
   }, [theme, isPremium, user]);
 
   // Update theme values
   const updateTheme = async (newTheme: Partial<BrandTheme>) => {
-    if (!isPremium || !user) return;
+    if (!isPremium || !user) {
+      console.warn('Cannot update theme: user not premium or not logged in');
+      return;
+    }
 
+    console.log('Updating theme:', newTheme);
+
+    // Update state immediately for UI feedback
     const updatedTheme = { ...theme, ...newTheme };
     setTheme(updatedTheme);
 
@@ -300,41 +273,65 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No active session');
 
+      // Build update object with individual color fields
       const updateData: any = {};
-      if (newTheme.primary !== undefined) updateData.brand_primary_color = newTheme.primary;
-      if (newTheme.secondary !== undefined) updateData.brand_secondary_color = newTheme.secondary;
-      if (newTheme.tertiary !== undefined) updateData.brand_tertiary_color = newTheme.tertiary;
 
-      // Update directly via Supabase client instead of API route
+      if (newTheme.primary !== undefined) {
+        updateData.brand_primary_color = newTheme.primary;
+      }
+      if (newTheme.secondary !== undefined) {
+        updateData.brand_secondary_color = newTheme.secondary;
+      }
+      if (newTheme.tertiary !== undefined) {
+        updateData.brand_tertiary_color = newTheme.tertiary;
+      }
+
+      console.log('Saving theme update to Supabase:', updateData);
+
+      // Update directly via Supabase client for immediate persistence
       const { error } = await supabase
         .from('users')
         .update(updateData)
         .eq('id', user.id);
 
       if (error) throw error;
-      console.log('Theme saved successfully to Supabase');
+
+      console.log('Theme updated successfully in Supabase');
+
+      // Don't refresh user - the local state update is sufficient
     } catch (e) {
       console.error('Error saving theme:', e);
+      // Revert the theme on error
+      setTheme(theme);
       throw e;
     }
   };
 
   // Update custom RSVP text
-  const updateCustomRSVPText = async (newText: Partial<CustomRSVPText>) => {
+  const updateCustomRSVPText = async (newRSVPText: Partial<CustomRSVPText>) => {
     if (!isPremium || !user) return;
 
-    const updatedText = { ...customRSVPText, ...newText };
-    setCustomRSVPText(updatedText);
+    // Update state immediately for UI feedback
+    const updatedRSVPText = { ...customRSVPText, ...newRSVPText };
+    setCustomRSVPText(updatedRSVPText);
 
     try {
       // Get current session token for authentication
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No active session');
 
+      // Build update object
       const updateData: any = {};
-      if (newText.yup !== undefined) updateData.custom_yup_text = newText.yup;
-      if (newText.nope !== undefined) updateData.custom_nope_text = newText.nope;
-      if (newText.maybe !== undefined) updateData.custom_maybe_text = newText.maybe;
+
+      if (newRSVPText.yup !== undefined) {
+        updateData.custom_yup_text = newRSVPText.yup;
+      }
+      if (newRSVPText.nope !== undefined) {
+        updateData.custom_nope_text = newRSVPText.nope;
+      }
+      if (newRSVPText.maybe !== undefined) {
+        updateData.custom_maybe_text = newRSVPText.maybe;
+      }
 
       // Update directly via Supabase client
       const { error } = await supabase
@@ -343,9 +340,13 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
         .eq('id', user.id);
 
       if (error) throw error;
-      console.log('Custom RSVP text saved successfully to Supabase');
+      console.log('RSVP text updated successfully to Supabase');
+
+      // Don't refresh user - the local state update is sufficient
     } catch (e) {
-      console.error('Error saving custom RSVP text:', e);
+      console.error('Error saving RSVP text:', e);
+      // Revert on error
+      setCustomRSVPText(customRSVPText);
       throw e;
     }
   };
@@ -369,9 +370,12 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
         .eq('id', user.id);
 
       if (error) throw error;
-      console.log('Logo saved successfully to Supabase');
+      console.log('Logo updated successfully to Supabase');
+
+      // Don't refresh user - the local state update is sufficient for logo changes
     } catch (e) {
       console.error('Error saving logo:', e);
+      // Don't revert logo on error - keep the preview
       throw e;
     }
   };
@@ -406,6 +410,11 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
 
       if (error) throw error;
       console.log('Branding reset successfully to Supabase');
+
+      // Only refresh user for reset operations since it's a major change
+      if (refreshUser) {
+        await refreshUser();
+      }
     } catch (e) {
       console.error('Error resetting branding:', e);
       throw e;
@@ -423,6 +432,7 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
         updateCustomRSVPText,
         updateLogo,
         resetToDefault,
+        isLoading,
       }}
     >
       {children}

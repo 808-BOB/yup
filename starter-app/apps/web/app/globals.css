@@ -14,13 +14,13 @@
 
 @layer base {
   :root {
-    --background: 240 10% 3.9%;
+    --background: 222 84% 5%;
     --foreground: 0 0% 98%;
     --primary: 308 100% 66%;
     --primary-foreground: 0 0% 100%;
-    --card: 240 10% 3.9%;
+    --card: 222 84% 5%;
     --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
+    --popover: 222 84% 5%;
     --popover-foreground: 0 0% 98%;
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
@@ -34,9 +34,51 @@
     --input: 240 3.7% 15.9%;
     --ring: 308 100% 66%;
     --radius: 0.5rem;
+
+    /* Custom branding variables (will be overridden by BrandingContext) */
+    --primary-color: hsl(308, 100%, 66%);
+    --secondary-color: hsl(240, 3.7%, 15.9%);
+    --tertiary-color: hsl(240, 3.7%, 15.9%);
+    --page-background: hsl(222, 84%, 5%);
+  }
+
+  html {
+    background-color: hsl(var(--background));
   }
 
   body {
-    @apply font-mono antialiased bg-gray-950 text-gray-100;
+    @apply font-mono antialiased text-gray-100;
+    background-color: hsl(var(--background));
+    min-height: 100vh;
   }
-} 
+
+  /* Ensure all pages use the consistent dark background */
+  .page-container {
+    background-color: hsl(var(--background));
+    min-height: 100vh;
+  }
+
+  /* Custom button styles using branding colors */
+  .btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--primary-color);
+    opacity: 0.9;
+  }
+
+  .btn-secondary {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+    color: white;
+  }
+
+  .btn-tertiary {
+    background-color: var(--tertiary-color);
+    border-color: var(--tertiary-color);
+    color: white;
+  }
+}

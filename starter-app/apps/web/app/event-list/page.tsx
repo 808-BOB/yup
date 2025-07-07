@@ -36,14 +36,14 @@ const fetchInvitedEvents = async (userId: string) => {
       )
     `)
     .eq("user_id", userId);
-  
+
   if (error) throw error;
-  
+
   // Extract events from invitations and filter out own events
   const events = data
     .map((inv: any) => inv.events)
     .filter((event: any) => event && event.host_id !== userId);
-    
+
   return events as EventRow[];
 };
 
@@ -52,15 +52,15 @@ const fetchUserResponses = async (userId: string) => {
     .from("responses")
     .select("event_id, response_type")
     .eq("user_id", userId);
-    
+
   if (error) throw error;
-  
+
   // Convert to object with event_id as key
   const responses: Record<string, "yup" | "nope" | "maybe"> = {};
   data.forEach((resp: any) => {
     responses[resp.event_id] = resp.response_type;
   });
-  
+
   return responses;
 };
 
@@ -75,10 +75,10 @@ export default function EventListPage() {
   const [filter, setFilter] = React.useState<ResponseFilter>("all");
 
   const { data: events, error: eventsError } = useSWR<EventRow[]>(
-    user ? ["invited-events", user.id] : null, 
+    user ? ["invited-events", user.id] : null,
     () => fetchInvitedEvents(user!.id)
   );
-  
+
   const { data: userResponses = {} } = useSWR<Record<string, "yup" | "nope" | "maybe">>(
     user ? ["user-responses", user.id] : null,
     () => fetchUserResponses(user!.id)
@@ -111,8 +111,8 @@ export default function EventListPage() {
   });
 
   return (
-    <div className="w-full max-w-lg mx-auto px-6 pb-8 min-h-screen flex flex-col bg-gray-950">
-      <div className="sticky top-0 z-50 bg-gray-950 pt-8">
+    <div className="w-full max-w-lg mx-auto px-6 pb-8 min-h-screen flex flex-col page-container">
+      <div className="sticky top-0 z-50 page-container pt-8">
         <Header />
         <ViewSelector
           activeMainTab="invited"
@@ -154,29 +154,29 @@ export default function EventListPage() {
             ) : filteredEvents.length ? (
               <div className="space-y-4">
                 {filteredEvents.map(e => (
-                  <EventCard 
-                    key={e.id} 
-                    event={e as any} 
-                    showStats={false} 
-                    isOwner={false} 
-                    userResponse={userResponses[e.id] || null} 
+                  <EventCard
+                    key={e.id}
+                    event={e as any}
+                    showStats={false}
+                    isOwner={false}
+                    userResponse={userResponses[e.id] || null}
                   />
                 ))}
               </div>
             ) : (
               <div className="text-center py-12">
                 <p className="text-gray-400 mb-2">
-                  {filter === "archives" 
-                    ? "No archived events" 
-                    : filter === "all" 
-                      ? "No invitations yet" 
+                  {filter === "archives"
+                    ? "No archived events"
+                    : filter === "all"
+                      ? "No invitations yet"
                       : `No "${filter.toUpperCase()}" responses`
                   }
                 </p>
                 <p className="text-sm text-gray-500">
-                  {filter === "all" 
-                    ? "Invited events will appear here" 
-                    : filter !== "archives" 
+                  {filter === "all"
+                    ? "Invited events will appear here"
+                    : filter !== "archives"
                       ? "Events you've responded to will appear here"
                       : ""
                   }
@@ -197,4 +197,4 @@ export default function EventListPage() {
       </main>
     </div>
   );
-} 
+}

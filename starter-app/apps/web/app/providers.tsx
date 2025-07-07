@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { AuthProvider } from "@/utils/auth-context";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 

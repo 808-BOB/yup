@@ -194,7 +194,7 @@ export default function ProfilePage() {
         .from("users")
         .update({ display_name: data.displayName })
         .eq("id", user.id);
-      
+
       if (updateErr) throw updateErr;
 
       await supabase.auth.updateUser({
@@ -230,7 +230,7 @@ export default function ProfilePage() {
         .from("users")
         .update({ username: data.username })
         .eq("id", user.id);
-      
+
       if (updateErr) throw updateErr;
 
       await supabase.auth.updateUser({
@@ -259,7 +259,7 @@ export default function ProfilePage() {
   const onUpdateProfileImage = async (file: File) => {
     console.log("onUpdateProfileImage called with file:", file);
     console.log("User:", user);
-    
+
     if (!user) {
       console.error("No user found");
       return;
@@ -292,7 +292,7 @@ export default function ProfilePage() {
         .from("users")
         .update({ profile_image_url: base64 })
         .eq("id", user.id);
-      
+
       if (updateErr) {
         console.error("Database update error:", updateErr);
         throw updateErr;
@@ -398,14 +398,14 @@ export default function ProfilePage() {
   const displayName = (user as any)?.display_name ?? (user as any)?.user_metadata?.display_name ?? user?.email ?? "";
   const username = (user as any)?.username ?? (user as any)?.user_metadata?.username ?? "";
   const profileImageUrl = (user as any)?.profile_image_url ?? (user as any)?.user_metadata?.profile_image_url;
-  
+
   // Use subscription data from Supabase instead of user metadata
   const isPremium = subscriptionData.currentPlan === 'premium';
   const isPro = subscriptionData.currentPlan === 'pro';
 
   return (
-    <div className="w-full max-w-md mx-auto px-8 pb-8 min-h-screen flex flex-col bg-gray-950">
-      <div className="sticky top-0 z-50 bg-gray-950 pt-8">
+    <div className="w-full max-w-md mx-auto px-8 pb-8 min-h-screen flex flex-col page-container">
+      <div className="sticky top-0 z-50 page-container pt-8">
         <Header />
       </div>
 
@@ -733,7 +733,7 @@ export default function ProfilePage() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="bg-gray-900 border border-gray-800">
           <CardHeader>
             <CardTitle className="text-base">Subscription</CardTitle>
@@ -764,7 +764,7 @@ export default function ProfilePage() {
                   </p>
                 )}
               </div>
-              
+
               <div>
                 <h3 className="text-sm font-medium text-gray-400 mb-1">Features</h3>
                 <ul className="space-y-1 text-sm">
@@ -792,7 +792,7 @@ export default function ProfilePage() {
                   )}
                 </ul>
               </div>
-              
+
               <div className="pt-2">
                 {subscriptionData.loading ? (
                   <Button
@@ -837,4 +837,4 @@ export default function ProfilePage() {
       </main>
     </div>
   );
-} 
+}

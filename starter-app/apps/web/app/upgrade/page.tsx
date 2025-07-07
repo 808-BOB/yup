@@ -101,11 +101,11 @@ export default function UpgradePage() {
   const getCurrentPlan = () => {
     // For non-logged in users, we don't show any "current plan" indicators
     if (!user) return "";
-    
+
     // Use the same subscription detection logic as profile page
     const isPremium = Boolean((user as any)?.is_premium ?? (user as any)?.user_metadata?.is_premium);
     const isPro = Boolean((user as any)?.is_pro ?? (user as any)?.user_metadata?.is_pro);
-    
+
     if (isPremium) return "premium";
     if (isPro) return "pro";
     return "free";
@@ -126,12 +126,12 @@ export default function UpgradePage() {
     }
 
     if (plan === currentPlan) return;
-    
+
     // For downgrading to free, show coming soon message
     if (plan === "free") {
       setSelectedPlan(plan);
       setUpgrading(true);
-      
+
       try {
         toast({
           title: "Feature Coming Soon",
@@ -147,14 +147,14 @@ export default function UpgradePage() {
       } finally {
         setUpgrading(false);
       }
-      
+
       return;
     }
-    
+
     // For upgrading to paid plans, show coming soon message
     setSelectedPlan(plan);
     setUpgrading(true);
-    
+
     try {
       toast({
         title: "Feature Coming Soon",
@@ -173,8 +173,8 @@ export default function UpgradePage() {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-8 pb-8 min-h-screen flex flex-col bg-gray-950">
-      <div className="sticky top-0 z-50 bg-gray-950 pt-8">
+    <div className="w-full max-w-5xl mx-auto px-8 pb-8 min-h-screen flex flex-col page-container">
+      <div className="sticky top-0 z-50 page-container pt-8">
         <Header />
       </div>
 
@@ -190,13 +190,13 @@ export default function UpgradePage() {
           {Object.entries(tierFeatures).map(([key, tier]) => {
             const isCurrent = currentPlan === key;
             const isDisabled = isCurrent || upgrading;
-            
+
             return (
-              <Card 
-                key={key} 
+              <Card
+                key={key}
                 className={`flex flex-col h-full transition-all bg-gray-900 border-gray-800 ${
-                  tier.highlight 
-                    ? "border-primary shadow-md shadow-primary/20" 
+                  tier.highlight
+                    ? "border-primary shadow-md shadow-primary/20"
                     : ""
                 }`}
               >
@@ -224,7 +224,7 @@ export default function UpgradePage() {
                     </span>
                   </div>
                 </CardHeader>
-                
+
                 <CardContent className="flex-grow">
                   <Separator className="mb-4 bg-gray-700" />
                   <ul className="space-y-3">
@@ -235,7 +235,7 @@ export default function UpgradePage() {
                         ) : (
                           <X className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
                         )}
-                        <span 
+                        <span
                           className={feature.included ? "text-gray-200" : "text-gray-500"}
                         >
                           {feature.name}
@@ -244,15 +244,15 @@ export default function UpgradePage() {
                     ))}
                   </ul>
                 </CardContent>
-                
+
                 <CardFooter className="pt-4">
                   <Button
                     onClick={() => handleUpgrade(key)}
                     disabled={isDisabled}
                     className={`w-full ${
-                      tier.highlight && !isDisabled 
-                        ? "bg-primary hover:bg-primary/90 text-white" 
-                        : isDisabled 
+                      tier.highlight && !isDisabled
+                        ? "bg-primary hover:bg-primary/90 text-white"
+                        : isDisabled
                         ? "bg-gray-700 text-gray-400 cursor-not-allowed"
                         : "bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
                     }`}
@@ -303,8 +303,8 @@ export default function UpgradePage() {
           <p className="text-gray-400 mb-4">
             Contact us for custom plans or if you have any questions.
           </p>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => router.push("/")}
             className="text-primary hover:text-primary hover:bg-gray-800"
           >
@@ -314,4 +314,4 @@ export default function UpgradePage() {
       </main>
     </div>
   );
-} 
+}

@@ -1,4 +1,8 @@
 {
+  "/not-found": "app/not-found.js",
   "/upgrade/page": "app/upgrade/page.js",
-  "/branding/page": "app/branding/page.js"
+  "/api/events/route": "app/api/events/route.js",
+  "/my-events/page": "app/my-events/page.js",
+  "/branding/page": "app/branding/page.js",
+  "/profile/page": "app/profile/page.js"
 }

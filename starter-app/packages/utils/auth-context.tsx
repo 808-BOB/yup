@@ -119,8 +119,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
+    console.log('[Auth] logout attempt');
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setUser(null);
+    } catch (err: any) {
+      console.error('[Auth] logout error', err);
+      setError(err.message || "Logout failed");
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const signup = async (username: string, displayName: string, password: string) => {
@@ -191,11 +202,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = async () => {
     if (!user) return;
-    console.log('[Auth] refreshUser called');
-    const profile = await fetchUserProfile(user.id);
-    if (profile) {
-      setUser({ ...user, ...profile });
-      console.log('[Auth] refreshUser completed');
+
+    console.log('[Auth] refreshUser called for user:', user.id);
+    try {
+      const profile = await fetchUserProfile(user.id);
+      if (profile) {
+        setUser({ ...user, ...profile });
+        console.log('[Auth] User refreshed successfully');
+      }
+    } catch (error) {
+      console.error('[Auth] Error refreshing user:', error);
     }
   };
 

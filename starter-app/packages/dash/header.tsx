@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
 } from "../ui/dropdown-menu";
 import { useAuth } from "../utils/auth-context";
-import { useBranding, getLogoUrl } from "../utils/BrandingContext";
+import { useBranding } from "../contexts/BrandingContext";
 import { useToast } from "../hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import type { User as SupabaseAuthUser } from "@supabase/supabase-js";
@@ -34,7 +34,7 @@ export default function Header() {
   const router = useRouter();
 
   const displayName = (user as ExtendedUser)?.display_name ?? user?.email ?? "";
-  const isPremium = Boolean((user as ExtendedUser)?.is_premium);
+  const isPremium = branding.isPremium;
   const isAdmin = Boolean((user as ExtendedUser)?.is_admin);
 
   const handleLogout = async () => {
@@ -66,10 +66,11 @@ export default function Header() {
 
   return (
     <header className="container flex justify-between items-center mb-6 py-3 px-4 border-b border-gray-800 sticky top-0 z-50 bg-gray-950">
-      <div className="flex items-center">
+      <div className="flex items-center gap-3">
+        {/* YUP Logo */}
         <img
-          src={getLogoUrl(branding)}
-          alt="Yup.RSVP - Navigate to dashboard"
+          src={defaultLogo}
+          alt="Yup.RSVP"
           className="h-6 sm:h-8 w-auto max-w-[120px] sm:max-w-[144px] object-contain cursor-pointer"
           onClick={() => router.push(user ? "/my-events" : "/")}
           onKeyDown={(e) => {
@@ -82,6 +83,18 @@ export default function Header() {
           role="button"
           aria-label="Navigate to dashboard"
         />
+
+        {/* Separator and Brand Logo (for premium users with custom logos) */}
+        {isPremium && branding.logoUrl && branding.logoUrl !== defaultLogo && (
+          <>
+            <div className="w-px h-6 sm:h-8 bg-gray-600"></div>
+            <img
+              src={branding.logoUrl}
+              alt="Brand Logo"
+              className="h-6 sm:h-8 w-auto max-w-[120px] sm:max-w-[144px] object-contain"
+            />
+          </>
+        )}
       </div>
       <div className="flex items-center gap-4">
         {user && (
@@ -99,8 +112,8 @@ export default function Header() {
           <DropdownMenuTrigger asChild>
             {user ? (
               <Avatar className="cursor-pointer border border-primary w-8 h-8 bg-gray-900">
-                <AvatarImage 
-                  src={(user as ExtendedUser)?.profile_image_url} 
+                <AvatarImage
+                  src={(user as ExtendedUser)?.profile_image_url}
                   alt={displayName}
                   className="object-cover"
                 />
@@ -118,8 +131,8 @@ export default function Header() {
               </Button>
             )}
           </DropdownMenuTrigger>
-          <DropdownMenuContent 
-            align="end" 
+          <DropdownMenuContent
+            align="end"
             className="w-48 bg-gray-900/95 backdrop-blur-sm border border-gray-700 shadow-2xl"
           >
             {user ? (
@@ -178,7 +191,7 @@ export default function Header() {
                     <span>Admin Dashboard</span>
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={handleLogout}
                   className="cursor-pointer text-gray-200 hover:bg-gray-800/70 hover:text-white focus:bg-gray-800/70 focus:text-white"
                 >
