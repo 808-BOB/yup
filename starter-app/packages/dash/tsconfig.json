@@ -1,0 +1,28 @@
+{
+  "extends": "../../apps/web/tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/ui/*": ["../ui/*"],
+      "@/utils": ["../utils/utils.ts"],
+      "@/utils/*": ["../utils/*"],
+      "@/lib/*": ["../utils/*"],
+      "@/lib/utils/*": ["../utils/*"],
+      "@/hooks/*": ["../hooks/*"],
+      "@/components/ui/*": ["../ui/*"],
+      "@/dash/*": ["./*"],
+      "@/components/*": ["./*"],
+      "@/contexts/*": ["../contexts/*"],
+      "@/types": ["../types/index.ts"],
+      "@/types/*": ["../types/*"]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "../types/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+} 

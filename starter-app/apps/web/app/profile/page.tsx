@@ -1,143 +1,85 @@
 "use client";
-import { useState, useEffect } from "react";
+
+import * as React from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { User } from "lucide-react";
-import { useAuth } from "@/utils/auth-context";
-import { useToast } from "@/utils/use-toast";
-import { supabase } from "@/lib/supabase";
-import Header from "@/dash/header";
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/ui/form";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/ui/card";
-import { Separator } from "@/ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "@/ui/avatar";
-import { ImageUpload } from "@/ui/image-upload";
-import { useRequireAuth } from "@/hooks/use-require-auth";
-import { uploadProfilePicture } from "@/utils/image-upload";
+import Header from "@/dash/header";
+import { useAuth } from "@/utils/auth-context";
+import { supabase } from "@/lib/supabase";
+import { Camera, Edit2, Check, X, CreditCard, Crown, Zap } from "lucide-react";
 
-// Define separate schemas for different updates
-const displayNameSchema = z.object({
-  displayName: z.string().min(2, "Display name must be at least 2 characters"),
-});
+interface AccountStats {
+  createdEvents: number;
+  totalResponses: number;
+  loading: boolean;
+}
 
-const usernameSchema = z.object({
-  username: z.string().min(2, "Username must be at least 2 characters"),
-});
-
-const passwordChangeSchema = z.object({
-  currentPassword: z.string().min(1, "Current password is required"),
-  newPassword: z.string().min(6, "New password must be at least 6 characters"),
-});
-
-type DisplayNameFormValues = z.infer<typeof displayNameSchema>;
-type UsernameFormValues = z.infer<typeof usernameSchema>;
-type PasswordChangeFormValues = z.infer<typeof passwordChangeSchema>;
+interface SubscriptionData {
+  plan: string;
+  status: string;
+  loading: boolean;
+  hasActiveSubscription: boolean;
+}
 
 export default function ProfilePage() {
-  // Redirect unauthenticated users
-  useRequireAuth();
-
+  const { user } = useAuth();
   const router = useRouter();
-  const { user, isLoading } = useAuth();
-  const { toast } = useToast();
-  const [isEditingDisplayName, setIsEditingDisplayName] = useState(false);
-  const [isEditingUsername, setIsEditingUsername] = useState(false);
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [isSubmittingDisplayName, setIsSubmittingDisplayName] = useState(false);
-  const [isSubmittingUsername, setIsSubmittingUsername] = useState(false);
-  const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [selectedProfileFile, setSelectedProfileFile] = useState<File | null>(null);
-  const [accountStats, setAccountStats] = useState({
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [accountStats, setAccountStats] = useState<AccountStats>({
     createdEvents: 0,
     totalResponses: 0,
     loading: true
   });
-  const [subscriptionData, setSubscriptionData] = useState({
-    currentPlan: 'free',
-    stripeCustomerId: null,
-    stripeSubscriptionId: null,
-    loading: true
+  
+  const [subscriptionData, setSubscriptionData] = useState<SubscriptionData>({
+    plan: "Free Plan",
+    status: "Active",
+    loading: true,
+    hasActiveSubscription: false
   });
+  
+  const [isEditingDisplayName, setIsEditingDisplayName] = useState(false);
+  const [newDisplayName, setNewDisplayName] = useState("");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const [isManagingSubscription, setIsManagingSubscription] = useState(false);
 
-  // Initialize separate forms for different updates
-  const displayNameForm = useForm<DisplayNameFormValues>({
-    resolver: zodResolver(displayNameSchema),
-    defaultValues: {
-      displayName: (user as any)?.display_name || "",
-    },
-  });
+  const isLoading = !user;
 
-  const usernameForm = useForm<UsernameFormValues>({
-    resolver: zodResolver(usernameSchema),
-    defaultValues: {
-      username: (user as any)?.username || "",
-    },
-  });
-
-  const passwordForm = useForm<PasswordChangeFormValues>({
-    resolver: zodResolver(passwordChangeSchema),
-    defaultValues: {
-      currentPassword: "",
-      newPassword: "",
-    },
-  });
-
-  // Fetch account stats from Supabase
+  // Fetch account statistics
   const fetchAccountStats = async () => {
     if (!user?.id) return;
 
     try {
-      // Get count of events created by user
-      const { count: eventsCount, error: eventsError } = await supabase
+      // Get created events count
+      const { count: eventsCount } = await supabase
         .from('events')
         .select('*', { count: 'exact', head: true })
         .eq('host_id', user.id);
 
-      if (eventsError) throw eventsError;
-
-      // Get user's event IDs first, then count responses
-      const { data: userEvents, error: userEventsError } = await supabase
+      // Get total responses count for user's events
+      const { data: userEvents } = await supabase
         .from('events')
         .select('id')
         .eq('host_id', user.id);
 
-      if (userEventsError) throw userEventsError;
-
-      let responsesCount = 0;
+      let totalResponses = 0;
       if (userEvents && userEvents.length > 0) {
-        const eventIds = userEvents.map(event => event.id);
-        const { count, error: responsesError } = await supabase
+        const eventIds = userEvents.map(e => e.id);
+        const { count: responsesCount } = await supabase
           .from('responses')
           .select('*', { count: 'exact', head: true })
           .in('event_id', eventIds);
-
-        if (responsesError) throw responsesError;
-        responsesCount = count || 0;
+        
+        totalResponses = responsesCount || 0;
       }
 
       setAccountStats({
         createdEvents: eventsCount || 0,
-        totalResponses: responsesCount || 0,
+        totalResponses,
         loading: false
       });
     } catch (error) {
@@ -146,28 +88,33 @@ export default function ProfilePage() {
     }
   };
 
-  // Fetch subscription data from Supabase
+  // Fetch subscription data
   const fetchSubscriptionData = async () => {
     if (!user?.id) return;
 
     try {
-      const { data: userData, error } = await supabase
+      const { data: userData } = await supabase
         .from('users')
         .select('is_pro, is_premium, stripe_customer_id, stripe_subscription_id')
         .eq('id', user.id)
         .single();
 
-      if (error) throw error;
-
-      let currentPlan = 'free';
-      if (userData?.is_premium) currentPlan = 'premium';
-      else if (userData?.is_pro) currentPlan = 'pro';
+      let currentPlan = "Free Plan";
+      let hasActiveSubscription = false;
+      
+      if (userData?.is_premium) {
+        currentPlan = "Premium Plan";
+        hasActiveSubscription = Boolean(userData.stripe_subscription_id);
+      } else if (userData?.is_pro) {
+        currentPlan = "Pro Plan";
+        hasActiveSubscription = Boolean(userData.stripe_subscription_id);
+      }
 
       setSubscriptionData({
-        currentPlan,
-        stripeCustomerId: userData?.stripe_customer_id || null,
-        stripeSubscriptionId: userData?.stripe_subscription_id || null,
-        loading: false
+        plan: currentPlan,
+        status: "Active",
+        loading: false,
+        hasActiveSubscription
       });
     } catch (error) {
       console.error('Error fetching subscription data:', error);
@@ -175,190 +122,126 @@ export default function ProfilePage() {
     }
   };
 
-  // Fetch data when user is available
+  // Handle manage subscription (opens Stripe customer portal)
+  const handleManageSubscription = async () => {
+    setIsManagingSubscription(true);
+
+    try {
+      const response = await fetch('/api/stripe/create-portal-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create portal session');
+      }
+
+      const { url } = await response.json();
+      
+      if (url) {
+        window.location.href = url;
+      } else {
+        throw new Error('No portal URL received');
+      }
+    } catch (error: any) {
+      console.error("Error creating portal session:", error);
+      alert("Failed to open subscription management. Please try again.");
+    } finally {
+      setIsManagingSubscription(false);
+    }
+  };
+
   useEffect(() => {
     if (user?.id) {
       fetchAccountStats();
       fetchSubscriptionData();
+      setNewDisplayName((user as any)?.display_name || "");
+      setProfileImageUrl((user as any)?.profile_image_url || null);
     }
   }, [user?.id]);
 
   // Handle display name update
-  const onUpdateDisplayName = async (data: DisplayNameFormValues) => {
-    if (!user) return;
-
-    setIsSubmittingDisplayName(true);
+  const handleUpdateDisplayName = async () => {
+    if (!user || !newDisplayName.trim()) return;
 
     try {
       const { error: updateErr } = await supabase
         .from("users")
-        .update({ display_name: data.displayName })
+        .update({ display_name: newDisplayName })
         .eq("id", user.id);
 
       if (updateErr) throw updateErr;
 
       await supabase.auth.updateUser({
-        data: { display_name: data.displayName },
+        data: { display_name: newDisplayName },
       });
 
-      toast({
-        title: "Display Name Updated",
-        description: "Your display name has been updated successfully.",
-      });
-
+      alert("Display name updated successfully!");
       setIsEditingDisplayName(false);
       window.location.reload();
     } catch (error: any) {
-      toast({
-        title: "Update Failed",
-        description: error?.message || "Failed to update display name.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmittingDisplayName(false);
+      alert("Failed to update display name: " + error.message);
     }
   };
 
-  // Handle username update
-  const onUpdateUsername = async (data: UsernameFormValues) => {
-    if (!user) return;
-
-    setIsSubmittingUsername(true);
-
-    try {
-      const { error: updateErr } = await supabase
-        .from("users")
-        .update({ username: data.username })
-        .eq("id", user.id);
-
-      if (updateErr) throw updateErr;
-
-      await supabase.auth.updateUser({
-        data: { username: data.username },
-      });
-
-      toast({
-        title: "Username Updated",
-        description: "Your username has been updated successfully.",
-      });
-
-      setIsEditingUsername(false);
-      window.location.reload();
-    } catch (error: any) {
-      toast({
-        title: "Update Failed",
-        description: error?.message || "Failed to update username.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmittingUsername(false);
-    }
-  };
-
-  // Handle profile image upload (using base64 instead of storage)
-  const onUpdateProfileImage = async (file: File) => {
-    console.log("onUpdateProfileImage called with file:", file);
-    console.log("User:", user);
-
-    if (!user) {
-      console.error("No user found");
-      return;
-    }
+  // Handle profile picture upload
+  const handleProfilePictureUpload = async (file: File) => {
+    if (!user || !file) return;
 
     setIsUploadingImage(true);
-    console.log("Starting upload...");
 
     try {
-      // Validate file
-      if (!file.type.startsWith('image/')) {
-        throw new Error('File must be an image');
-      }
-
-      if (file.size > 5 * 1024 * 1024) {
-        throw new Error('File size must be less than 5MB');
-      }
-
-      // Convert to base64
-      console.log("Converting file to base64...");
-      const base64 = await new Promise<string>((resolve, reject) => {
+      // Convert file to base64 for now (avoiding storage bucket complexity)
+      const base64Image = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
 
-      console.log("Base64 conversion complete, updating database...");
-      const { error: updateErr } = await supabase
+      // Update user profile with base64 image
+      const { error: updateError } = await supabase
         .from("users")
-        .update({ profile_image_url: base64 })
+        .update({ profile_image_url: base64Image })
         .eq("id", user.id);
 
-      if (updateErr) {
-        console.error("Database update error:", updateErr);
-        throw updateErr;
-      }
+      if (updateError) throw updateError;
 
-      console.log("Updating auth user metadata...");
+      // Update auth metadata
       await supabase.auth.updateUser({
-        data: { profile_image_url: base64 },
+        data: { profile_image_url: base64Image },
       });
 
-      toast({
-        title: "Profile Picture Updated",
-        description: "Your profile picture has been updated successfully.",
-      });
-
-      setSelectedProfileFile(null);
-      window.location.reload();
+      setProfileImageUrl(base64Image);
+      alert("Profile picture updated successfully!");
     } catch (error: any) {
-      console.error("Upload error:", error);
-      toast({
-        title: "Upload Failed",
-        description: error?.message || "Failed to upload profile picture.",
-        variant: "destructive",
-      });
+      console.error("Error uploading profile picture:", error);
+      alert("Failed to update profile picture: " + error.message);
     } finally {
       setIsUploadingImage(false);
     }
   };
 
-  // Handle password change
-  const onChangePassword = async (data: PasswordChangeFormValues) => {
-    if (!user) return;
+  // Handle file selection
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
 
-    setIsSubmittingPassword(true);
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image must be smaller than 5MB');
+        return;
+      }
 
-    try {
-      // Verify current password
-      if (!user.email) throw new Error("Email missing on user account");
-
-      const { error: verifyErr } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: data.currentPassword,
-      });
-      if (verifyErr) throw new Error("Current password is incorrect");
-
-      // Update password
-      const { error: updateErr } = await supabase.auth.updateUser({
-        password: data.newPassword,
-      });
-      if (updateErr) throw updateErr;
-
-      toast({
-        title: "Password Changed",
-        description: "Your password has been changed successfully.",
-      });
-
-      setIsChangingPassword(false);
-      passwordForm.reset();
-    } catch (error: any) {
-      toast({
-        title: "Password Change Failed",
-        description: error?.message || "Failed to change password.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmittingPassword(false);
+      handleProfilePictureUpload(file);
     }
   };
 
@@ -372,15 +255,7 @@ export default function ProfilePage() {
       .slice(0, 2);
   };
 
-  // Common classes for form inputs
-  const inputClasses =
-    "bg-transparent border border-gray-700 rounded-none h-10";
-
-  if (!user) {
-    return null; // useRequireAuth will redirect
-  }
-
-  if (isLoading) {
+  if (isLoading || !user) {
     return (
       <div className="w-full max-w-md mx-auto px-8 pb-8 min-h-screen flex flex-col bg-gray-950">
         <div className="sticky top-0 z-50 bg-gray-950 pt-8">
@@ -397,443 +272,202 @@ export default function ProfilePage() {
 
   const displayName = (user as any)?.display_name ?? (user as any)?.user_metadata?.display_name ?? user?.email ?? "";
   const username = (user as any)?.username ?? (user as any)?.user_metadata?.username ?? "";
-  const profileImageUrl = (user as any)?.profile_image_url ?? (user as any)?.user_metadata?.profile_image_url;
-
-  // Use subscription data from Supabase instead of user metadata
-  const isPremium = subscriptionData.currentPlan === 'premium';
-  const isPro = subscriptionData.currentPlan === 'pro';
 
   return (
-    <div className="w-full max-w-md mx-auto px-8 pb-8 min-h-screen flex flex-col page-container">
-      <div className="sticky top-0 z-50 page-container pt-8">
+    <div className="w-full max-w-md mx-auto px-8 pb-8 min-h-screen flex flex-col bg-gray-950">
+      <div className="sticky top-0 z-50 bg-gray-950 pt-8">
         <Header />
       </div>
 
-      <main className="flex-1 overflow-auto mb-6 animate-fade-in">
-        <h1 className="text-2xl font-bold mb-6">Profile</h1>
+      <main className="flex-1 overflow-auto mb-6">
+        <h1 className="text-2xl font-bold mb-6 text-white">Profile</h1>
 
-        <Card className="bg-gray-900 border border-gray-800 mb-6">
-          <CardHeader className="pb-2">
-            <div className="flex items-center space-x-4">
-              <Avatar className="h-16 w-16 border border-primary bg-gray-900">
+        {/* Profile Card */}
+        <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6">
+          {/* Profile Header */}
+          <div className="flex items-center space-x-4 mb-6">
+            <div className="relative">
+              <div className="h-16 w-16 border border-primary bg-gray-900 rounded-full flex items-center justify-center overflow-hidden">
                 {profileImageUrl ? (
-                  <AvatarImage src={profileImageUrl} alt={displayName} />
-                ) : null}
-                <AvatarFallback className="bg-gray-900 text-primary text-xl">
-                  {getInitials(displayName)}
-                </AvatarFallback>
-              </Avatar>
-
-              <div>
-                <CardTitle>{displayName}</CardTitle>
-                <CardDescription className="text-gray-400">
-                  {username ? `@${username}` : user.email}
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-
-          <Separator className="bg-gray-800" />
-
-          <CardContent className="pt-6">
-            <div className="space-y-6">
-              {/* Profile Picture Section */}
-              <div>
-                <h3 className="text-sm font-medium text-gray-400 mb-3">
-                  Profile Picture
-                </h3>
-                <div className="flex items-start gap-4">
-                  <ImageUpload
-                    value={profileImageUrl}
-                    onChange={(file) => {
-                      console.log("File selected:", file);
-                      setSelectedProfileFile(file);
-                    }}
-                    placeholder="Upload a profile picture"
-                    rounded={true}
-                    size="lg"
-                    maxSize={5}
-                    className="flex-shrink-0"
+                  <img 
+                    src={profileImageUrl} 
+                    alt={displayName} 
+                    className="h-16 w-16 rounded-full object-cover" 
                   />
-                  {selectedProfileFile && (
-                    <div className="flex flex-col gap-2 mt-2">
-                      <div className="text-xs text-gray-500 mb-1">
-                        File: {selectedProfileFile.name} ({(selectedProfileFile.size / 1024 / 1024).toFixed(2)}MB)
-                      </div>
-                      <Button
-                        onClick={() => {
-                          console.log("Save button clicked, file:", selectedProfileFile);
-                          onUpdateProfileImage(selectedProfileFile);
-                        }}
-                        disabled={isUploadingImage}
-                        size="sm"
-                        className="bg-primary hover:bg-primary/90 text-white"
-                      >
-                        {isUploadingImage ? "Saving..." : "Save Picture"}
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          console.log("Cancel button clicked");
-                          setSelectedProfileFile(null);
-                        }}
-                        variant="outline"
-                        size="sm"
-                        className="bg-transparent border-gray-700 hover:bg-gray-800"
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  )}
-                  {!selectedProfileFile && (
-                    <div className="text-xs text-gray-500 mt-2">
-                      No file selected
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Display Name Section */}
-              <div>
-                <h3 className="text-sm font-medium text-gray-400 mb-1">
-                  Display Name
-                </h3>
-                {isEditingDisplayName ? (
-                  <Form {...displayNameForm}>
-                    <form
-                      onSubmit={displayNameForm.handleSubmit(onUpdateDisplayName)}
-                      className="space-y-3"
-                    >
-                      <FormField
-                        control={displayNameForm.control}
-                        name="displayName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input
-                                placeholder="Your display name"
-                                className={inputClasses}
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage className="text-primary" />
-                          </FormItem>
-                        )}
-                      />
-                      <div className="flex gap-2">
-                        <Button
-                          type="submit"
-                          size="sm"
-                          disabled={isSubmittingDisplayName}
-                          className="bg-primary hover:bg-primary/90 text-white"
-                        >
-                          {isSubmittingDisplayName ? "Saving..." : "Save"}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setIsEditingDisplayName(false)}
-                          className="bg-transparent border-gray-700 hover:bg-gray-800"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
                 ) : (
-                  <div className="flex items-center justify-between">
-                    <p>{displayName}</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsEditingDisplayName(true)}
-                      className="bg-transparent border-gray-700 hover:bg-gray-800"
-                    >
-                      Edit
-                    </Button>
-                  </div>
+                  <span className="text-primary text-xl font-medium">
+                    {getInitials(displayName)}
+                  </span>
                 )}
               </div>
-
-              {/* Username Section */}
-              <div>
-                <h3 className="text-sm font-medium text-gray-400 mb-1">
-                  Username
-                </h3>
-                {isEditingUsername ? (
-                  <Form {...usernameForm}>
-                    <form
-                      onSubmit={usernameForm.handleSubmit(onUpdateUsername)}
-                      className="space-y-3"
-                    >
-                      <FormField
-                        control={usernameForm.control}
-                        name="username"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input
-                                placeholder="Your username"
-                                className={inputClasses}
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage className="text-primary" />
-                          </FormItem>
-                        )}
-                      />
-                      <div className="flex gap-2">
-                        <Button
-                          type="submit"
-                          size="sm"
-                          disabled={isSubmittingUsername}
-                          className="bg-primary hover:bg-primary/90 text-white"
-                        >
-                          {isSubmittingUsername ? "Saving..." : "Save"}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setIsEditingUsername(false)}
-                          className="bg-transparent border-gray-700 hover:bg-gray-800"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
+              
+              {/* Camera overlay for upload */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingImage}
+                className="absolute -bottom-1 -right-1 bg-primary hover:bg-primary/90 rounded-full p-2 border-2 border-gray-950 transition-colors disabled:opacity-50"
+              >
+                {isUploadingImage ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <div className="flex items-center justify-between">
-                    <p>{username ? `@${username}` : "No username set"}</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsEditingUsername(true)}
-                      className="bg-transparent border-gray-700 hover:bg-gray-800"
-                    >
-                      Edit
-                    </Button>
-                  </div>
+                  <Camera className="w-4 h-4 text-white" />
                 )}
-              </div>
-
-              {/* Password Section */}
-              <div>
-                <h3 className="text-sm font-medium text-gray-400 mb-1">
-                  Password
-                </h3>
-                {isChangingPassword ? (
-                  <Form {...passwordForm}>
-                    <form
-                      onSubmit={passwordForm.handleSubmit(onChangePassword)}
-                      className="space-y-3"
-                    >
-                      <FormField
-                        control={passwordForm.control}
-                        name="currentPassword"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs text-gray-500">
-                              Current Password
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                type="password"
-                                placeholder="••••••••"
-                                className={inputClasses}
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage className="text-primary" />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={passwordForm.control}
-                        name="newPassword"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs text-gray-500">
-                              New Password
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                type="password"
-                                placeholder="••••••••"
-                                className={inputClasses}
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage className="text-primary" />
-                          </FormItem>
-                        )}
-                      />
-                      <div className="flex gap-2">
-                        <Button
-                          type="submit"
-                          size="sm"
-                          disabled={isSubmittingPassword}
-                          className="bg-primary hover:bg-primary/90 text-white"
-                        >
-                          {isSubmittingPassword ? "Changing..." : "Change Password"}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setIsChangingPassword(false)}
-                          className="bg-transparent border-gray-700 hover:bg-gray-800"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                ) : (
-                  <div className="flex items-center justify-between">
-                    <p>••••••••</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsChangingPassword(true)}
-                      className="bg-transparent border-gray-700 hover:bg-gray-800"
-                    >
-                      Change Password
-                    </Button>
-                  </div>
-                )}
-              </div>
+              </button>
+              
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gray-900 border border-gray-800 mb-6">
-          <CardHeader>
-            <CardTitle className="text-base">Account Stats</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-800 p-4 rounded-sm text-center">
-                <p className="text-gray-400 text-sm uppercase tracking-wider">
-                  Created Events
-                </p>
-                <p className="text-2xl font-bold">
-                  {accountStats.loading ? "..." : accountStats.createdEvents}
-                </p>
-              </div>
-              <div className="bg-gray-800 p-4 rounded-sm text-center">
-                <p className="text-gray-400 text-sm uppercase tracking-wider">
-                  Total Responses
-                </p>
-                <p className="text-2xl font-bold">
-                  {accountStats.loading ? "..." : accountStats.totalResponses}
-                </p>
-              </div>
+            
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl font-semibold text-white truncate">{displayName}</h2>
+              <p className="text-gray-400 text-sm truncate">{user?.email}</p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        <Card className="bg-gray-900 border border-gray-800">
-          <CardHeader>
-            <CardTitle className="text-base">Subscription</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-medium text-gray-400 mb-1">Current Plan</h3>
-                {subscriptionData.loading ? (
-                  <p className="flex items-center">
-                    <span className="flex h-2 w-2 bg-gray-400 rounded-full mr-2"></span>
-                    Loading...
-                  </p>
-                ) : isPremium ? (
-                  <p className="flex items-center">
-                    <span className="flex h-2 w-2 bg-primary rounded-full mr-2"></span>
-                    Premium Plan
-                  </p>
-                ) : isPro ? (
-                  <p className="flex items-center">
-                    <span className="flex h-2 w-2 bg-primary rounded-full mr-2"></span>
-                    Pro Plan
-                  </p>
-                ) : (
-                  <p className="flex items-center">
-                    <span className="flex h-2 w-2 bg-gray-400 rounded-full mr-2"></span>
-                    Free Plan
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <h3 className="text-sm font-medium text-gray-400 mb-1">Features</h3>
-                <ul className="space-y-1 text-sm">
-                  {isPremium ? (
-                    <>
-                      <li>• Unlimited events</li>
-                      <li>• Advanced analytics</li>
-                      <li>• Custom branding</li>
-                      <li>• White-label events</li>
-                    </>
-                  ) : isPro ? (
-                    <>
-                      <li>• Unlimited events</li>
-                      <li>• Advanced analytics</li>
-                      <li className="text-gray-500">• Custom branding (Premium only)</li>
-                      <li className="text-gray-500">• White-label events (Premium only)</li>
-                    </>
-                  ) : (
-                    <>
-                      <li>• Up to 3 events</li>
-                      <li className="text-gray-500">• Advanced analytics (Pro & Premium)</li>
-                      <li className="text-gray-500">• Custom branding (Premium only)</li>
-                      <li className="text-gray-500">• White-label events (Premium only)</li>
-                    </>
-                  )}
-                </ul>
-              </div>
-
-              <div className="pt-2">
-                {subscriptionData.loading ? (
+          {/* Profile Details */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-1">Display Name</label>
+              {isEditingDisplayName ? (
+                <div className="flex items-center space-x-2">
+                  <Input
+                    value={newDisplayName}
+                    onChange={(e) => setNewDisplayName(e.target.value)}
+                    className="flex-1 bg-gray-800 border-gray-700 text-white"
+                    placeholder="Enter display name"
+                  />
                   <Button
-                    disabled
-                    className="w-full bg-gray-700 text-gray-400"
+                    size="sm"
+                    onClick={handleUpdateDisplayName}
+                    className="bg-green-600 hover:bg-green-700"
                   >
-                    Loading...
+                    <Check className="w-4 h-4" />
                   </Button>
-                ) : (isPro || isPremium) && subscriptionData.stripeCustomerId ? (
                   <Button
-                    onClick={async () => {
-                      try {
-                        // This would require implementing a Stripe customer portal API endpoint
-                        toast({
-                          title: "Feature Coming Soon",
-                          description: "Subscription management portal is coming soon.",
-                        });
-                      } catch (error) {
-                        toast({
-                          title: "Error",
-                          description: "Could not open subscription management portal.",
-                          variant: "destructive",
-                        });
-                      }
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setIsEditingDisplayName(false);
+                      setNewDisplayName((user as any)?.display_name || "");
                     }}
-                    className="w-full bg-gray-800 hover:bg-gray-700 border border-gray-700"
+                    className="border-gray-700"
                   >
-                    Manage Subscription
+                    <X className="w-4 h-4" />
                   </Button>
-                ) : (
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <span className="text-white">{displayName}</span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setIsEditingDisplayName(true)}
+                    className="text-gray-400 hover:text-white"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-1">Email</label>
+              <span className="text-white">{user?.email}</span>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-1">User ID</label>
+              <span className="text-gray-400 text-sm font-mono">{user?.id}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Account Stats */}
+        <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6">
+          <h3 className="text-lg font-semibold mb-4 text-white">Account Stats</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-primary">
+                {accountStats.loading ? "..." : accountStats.createdEvents}
+              </div>
+              <div className="text-sm text-gray-400">Events Created</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-primary">
+                {accountStats.loading ? "..." : accountStats.totalResponses}
+              </div>
+              <div className="text-sm text-gray-400">Total Responses</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Subscription */}
+        <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
+          <h3 className="text-lg font-semibold mb-4 text-white">Subscription</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400">Current Plan</span>
+              <div className="flex items-center gap-2">
+                {subscriptionData.plan === "Premium Plan" && <Crown className="w-4 h-4 text-yellow-400" />}
+                {subscriptionData.plan === "Pro Plan" && <Zap className="w-4 h-4 text-blue-400" />}
+                <span className="text-white font-medium">
+                  {subscriptionData.loading ? "..." : subscriptionData.plan}
+                </span>
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400">Status</span>
+              <span className="text-green-400">
+                {subscriptionData.loading ? "..." : subscriptionData.status}
+              </span>
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="space-y-2 pt-2">
+              {subscriptionData.hasActiveSubscription ? (
+                <>
+                  <Button
+                    onClick={handleManageSubscription}
+                    disabled={isManagingSubscription}
+                    className="w-full bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
+                  >
+                    {isManagingSubscription ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        Opening...
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="w-4 h-4" />
+                        Manage Subscription
+                      </div>
+                    )}
+                  </Button>
                   <Button
                     onClick={() => router.push("/upgrade")}
-                    className="w-full bg-primary hover:bg-primary/90 text-white"
+                    variant="outline"
+                    className="w-full border-gray-700 text-gray-300 hover:text-white hover:bg-gray-800"
                   >
-                    Upgrade Your Plan
+                    View All Plans
                   </Button>
-                )}
-              </div>
+                </>
+              ) : (
+                <Button
+                  onClick={() => router.push("/upgrade")}
+                  className="w-full bg-primary hover:bg-primary/90 text-white"
+                >
+                  Upgrade Plan
+                </Button>
+              )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </main>
     </div>
   );

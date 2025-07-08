@@ -10,7 +10,12 @@ export default function HomePage() {
   useEffect(() => {
     if (!isLoading) {
       if (user) {
-        router.replace("/my-events");
+        // Check if user needs phone verification
+        if (!user.phone_number || user.phone_number.trim() === '') {
+          router.replace("/phone-verification");
+        } else {
+          router.replace("/my-events");
+        }
       } else {
         router.replace("/auth?mode=login");
       }

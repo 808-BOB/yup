@@ -71,6 +71,9 @@ export async function uploadEventImage(
   file: File
 ): Promise<UploadResult> {
   try {
+    console.log('Starting event image upload for event:', eventId);
+    console.log('File details:', { name: file.name, size: file.size, type: file.type });
+    
     // Validate file type
     if (!file.type.startsWith('image/')) {
       return { success: false, error: 'File must be an image' };
@@ -85,13 +88,30 @@ export async function uploadEventImage(
     const fileName = `${eventId}.${fileExt}`;
     const filePath = `${fileName}`;
 
+    console.log('Uploading to path:', filePath);
+
+    // Check authentication first
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      console.error('Authentication check failed:', authError);
+      return { 
+        success: false, 
+        error: 'Authentication required for image upload. Please log in and try again.' 
+      };
+    }
+
+    console.log('User authenticated:', user.id);
+
     // Delete existing event image if it exists
+    console.log('Removing existing image if present...');
     await supabase.storage
       .from('event-pics')
       .remove([filePath]);
 
     // Upload new event image
-    const { error: uploadError } = await supabase.storage
+    console.log('Uploading new image...');
+    const { data: uploadData, error: uploadError } = await supabase.storage
       .from('event-pics')
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -99,13 +119,34 @@ export async function uploadEventImage(
       });
 
     if (uploadError) {
+      console.error('Upload error details:', uploadError);
+      
+      // Provide more specific error messages for common issues
+      if (uploadError.message?.includes('row-level security')) {
+        return {
+          success: false,
+          error: 'Storage permissions error. Please ensure you are logged in and try again.'
+        };
+      }
+      
+      if (uploadError.message?.includes('bucket')) {
+        return {
+          success: false,
+          error: 'Storage bucket configuration error. Please contact support.'
+        };
+      }
+      
       throw uploadError;
     }
+
+    console.log('Upload successful:', uploadData);
 
     // Get public URL
     const { data: publicUrlData } = supabase.storage
       .from('event-pics')
       .getPublicUrl(filePath);
+
+    console.log('Generated public URL:', publicUrlData.publicUrl);
 
     return {
       success: true,
@@ -113,9 +154,21 @@ export async function uploadEventImage(
     };
   } catch (error: any) {
     console.error('Event image upload error:', error);
+    
+    // Provide user-friendly error messages
+    let errorMessage = 'Failed to upload event image';
+    
+    if (error.message?.includes('row-level security')) {
+      errorMessage = 'Storage access denied. Please ensure you are logged in.';
+    } else if (error.message?.includes('unauthorized')) {
+      errorMessage = 'Authentication required. Please log in and try again.';
+    } else if (error.message?.includes('bucket')) {
+      errorMessage = 'Storage configuration error. Please contact support.';
+    }
+    
     return {
       success: false,
-      error: error.message || 'Failed to upload event image'
+      error: errorMessage
     };
   }
 }

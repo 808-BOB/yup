@@ -3,7 +3,11 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, ArrowRight, Image, Upload, Loader2 } from "lucide-react";
+import ArrowLeft from "lucide-react/dist/esm/icons/arrow-left";
+import ArrowRight from "lucide-react/dist/esm/icons/arrow-right";
+import Image from "lucide-react/dist/esm/icons/image";
+import Upload from "lucide-react/dist/esm/icons/upload";
+import Loader2 from "lucide-react/dist/esm/icons/loader-2";
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
 import { Textarea } from "@/ui/textarea";
@@ -14,7 +18,6 @@ import { useAuth } from "@/utils/auth-context";
 import { insertEventSchema } from "@/utils/validators/event";
 import { useAccessibleColors } from "@/hooks/use-accessible-colors";
 import { ImageUpload } from "@/ui/image-upload";
-import { uploadEventImage } from "@/utils/image-upload";
 import dynamic from "next/dynamic";
 
 // Dynamically import Header to avoid SSR issues
@@ -47,7 +50,7 @@ export default function CreateEvent() {
       address: "",
       description: "",
       imageUrl: "",
-      hostId: user?.id || "",
+      hostId: "",
       status: "open",
       slug: "",
       allowGuestRsvp: true,
@@ -59,10 +62,29 @@ export default function CreateEvent() {
     },
   });
 
+  // Update hostId when user becomes available
+  React.useEffect(() => {
+    if (user?.id) {
+      form.setValue("hostId", user.id);
+    }
+  }, [user?.id, form]);
+
   // Handle image upload will be managed by ImageUpload component
 
   const onSubmit = async (data: FormValues) => {
-    if (!user) return;
+    if (!user?.id) {
+      toast({
+        title: "Authentication Error",
+        description: "Please log in to create an event.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Ensure hostId is set
+    if (!data.hostId) {
+      data.hostId = user.id;
+    }
     
     setIsSubmitting(true);
     
@@ -70,22 +92,10 @@ export default function CreateEvent() {
       // Generate slug from title
       const slug = `${data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`;
 
-      // Handle image upload if a file was selected
-      let imageUrl = data.imageUrl || "";
-      if (selectedImageFile) {
-        console.log("Converting event image to base64...");
-        // Convert to base64 for now (avoiding storage bucket issues)
-        imageUrl = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(selectedImageFile);
-        });
-      }
-
+      // Create event first without image
       const eventPayload = {
         ...data,
-        imageUrl,
+        imageUrl: "", // Will be updated after image upload
         hostId: user.id,
         slug,
         status: "open",
@@ -104,11 +114,83 @@ export default function CreateEvent() {
 
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // Handle specific event limit error for free users
+        if (response.status === 403 && errorData.upgradeRequired) {
+          toast({
+            title: "Event Limit Reached",
+            description: errorData.details || "Free accounts are limited to 3 events. Upgrade to Pro or Premium for unlimited events.",
+            variant: "destructive",
+          });
+          
+          // Redirect to upgrade page after a short delay
+          setTimeout(() => {
+            router.push("/upgrade");
+          }, 2000);
+          
+          return;
+        }
+        
         throw new Error(errorData.error || 'Failed to create event');
       }
 
       const result = await response.json();
+      const eventId = result.event?.id;
       console.log('Event created successfully:', result);
+      console.log('Event ID:', eventId);
+      console.log('Selected image file:', selectedImageFile ? selectedImageFile.name : 'None');
+      
+      if (!eventId) {
+        console.error('No event ID returned from API');
+        throw new Error('Event was created but no ID was returned');
+      }
+
+      // Handle image upload after event creation if a file was selected
+      if (selectedImageFile && eventId) {
+        console.log("Uploading event image via server-side endpoint...");
+        console.log('Event ID for upload:', eventId);
+        console.log('Selected file:', selectedImageFile.name, selectedImageFile.size, 'bytes');
+        
+        try {
+          // Use server-side upload endpoint instead of client-side upload
+          const formData = new FormData();
+          formData.append('file', selectedImageFile);
+          
+          const uploadResponse = await fetch(`/api/events/${eventId}/upload-image`, {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!uploadResponse.ok) {
+            const errorData = await uploadResponse.json();
+            console.error('Server-side upload failed:', errorData);
+            
+            // Don't fail the entire event creation for image upload failure
+            toast({
+              title: "Image Upload Failed",
+              description: errorData.error || "Failed to upload event image, but event was created successfully.",
+              variant: "destructive",
+            });
+          } else {
+            const uploadResult = await uploadResponse.json();
+            console.log('Server-side upload successful:', uploadResult);
+            
+            toast({
+              title: "Image Uploaded!",
+              description: "Event image was uploaded successfully.",
+            });
+          }
+        } catch (uploadError: any) {
+          console.error('Image upload error:', uploadError);
+          toast({
+            title: "Image Upload Failed", 
+            description: "Failed to upload event image, but event was created successfully.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        console.log('No image upload needed:', { hasFile: !!selectedImageFile, hasEventId: !!eventId });
+      }
       
       toast({
         title: "Event Created!",

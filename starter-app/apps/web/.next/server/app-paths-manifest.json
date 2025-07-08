@@ -1,8 +1,10 @@
 {
-  "/not-found": "app/not-found.js",
-  "/upgrade/page": "app/upgrade/page.js",
-  "/api/events/route": "app/api/events/route.js",
+  "/api/storage/setup-brand-logos/route": "app/api/storage/setup-brand-logos/route.js",
+  "/api/events/my/route": "app/api/events/my/route.js",
+  "/events/create/page": "app/events/create/page.js",
   "/my-events/page": "app/my-events/page.js",
+  "/events/[slug]/page": "app/events/[slug]/page.js",
   "/branding/page": "app/branding/page.js",
+  "/event-list/page": "app/event-list/page.js",
   "/profile/page": "app/profile/page.js"
 }

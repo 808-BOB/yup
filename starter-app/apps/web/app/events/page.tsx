@@ -14,7 +14,8 @@ interface EventRow {
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function EventsPage() {
-  const { data: events, error } = useSWR<EventRow[]>("/api/events", fetcher);
+  const { data, error } = useSWR<{events: EventRow[]}>("/api/events", fetcher);
+  const events = data?.events;
 
   if (!events && !error) {
     return <div className="min-h-screen flex items-center justify-center">Loading events…</div>;
@@ -26,17 +27,26 @@ export default function EventsPage() {
   return (
     <div className="max-w-2xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Upcoming Events</h1>
-      <ul className="space-y-4">
-        {events?.map((ev) => (
-          <li key={ev.id} className="border border-gray-700 p-4 rounded">
-            <h2 className="font-semibold text-lg">{ev.title}</h2>
-            <p className="text-sm text-gray-400">{ev.date} – {ev.location}</p>
-            <Link href={`/events/${ev.slug}`} className="text-primary text-sm underline mt-2 inline-block">
-              View event
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {events && events.length > 0 ? (
+        <ul className="space-y-4">
+          {events.map((ev) => (
+            <li key={ev.id} className="border border-gray-700 p-4 rounded">
+              <h2 className="font-semibold text-lg">{ev.title}</h2>
+              <p className="text-sm text-gray-400">{ev.date} – {ev.location}</p>
+              <Link href={`/events/${ev.slug}`} className="text-primary text-sm underline mt-2 inline-block">
+                View event
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="text-center text-gray-400 py-8">
+          <p>No events found.</p>
+          <Link href="/events/create" className="text-primary underline mt-2 inline-block">
+            Create your first event
+          </Link>
+        </div>
+      )}
     </div>
   );
 } 

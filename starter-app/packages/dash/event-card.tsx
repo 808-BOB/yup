@@ -15,7 +15,13 @@ import { useAccessibleColors } from "@/hooks/use-accessible-colors";
 import { type Event } from "@/types";
 
 interface EventCardProps {
-  event: Event;
+  event: Event & {
+    response_counts?: {
+      yupCount: number;
+      nopeCount: number;
+      maybeCount: number;
+    };
+  };
   showStats?: boolean;
   isOwner?: boolean;
   userResponse?: "yup" | "nope" | null;
@@ -37,26 +43,40 @@ export default function EventCard({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const { accessibleTextColor, primaryColor } = useAccessibleColors();
 
-  const [responseCounts, setResponseCounts] = useState({ yupCount: 0, nopeCount: 0, maybeCount: 0 });
-  
+  // Use the response counts from the API if available
+  const [responseCounts, setResponseCounts] = useState(
+    event.response_counts || { yupCount: 0, nopeCount: 0, maybeCount: 0 }
+  );
+
+  // Only fetch counts if they're not provided and showStats is true
   React.useEffect(() => {
     const fetchResponseCounts = async () => {
-      if (!showStats || !event.id) return;
+      if (!showStats || !event.id || event.response_counts) return;
 
       try {
         const { data, error } = await supabase
           .from('responses')
-          .select('response_type')
-          .eq('event_id', event.id);
+          .select('response_type, user_id, created_at')
+          .eq('event_id', event.id)
+          .order('created_at', { ascending: false });
 
         if (error) throw error;
 
-        const counts = { yupCount: 0, nopeCount: 0, maybeCount: 0 };
-        data?.forEach(response => {
-          if (response.response_type === 'yup') counts.yupCount++;
-          else if (response.response_type === 'nope') counts.nopeCount++;
-          else if (response.response_type === 'maybe') counts.maybeCount++;
-        });
+        // Deduplicate responses by user_id, keeping only the latest response
+        const uniqueResponses = data?.reduce((acc: any[], response) => {
+          if (!acc.some(r => r.user_id === response.user_id)) {
+            acc.push(response);
+          }
+          return acc;
+        }, []) || [];
+
+        // Count responses from deduplicated list
+        const counts = uniqueResponses.reduce((acc, response) => {
+          if (response.response_type === 'yup') acc.yupCount++;
+          else if (response.response_type === 'nope') acc.nopeCount++;
+          else if (response.response_type === 'maybe') acc.maybeCount++;
+          return acc;
+        }, { yupCount: 0, nopeCount: 0, maybeCount: 0 });
 
         setResponseCounts(counts);
       } catch (error) {
@@ -65,7 +85,7 @@ export default function EventCard({
     };
 
     fetchResponseCounts();
-  }, [showStats, event.id]);
+  }, [showStats, event.id, event.response_counts]);
 
   const actualUserResponse = userResponse;
 
@@ -127,6 +147,21 @@ export default function EventCard({
                 </Badge>
               )}
             </div>
+
+            {/* Event Image */}
+            {event.image_url && (
+              <div className="mb-3 -mx-4">
+                <img
+                  src={event.image_url}
+                  alt={event.title}
+                  className="w-full h-24 object-cover rounded-md"
+                  onError={(e) => {
+                    // Hide image if it fails to load
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
 
             {/* Date and time */}
             <div className="flex flex-col gap-1 mb-2">

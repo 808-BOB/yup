@@ -136,14 +136,20 @@ export default function EditEventPage() {
       // Handle image upload if a new file was selected
       let imageUrl = data.image_url || "";
       if (selectedImageFile) {
-        console.log("Converting event image to base64...");
-        // Convert to base64 for now (avoiding storage bucket issues)
-        imageUrl = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(selectedImageFile);
-        });
+        console.log("Uploading event image to storage...");
+        const uploadResult = await uploadEventImage(event.id.toString(), selectedImageFile);
+        
+        if (uploadResult.success && uploadResult.url) {
+          imageUrl = uploadResult.url;
+        } else {
+          console.error('Failed to upload event image:', uploadResult.error);
+          toast({
+            title: "Image Upload Failed",
+            description: uploadResult.error || "Failed to upload event image.",
+            variant: "destructive",
+          });
+          return; // Don't continue with event update if image upload fails
+        }
       }
 
       const { error } = await supabase

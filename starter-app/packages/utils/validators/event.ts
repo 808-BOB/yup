@@ -19,4 +19,19 @@ export const insertEventSchema = z.object({
   customYesText: z.string().optional(),
   customNoText: z.string().optional(),
   useCustomRsvpText: z.boolean().default(false),
+  // Host branding fields
+  hostBranding: z.object({
+    logoUrl: z.string().optional(),
+    brandTheme: z.object({
+      primary: z.string().optional(),
+      secondary: z.string().optional(),
+      tertiary: z.string().optional(),
+      background: z.string().optional(),
+    }).optional(),
+    customRSVPText: z.object({
+      yup: z.string().optional(),
+      nope: z.string().optional(),
+      maybe: z.string().optional(),
+    }).optional(),
+  }).optional(),
 });

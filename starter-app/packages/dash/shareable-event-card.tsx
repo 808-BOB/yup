@@ -79,6 +79,21 @@ export default function ShareableEventCard({
         </div>
 
       <CardContent className="p-4">
+        {/* Event Image */}
+        {event.image_url && (
+          <div className="mb-4 -mx-4 -mt-4">
+            <img
+              src={event.image_url}
+              alt={event.title}
+              className="w-full h-32 object-cover"
+              onError={(e) => {
+                // Hide image if it fails to load
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          </div>
+        )}
+
         <div className="mb-4">
           <h3 className="font-bold text-lg tracking-tight mb-1">{event.title}</h3>
           <p className="text-gray-400 text-sm">{event.description}</p>

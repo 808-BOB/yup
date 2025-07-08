@@ -8,6 +8,13 @@ const nextConfig = {
   experimental: {
     externalDir: true,
   },
+  // Allow cross-origin requests for OAuth
+  allowedDevOrigins: [
+    'accounts.google.com',
+    'googleapis.com',
+    '*.supabase.co',
+    '*.google.com'
+  ],
   // Expose the supabase vars to the browser bundle
   env: {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,

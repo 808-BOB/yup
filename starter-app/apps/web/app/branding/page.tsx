@@ -9,9 +9,21 @@ import { Input } from "@/ui/input";
 import { Label } from "@/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/tabs";
+import { Badge } from "@/ui/badge";
 import { ColorPicker } from "@/ui/color-picker";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Download, RotateCcw, Palette, Type, Image } from "lucide-react";
+import Upload from "lucide-react/dist/esm/icons/upload";
+import Download from "lucide-react/dist/esm/icons/download";
+import RotateCcw from "lucide-react/dist/esm/icons/rotate-ccw";
+import Palette from "lucide-react/dist/esm/icons/palette";
+import Type from "lucide-react/dist/esm/icons/type";
+import Image from "lucide-react/dist/esm/icons/image";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
+import MapPin from "lucide-react/dist/esm/icons/map-pin";
+import Check from "lucide-react/dist/esm/icons/check";
+import Users from "lucide-react/dist/esm/icons/users";
+import X from "lucide-react/dist/esm/icons/x";
+import Share2 from "lucide-react/dist/esm/icons/share-2";
 import { supabase } from "@/utils/supabase";
 import Header from "@/dash/header";
 
@@ -230,62 +242,53 @@ export default function BrandingPage() {
     console.log('File details:', { name: file.name, size: file.size, type: file.type });
 
     try {
-      // Check if user is authenticated
+      // Get current session for authorization
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log('Auth session check:', { session: !!session, error: sessionError });
-
+      
       if (sessionError || !session) {
         throw new Error('Authentication required for file upload');
       }
 
-      // Generate unique filename
-      const fileExt = file.name.split('.').pop() || 'png';
-      const timestamp = Date.now();
-      const fileName = `${user.id}/logo-${timestamp}.${fileExt}`;
+      // Create form data for file upload
+      const formData = new FormData();
+      formData.append('file', file);
 
-      console.log('Uploading to path:', fileName);
+      console.log('Uploading via API endpoint...');
 
-      // Upload to Supabase Storage directly (no need to check bucket existence)
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('brand-logos')
-        .upload(fileName, file, {
-          upsert: true,
-          contentType: file.type,
-          cacheControl: '3600'
-        });
+      // Upload via our API endpoint
+      const response = await fetch(`/api/users/${user.id}/branding`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: formData,
+      });
 
-      console.log('Upload result:', { uploadData, uploadError });
+      console.log('API response status:', response.status);
 
-      if (uploadError) {
-        console.error('Upload error details:', uploadError);
+      // Parse response as JSON
+      const result = await response.json();
+      console.log('API response:', result);
 
-        // Provide more specific error messages based on the error
-        if (uploadError.message?.includes('new row violates row-level security policy')) {
-          throw new Error('Permission denied: You may not have upload permissions. Please contact support.');
-        } else if (uploadError.message?.includes('bucket')) {
-          throw new Error('Storage bucket error: Please ensure the brand-logos bucket is properly configured.');
+      if (!response.ok) {
+        // Handle specific error codes
+        if (result.code === 'BUCKET_NOT_FOUND') {
+          throw new Error('Storage not configured. Please contact support or set up the brand-logos bucket.');
+        } else if (result.code === 'RLS_VIOLATION') {
+          throw new Error('Permission denied. You may not have upload permissions.');
         } else {
-          throw new Error(`Upload failed: ${uploadError.message}`);
+          throw new Error(result.message || 'Upload failed');
         }
       }
 
-      console.log('Upload successful:', uploadData);
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('brand-logos')
-        .getPublicUrl(fileName);
-
-      console.log('URL data:', urlData);
-
-      if (!urlData?.publicUrl) {
-        throw new Error('Failed to get public URL for uploaded image');
+      if (!result.success || !result.logoUrl) {
+        throw new Error('Upload failed: No logo URL returned');
       }
 
-      const publicUrl = urlData.publicUrl;
-      console.log('Public URL generated:', publicUrl);
+      const publicUrl = result.logoUrl;
+      console.log('Upload successful, public URL:', publicUrl);
 
-      // Update branding context and database
+      // Update branding context (this will also update the database)
       console.log('Updating branding context...');
       await branding.updateLogo(publicUrl);
       setPreviewLogo(publicUrl);
@@ -303,12 +306,10 @@ export default function BrandingPage() {
 
       if (error.message?.includes('Authentication')) {
         errorMessage = "Please log in again to upload images.";
+      } else if (error.message?.includes('Storage not configured')) {
+        errorMessage = error.message;
       } else if (error.message?.includes('Permission denied')) {
         errorMessage = error.message;
-      } else if (error.message?.includes('bucket not found')) {
-        errorMessage = "Storage not configured. Please contact support.";
-      } else if (error.message?.includes('storage')) {
-        errorMessage = "Storage service is not available. Please contact support.";
       } else if (error.message?.includes('bucket')) {
         errorMessage = "Image storage is not properly configured. Please contact support.";
       } else if (error.message) {
@@ -527,46 +528,312 @@ export default function BrandingPage() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <ColorPicker
-                      label="Primary Color"
-                      value={branding.theme.primary}
-                      onChange={(color) => handleColorChange('primary', color)}
-                    />
-                    <ColorPicker
-                      label="Secondary Color"
-                      value={branding.theme.secondary}
-                      onChange={(color) => handleColorChange('secondary', color)}
-                    />
-                    <ColorPicker
-                      label="Tertiary Color"
-                      value={branding.theme.tertiary}
-                      onChange={(color) => handleColorChange('tertiary', color)}
-                    />
+                    <div className="space-y-2">
+                      <ColorPicker
+                        label="Primary Color"
+                        value={branding.theme.primary}
+                        onChange={(color) => handleColorChange('primary', color)}
+                      />
+                      <p className="text-xs text-gray-400">Buttons, icons, accents</p>
+                    </div>
+                    <div className="space-y-2">
+                      <ColorPicker
+                        label="Secondary Color"
+                        value={branding.theme.secondary}
+                        onChange={(color) => handleColorChange('secondary', color)}
+                      />
+                      <p className="text-xs text-gray-400">Background color</p>
+                    </div>
+                    <div className="space-y-2">
+                      <ColorPicker
+                        label="Tertiary Color"
+                        value={branding.theme.tertiary}
+                        onChange={(color) => handleColorChange('tertiary', color)}
+                      />
+                      <p className="text-xs text-gray-400">Text and content color</p>
+                    </div>
                   </div>
 
                   <div className="mt-6 p-4 bg-gray-950 rounded-md border border-gray-800">
                     <h3 className="text-sm font-medium mb-3 text-white">Your Current Colors</h3>
-                    <div className="flex flex-wrap gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="flex items-center gap-2">
                         <div
                           className="w-6 h-6 rounded border border-gray-600"
                           style={{ backgroundColor: branding.theme.primary }}
                         />
-                        <span className="text-sm text-gray-300">Primary</span>
+                        <div>
+                          <span className="text-sm text-gray-300 font-medium">Primary</span>
+                          <p className="text-xs text-gray-500">Buttons & accents</p>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <div
                           className="w-6 h-6 rounded border border-gray-600"
                           style={{ backgroundColor: branding.theme.secondary }}
                         />
-                        <span className="text-sm text-gray-300">Secondary</span>
+                        <div>
+                          <span className="text-sm text-gray-300 font-medium">Secondary</span>
+                          <p className="text-xs text-gray-500">Background</p>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <div
                           className="w-6 h-6 rounded border border-gray-600"
                           style={{ backgroundColor: branding.theme.tertiary }}
                         />
-                        <span className="text-sm text-gray-300">Tertiary</span>
+                        <div>
+                          <span className="text-sm text-gray-300 font-medium">Tertiary</span>
+                          <p className="text-xs text-gray-500">Text & content</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Event Invitation Preview */}
+                  <div className="mt-6 p-6 bg-gray-950 rounded-md border border-gray-800">
+                    <h3 className="text-sm font-medium mb-4 text-white">Event Invitation Preview</h3>
+                    
+                    {/* Mock the exact event page layout */}
+                    <div 
+                      className="rounded-lg p-4 border border-gray-700"
+                      style={{ backgroundColor: branding.theme.secondary }}
+                    >
+                      <div className="space-y-6">
+                        {/* Title and action buttons */}
+                        <div className="flex justify-between items-start">
+                          <h1 className="text-xl font-bold" style={{ color: branding.theme.tertiary }}>Sample Event</h1>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs border-gray-500"
+                              style={{ color: branding.theme.tertiary }}
+                            >
+                              <Share2 className="h-3 w-3 mr-1" /> Share
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Sample Event Image */}
+                        <div className="w-full">
+                          <div 
+                            className="relative rounded-lg overflow-hidden border h-32 bg-gray-800 flex items-center justify-center"
+                            style={{ borderColor: `${branding.theme.primary}30` }}
+                          >
+                            <div className="text-center">
+                              <Image className="w-6 h-6 mx-auto mb-1" style={{ color: branding.theme.primary }} />
+                              <p className="text-xs opacity-60" style={{ color: branding.theme.tertiary }}>
+                                Event Image
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                          {/* Left column - Event details */}
+                          <div className="lg:col-span-2 space-y-4">
+                            {/* Status badges */}
+                            <div className="flex flex-wrap gap-2">
+                              <Badge 
+                                variant="outline" 
+                                className="text-xs"
+                                style={{ 
+                                  backgroundColor: `${branding.theme.primary}20`,
+                                  color: branding.theme.primary,
+                                  borderColor: `${branding.theme.primary}50`
+                                }}
+                              >
+                                {localRSVPText.yup || branding.customRSVPText.yup}
+                              </Badge>
+                              <Badge variant="outline" className="bg-gray-800 text-gray-300 text-xs">
+                                open
+                              </Badge>
+                            </div>
+
+                                                         {/* RSVP Buttons */}
+                             <div 
+                               className="flex gap-2 p-3 rounded-lg border"
+                               style={{ 
+                                 backgroundColor: `${branding.theme.primary}08`,
+                                 borderColor: `${branding.theme.primary}20`
+                               }}
+                             >
+                              <Button
+                                size="sm"
+                                className="flex-1 text-xs"
+                                style={{ 
+                                  backgroundColor: branding.theme.primary,
+                                  color: 'white'
+                                }}
+                              >
+                                <Check className="h-3 w-3 mr-1" />
+                                {localRSVPText.yup || branding.customRSVPText.yup}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 text-xs hover:bg-primary/10"
+                              >
+                                <Users className="h-3 w-3 mr-1" />
+                                {localRSVPText.maybe || branding.customRSVPText.maybe}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 text-xs hover:bg-muted/20"
+                              >
+                                <X className="h-3 w-3 mr-1" />
+                                {localRSVPText.nope || branding.customRSVPText.nope}
+                              </Button>
+                            </div>
+
+                                                         {/* Host info */}
+                             <div 
+                               className="flex items-center gap-3 p-3 rounded border"
+                               style={{ 
+                                 backgroundColor: `${branding.theme.primary}15`,
+                                 borderColor: `${branding.theme.primary}30`
+                               }}
+                             >
+                               <div className="h-12 w-12 rounded-full bg-gray-600 flex items-center justify-center">
+                                 {user?.user_metadata?.profile_image_url ? (
+                                   <img 
+                                     src={user.user_metadata.profile_image_url} 
+                                     alt="Host Profile" 
+                                     className="h-12 w-12 rounded-full object-cover" 
+                                   />
+                                 ) : (
+                                   <span className="text-sm font-medium" style={{ color: branding.theme.tertiary }}>
+                                     {user?.display_name?.charAt(0) || user?.email?.charAt(0) || 'H'}
+                                   </span>
+                                 )}
+                               </div>
+                               <div>
+                                 <p className="text-sm font-medium" style={{ color: branding.theme.tertiary }}>{user?.display_name || 'Host Name'}</p>
+                                 <p className="text-xs opacity-70" style={{ color: branding.theme.tertiary }}>Created {new Date().toLocaleDateString()}</p>
+                               </div>
+                             </div>
+
+                             {/* Date and Time */}
+                             <div className="flex items-start gap-3">
+                               <Calendar className="h-4 w-4 mt-1" style={{ color: branding.theme.primary }} />
+                               <div>
+                                 <h3 className="text-sm font-semibold mb-1" style={{ color: branding.theme.tertiary }}>When</h3>
+                                 <p className="text-xs opacity-80" style={{ color: branding.theme.tertiary }}>Saturday, February 15, 2025</p>
+                                 <p className="text-xs opacity-80" style={{ color: branding.theme.tertiary }}>7:00 PM - 10:00 PM</p>
+                               </div>
+                             </div>
+
+                             {/* Location */}
+                             <div className="flex items-start gap-3">
+                               <MapPin className="h-4 w-4 mt-1" style={{ color: branding.theme.primary }} />
+                               <div>
+                                 <h3 className="text-sm font-semibold mb-1" style={{ color: branding.theme.tertiary }}>Where</h3>
+                                 <p className="text-xs opacity-80" style={{ color: branding.theme.tertiary }}>Sample Venue</p>
+                                 <p className="text-xs opacity-60" style={{ color: branding.theme.tertiary }}>123 Example Street</p>
+                               </div>
+                             </div>
+                          </div>
+
+                                                     {/* Right column - RSVP Settings */}
+                           <div 
+                             className="rounded-lg p-4 border"
+                             style={{ 
+                               backgroundColor: `${branding.theme.primary}10`,
+                               borderColor: `${branding.theme.primary}25`
+                             }}
+                           >
+                             <h3 className="text-sm font-semibold mb-3" style={{ color: branding.theme.tertiary }}>RSVP Settings</h3>
+                             <div className="space-y-3">
+                               <div className="flex justify-between items-center">
+                                 <span className="text-xs opacity-80" style={{ color: branding.theme.tertiary }}>Guest RSVP</span>
+                                 <Badge 
+                                   variant="outline" 
+                                   className="text-xs"
+                                   style={{ 
+                                     backgroundColor: `${branding.theme.primary}25`,
+                                     color: branding.theme.primary,
+                                     borderColor: `${branding.theme.primary}50`
+                                   }}
+                                 >
+                                   Allowed
+                                 </Badge>
+                               </div>
+                               <div className="flex justify-between items-center">
+                                 <span className="text-xs opacity-80" style={{ color: branding.theme.tertiary }}>Plus One</span>
+                                 <Badge 
+                                   variant="outline" 
+                                   className="text-xs opacity-60"
+                                   style={{ 
+                                     backgroundColor: `${branding.theme.tertiary}10`,
+                                     color: branding.theme.tertiary,
+                                     borderColor: `${branding.theme.tertiary}30`
+                                   }}
+                                 >
+                                   Not Allowed
+                                 </Badge>
+                               </div>
+                               <div className="flex justify-between items-center">
+                                 <span className="text-xs opacity-80" style={{ color: branding.theme.tertiary }}>Max Guests</span>
+                                 <span className="text-xs font-medium" style={{ color: branding.theme.primary }}>
+                                   1
+                                 </span>
+                               </div>
+                               
+                               {/* Brand Logo Display */}
+                               {previewLogo && (
+                                 <div className="pt-4 border-t border-gray-600">
+                                   <div className="text-center">
+                                     <img
+                                       src={previewLogo}
+                                       alt="Brand Logo"
+                                       className="h-32 w-auto max-w-full mx-auto object-contain rounded"
+                                     />
+                                   </div>
+                                 </div>
+                               )}
+                             </div>
+                           </div>
+                        </div>
+
+                                                 {/* Responses section */}
+                         <div>
+                           <div className="flex justify-between items-center mb-3">
+                             <h3 className="text-sm font-semibold" style={{ color: branding.theme.tertiary }}>Responses</h3>
+                             <div className="flex gap-3 text-xs">
+                               <span style={{ color: branding.theme.primary }} className="font-medium">
+                                 8 {(localRSVPText.yup || branding.customRSVPText.yup).toLowerCase()}
+                               </span>
+                               <span className="opacity-70" style={{ color: branding.theme.tertiary }}>
+                                 2 {(localRSVPText.nope || branding.customRSVPText.nope).toLowerCase()}
+                               </span>
+                               <span style={{ color: `${branding.theme.primary}BB` }}>
+                                 3 {(localRSVPText.maybe || branding.customRSVPText.maybe).toLowerCase()}
+                               </span>
+                             </div>
+                           </div>
+                         </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 p-3 bg-gray-900 rounded border border-gray-700">
+                      <p className="text-xs text-gray-400 text-center mb-2">
+                        <strong>Live Preview:</strong> This shows how your 3-color branding system works
+                      </p>
+                      <div className="grid grid-cols-3 gap-2 text-xs text-center">
+                        <div>
+                          <div className="w-3 h-3 rounded mx-auto mb-1" style={{ backgroundColor: branding.theme.primary }}></div>
+                          <span className="text-gray-500">Primary<br/>Buttons & Icons</span>
+                        </div>
+                        <div>
+                          <div className="w-3 h-3 rounded mx-auto mb-1" style={{ backgroundColor: branding.theme.secondary }}></div>
+                          <span className="text-gray-500">Secondary<br/>Background</span>
+                        </div>
+                        <div>
+                          <div className="w-3 h-3 rounded mx-auto mb-1" style={{ backgroundColor: branding.theme.tertiary }}></div>
+                          <span className="text-gray-500">Tertiary<br/>Text & Content</span>
+                        </div>
                       </div>
                     </div>
                   </div>

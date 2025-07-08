@@ -12,56 +12,32 @@ import Link from "next/link";
 import { Button } from "@/ui/button";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { Card, CardContent } from "@/ui/card";
+import { type Event } from "@/types";
 
-interface EventRow {
-  id: number;
-  title: string;
-  slug: string;
-  date: string;
-  location: string;
-  host_id: string;
+interface EventWithResponse extends Event {
+  user_response: "yup" | "nope" | "maybe" | null;
 }
 
-const fetchInvitedEvents = async (userId: string) => {
-  const { data, error } = await supabase
-    .from("invitations")
-    .select(`
-      events!inner(
-        id,
-        title,
-        slug,
-        date,
-        location,
-        host_id
-      )
-    `)
-    .eq("user_id", userId);
+const fetchInvitedEvents = async () => {
+  // Get the access token from Supabase
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    return [];
+  }
 
-  if (error) throw error;
-
-  // Extract events from invitations and filter out own events
-  const events = data
-    .map((inv: any) => inv.events)
-    .filter((event: any) => event && event.host_id !== userId);
-
-  return events as EventRow[];
-};
-
-const fetchUserResponses = async (userId: string) => {
-  const { data, error } = await supabase
-    .from("responses")
-    .select("event_id, response_type")
-    .eq("user_id", userId);
-
-  if (error) throw error;
-
-  // Convert to object with event_id as key
-  const responses: Record<string, "yup" | "nope" | "maybe"> = {};
-  data.forEach((resp: any) => {
-    responses[resp.event_id] = resp.response_type;
+  const response = await fetch('/api/events/invited', {
+    headers: {
+      'Authorization': `Bearer ${session.access_token}`,
+    },
   });
-
-  return responses;
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to fetch invited events: ${response.status} - ${errorText}`);
+  }
+  
+  const events = await response.json();
+  return events as EventWithResponse[];
 };
 
 type ResponseFilter = "all" | "yup" | "nope" | "maybe" | "archives";
@@ -74,14 +50,9 @@ export default function EventListPage() {
   const router = useRouter();
   const [filter, setFilter] = React.useState<ResponseFilter>("all");
 
-  const { data: events, error: eventsError } = useSWR<EventRow[]>(
-    user ? ["invited-events", user.id] : null,
-    () => fetchInvitedEvents(user!.id)
-  );
-
-  const { data: userResponses = {} } = useSWR<Record<string, "yup" | "nope" | "maybe">>(
-    user ? ["user-responses", user.id] : null,
-    () => fetchUserResponses(user!.id)
+  const { data: events, error: eventsError } = useSWR<EventWithResponse[]>(
+    user ? "invited-events" : null,
+    fetchInvitedEvents
   );
 
   if (!user) {
@@ -95,7 +66,7 @@ export default function EventListPage() {
   const cutoff = now.toISOString().slice(0, 10);
 
   const filteredEvents = (events || []).filter(event => {
-    const response = userResponses[event.id];
+    const response = event.user_response;
     const eventDateStr = event.date;
     const isPastEvent = eventDateStr < cutoff;
 
@@ -111,8 +82,8 @@ export default function EventListPage() {
   });
 
   return (
-    <div className="w-full max-w-lg mx-auto px-6 pb-8 min-h-screen flex flex-col page-container">
-      <div className="sticky top-0 z-50 page-container pt-8">
+    <div className="w-full max-w-lg mx-auto px-6 pb-8 min-h-screen flex flex-col">
+      <div className="sticky top-0 z-50 bg-gray-950 pt-8">
         <Header />
         <ViewSelector
           activeMainTab="invited"
@@ -124,7 +95,7 @@ export default function EventListPage() {
         />
       </div>
 
-      <main className="flex-1 w-full animate-fade-in pb-32">
+      <main className="flex-1 w-full pb-32 mt-6">
         <Card className="w-full bg-gray-900/95 backdrop-blur-sm border border-gray-800 shadow-lg">
           <CardContent className="w-full p-6 flex flex-col gap-6">
             <div className="flex justify-between items-center mb-6">
@@ -150,16 +121,17 @@ export default function EventListPage() {
               <div className="text-center py-12">
                 <p className="text-gray-400 mb-2">Failed to load events</p>
                 <p className="text-sm text-gray-500">Please try refreshing the page</p>
+                <p className="text-xs text-red-400 mt-2">{eventsError.message}</p>
               </div>
             ) : filteredEvents.length ? (
               <div className="space-y-4">
-                {filteredEvents.map(e => (
-                  <EventCard
-                    key={e.id}
-                    event={e as any}
-                    showStats={false}
-                    isOwner={false}
-                    userResponse={userResponses[e.id] || null}
+                {filteredEvents.map(event => (
+                  <EventCard 
+                    key={event.id} 
+                    event={event} 
+                    showStats={false} 
+                    isOwner={false} 
+                    userResponse={event.user_response === "maybe" ? null : event.user_response} 
                   />
                 ))}
               </div>

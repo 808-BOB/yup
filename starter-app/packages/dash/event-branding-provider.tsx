@@ -98,11 +98,26 @@ export default function EventBrandingProvider({
           
           // Apply color to other CSS variables that might be using the primary color
           document.documentElement.style.setProperty('--ring', `${h} ${s} ${l}`);
-          document.documentElement.style.setProperty('--card-foreground', `0 0% 100%`);
           document.documentElement.style.setProperty('--border', `${h} ${s} 20%`); // Darker version
           
           // For custom components using CSS variables
           document.documentElement.style.setProperty('--color-primary', parsedTheme.primary);
+        }
+        
+        // Handle secondary color (background)
+        if (parsedTheme && parsedTheme.secondary) {
+          const { h: h2, s: s2, l: l2 } = parseColor(parsedTheme.secondary);
+          document.documentElement.style.setProperty('--background', `${h2} ${s2} ${l2}`);
+          document.documentElement.style.setProperty('--card', `${h2} ${s2} ${l2}`);
+          document.documentElement.style.setProperty('--secondary-color', parsedTheme.secondary);
+        }
+        
+        // Handle tertiary color (text/foreground)  
+        if (parsedTheme && parsedTheme.tertiary) {
+          const { h: h3, s: s3, l: l3 } = parseColor(parsedTheme.tertiary);
+          document.documentElement.style.setProperty('--foreground', `${h3} ${s3} ${l3}`);
+          document.documentElement.style.setProperty('--card-foreground', `${h3} ${s3} ${l3}`);
+          document.documentElement.style.setProperty('--tertiary-color', parsedTheme.tertiary);
         }
       } catch (e) {
         console.error('Failed to parse theme:', e);
