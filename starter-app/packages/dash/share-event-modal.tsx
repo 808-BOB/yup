@@ -37,7 +37,12 @@ const ShareEventModal = ({
 }) => {
   const { toast } = useToast();
   const branding = useBranding();
-  const [shareUrl] = useState(`${window.location.origin}/events/${event.slug}`);
+  const [shareUrl] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return `${window.location.origin}/events/${event.slug}`;
+    }
+    return `/events/${event.slug}`;
+  });
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isSendingSMS, setIsSendingSMS] = useState(false);
 
@@ -82,7 +87,10 @@ const ShareEventModal = ({
       `${event.location ? `Location: ${event.location}\n` : ''}` +
       `\nView and respond here: ${shareUrl}`
     );
-    window.open(`mailto:?subject=${subject}&body=${body}`);
+    
+    if (typeof window !== 'undefined') {
+      window.open(`mailto:?subject=${subject}&body=${body}`);
+    }
     
     toast({
       title: "Email Opened",
@@ -95,7 +103,10 @@ const ShareEventModal = ({
     const message = encodeURIComponent(
       `Check out this event: ${event.title} - ${shareUrl}`
     );
-    window.open(`sms:?body=${message}`);
+    
+    if (typeof window !== 'undefined') {
+      window.open(`sms:?body=${message}`);
+    }
     
     toast({
       title: "SMS Opened",
@@ -191,7 +202,7 @@ const ShareEventModal = ({
         </EventBrandingProvider>
 
         {/* Share Tabs */}
-        <Tabs defaultValue="link" className="w-full share-modal">
+        <Tabs defaultValue="link" className="w-full">
           <TabsList 
             className="grid w-full grid-cols-3 border"
             style={{
@@ -201,78 +212,35 @@ const ShareEventModal = ({
           >
             <TabsTrigger 
               value="link"
-              className="border-0 data-[state=active]:text-white"
+              className="border-0"
               style={{
                 color: getContrastingTextColor(branding.theme.secondary),
                 backgroundColor: 'transparent'
               }}
-              data-active-bg={branding.theme.primary}
             >
               Link
             </TabsTrigger>
             <TabsTrigger 
               value="sms"
-              className="border-0 data-[state=active]:text-white"
+              className="border-0"
               style={{
                 color: getContrastingTextColor(branding.theme.secondary),
                 backgroundColor: 'transparent'
               }}
-              data-active-bg={branding.theme.primary}
             >
               SMS
             </TabsTrigger>
             <TabsTrigger 
               value="other"
-              className="border-0 data-[state=active]:text-white"
+              className="border-0"
               style={{
                 color: getContrastingTextColor(branding.theme.secondary),
                 backgroundColor: 'transparent'
               }}
-              data-active-bg={branding.theme.primary}
             >
               Other
             </TabsTrigger>
           </TabsList>
-          <style dangerouslySetInnerHTML={{
-            __html: `
-              .share-modal [data-state="active"] {
-                background-color: ${branding.theme.primary} !important;
-                color: ${getContrastingTextColor(branding.theme.primary)} !important;
-              }
-              .share-modal [data-radix-tabs-content][data-value="link"],
-              .share-modal [data-radix-tabs-content][data-value="other"] {
-                background-color: ${branding.theme.secondary} !important;
-              }
-              .share-modal [data-radix-tabs-content][data-value="sms"],
-              .share-modal .sms-white-content {
-                background-color: #ffffff !important;
-              }
-              .share-modal [data-radix-tabs-content][data-value="sms"] *,
-              .share-modal [data-radix-tabs-content][data-value="sms"] div {
-                background-color: transparent !important;
-              }
-              .share-modal [data-radix-tabs-content][data-value="sms"] .bg-blue-500,
-              .share-modal [data-radix-tabs-content][data-value="sms"] .bg-blue-600,
-              .share-modal [data-radix-tabs-content][data-value="sms"] .bg-cyan-500,
-              .share-modal [data-radix-tabs-content][data-value="sms"] .bg-cyan-600,
-              .share-modal [data-radix-tabs-content][data-value="sms"] .bg-teal-500,
-              .share-modal [data-radix-tabs-content][data-value="sms"] .bg-teal-600 {
-                background-color: #ffffff !important;
-              }
-              .share-modal .bg-blue-500,
-              .share-modal .bg-blue-600,
-              .share-modal .bg-cyan-500,
-              .share-modal .bg-cyan-600 {
-                background-color: ${branding.theme.primary} !important;
-              }
-              .share-modal .text-blue-500,
-              .share-modal .text-blue-600,
-              .share-modal .text-cyan-500,
-              .share-modal .text-cyan-600 {
-                color: ${getContrastingTextColor(branding.theme.secondary)} !important;
-              }
-            `
-          }} />
           
           <TabsContent 
             value="link" 
@@ -309,7 +277,7 @@ const ShareEventModal = ({
           
           <TabsContent 
             value="sms" 
-            className="space-y-4 sms-white-content"
+            className="space-y-4"
             style={{
               backgroundColor: '#ffffff',
               color: '#000000'
@@ -413,7 +381,7 @@ const ShareEventModal = ({
                 variant="outline"
                 className="flex-1"
                 onClick={() => {
-                  if (navigator.share) {
+                  if (typeof window !== 'undefined' && navigator.share) {
                     navigator.share({
                       title: event.title,
                       text: `Check out this event: ${event.title}`,
