@@ -1,7 +1,11 @@
 {
-  "framework": "nextjs",
-  "buildCommand": "pnpm install && pnpm --filter web build",
-  "outputDirectory": ".next",
-  "installCommand": "pnpm install",
-  "rootDirectory": "starter-app/apps/web"
+  "builds": [
+    {
+      "src": "starter-app/apps/web/package.json",
+      "use": "@vercel/next",
+      "config": {
+        "buildCommand": "cd ../../../ && pnpm install && pnpm --filter web build"
+      }
+    }
+  ]
 } 
