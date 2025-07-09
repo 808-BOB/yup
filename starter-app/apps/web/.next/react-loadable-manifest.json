@@ -1,1 +1,39 @@
-{}
+{
+  "..\\..\\node_modules\\.pnpm\\@supabase+auth-js@2.70.0\\node_modules\\@supabase\\auth-js\\dist\\module\\lib\\helpers.js -> @supabase/node-fetch": {
+    "id": 8709,
+    "files": []
+  },
+  "..\\..\\node_modules\\.pnpm\\@supabase+functions-js@2.4.4\\node_modules\\@supabase\\functions-js\\dist\\module\\helper.js -> @supabase/node-fetch": {
+    "id": 8709,
+    "files": []
+  },
+  "..\\..\\node_modules\\.pnpm\\@supabase+realtime-js@2.11.15\\node_modules\\@supabase\\realtime-js\\dist\\module\\RealtimeClient.js -> @supabase/node-fetch": {
+    "id": 8709,
+    "files": []
+  },
+  "..\\..\\node_modules\\.pnpm\\@supabase+storage-js@2.7.1\\node_modules\\@supabase\\storage-js\\dist\\module\\lib\\helpers.js -> @supabase/node-fetch": {
+    "id": 8709,
+    "files": []
+  },
+  "..\\..\\node_modules\\.pnpm\\next@15.3.4_react-dom@18.3.1_react@18.3.1__react@18.3.1\\node_modules\\next\\dist\\client\\index.js -> ../pages/_app": {
+    "id": 1364,
+    "files": [
+      "static/chunks/1364.fba724cdcfe20c70.js"
+    ]
+  },
+  "..\\..\\node_modules\\.pnpm\\next@15.3.4_react-dom@18.3.1_react@18.3.1__react@18.3.1\\node_modules\\next\\dist\\client\\index.js -> ../pages/_error": {
+    "id": 1913,
+    "files": [
+      "static/chunks/1913.0cbdc8ea28ed2d3a.js"
+    ]
+  },
+  "app\\events\\create\\page.tsx -> @/dash/header": {
+    "id": 266,
+    "files": [
+      "static/chunks/5314-213acd00bf9f4b74.js",
+      "static/chunks/6356-ccb899b0d7b5df59.js",
+      "static/chunks/6814-4061c1ccae1c2e14.js",
+      "static/chunks/266-43153ed3551b26a9.js"
+    ]
+  }
+}
