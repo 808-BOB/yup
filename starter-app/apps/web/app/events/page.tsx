@@ -1,52 +1,28 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import useSWR from "swr";
-
-interface EventRow {
-  id: number;
-  title: string;
-  slug: string;
-  date: string;
-  location: string;
-}
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/utils/auth-context";
 
 export default function EventsPage() {
-  const { data, error } = useSWR<{events: EventRow[]}>("/api/events", fetcher);
-  const events = data?.events;
+  const router = useRouter();
+  const { user, isLoading } = useAuth();
 
-  if (!events && !error) {
-    return <div className="min-h-screen flex items-center justify-center">Loading events…</div>;
-  }
-  if (error) {
-    return <div className="min-h-screen flex items-center justify-center">Failed to load events</div>;
-  }
+  useEffect(() => {
+    if (!isLoading) {
+      if (user) {
+        // Authenticated users go to their events dashboard
+        router.replace("/my-events");
+      } else {
+        // Non-authenticated users go to login
+        router.replace("/auth/login");
+      }
+    }
+  }, [user, isLoading, router]);
 
+  // Show loading while redirecting
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Upcoming Events</h1>
-      {events && events.length > 0 ? (
-        <ul className="space-y-4">
-          {events.map((ev) => (
-            <li key={ev.id} className="border border-gray-700 p-4 rounded">
-              <h2 className="font-semibold text-lg">{ev.title}</h2>
-              <p className="text-sm text-gray-400">{ev.date} – {ev.location}</p>
-              <Link href={`/events/${ev.slug}`} className="text-primary text-sm underline mt-2 inline-block">
-                View event
-              </Link>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <div className="text-center text-gray-400 py-8">
-          <p>No events found.</p>
-          <Link href="/events/create" className="text-primary underline mt-2 inline-block">
-            Create your first event
-          </Link>
-        </div>
-      )}
+    <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
     </div>
   );
 } 

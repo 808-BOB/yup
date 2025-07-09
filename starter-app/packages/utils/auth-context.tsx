@@ -1,284 +1,270 @@
 "use client";
-import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { supabase } from "./supabase";
-import type { User as SupabaseAuthUser } from "@supabase/supabase-js";
 
-interface UserProfile {
-  id: string;
-  username?: string;
-  display_name?: string;
-  email?: string;
-  phone_number?: string;
-  profile_image_url?: string;
-  is_premium?: boolean;
-  is_admin?: boolean;
-  is_pro?: boolean;
-  // Legacy branding fields
-  brand_theme?: string;
-  logo_url?: string;
-  // New comprehensive branding fields
-  brand_primary_color?: string;
-  brand_secondary_color?: string;
-  brand_tertiary_color?: string;
-  custom_yup_text?: string;
-  custom_nope_text?: string;
-  custom_maybe_text?: string;
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { User, Session } from '@supabase/supabase-js';
+import { getSupabaseClient } from './supabase';
+
+interface ExtendedProfile {
+  display_name?: string | null;
+  profile_image_url?: string | null;
+  is_premium?: boolean | null;
+  is_pro?: boolean | null;
+  is_admin?: boolean | null;
 }
 
-interface AuthContextValue {
-  user: (SupabaseAuthUser & UserProfile) | null;
+interface AuthContextType {
+  user: (User & ExtendedProfile) | null;
+  session: Session | null;
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (username: string, displayName: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
-  logout: () => Promise<void>;
+  logout: () => Promise<void>; // alias for signOut (legacy)
+  signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<(SupabaseAuthUser & UserProfile) | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const supabase = getSupabaseClient();
 
-  // Simple fetch user profile without auto-creation
-  const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
-    console.log("[Auth] fetchUserProfile →", userId);
-    
+  // Helper to merge additional profile columns into the auth user
+  const attachProfileData = async (authUser: User | null): Promise<(User & ExtendedProfile) | null> => {
+    if (!authUser) return null;
+
     try {
       const { data: profile, error } = await supabase
         .from('users')
-        .select('*')
-        .eq('id', userId)
+        .select('display_name, profile_image_url, is_premium, is_pro, is_admin')
+        .eq('id', authUser.id)
         .single();
-      
+
       if (error) {
-        console.error('[Auth] fetchUserProfile error', error);
-        return null;
+        console.warn('[AuthContext] No profile row found / error fetching profile:', error.message);
+        return authUser as User & ExtendedProfile;
       }
 
-      console.log('[Auth] fetchUserProfile result', profile);
-      return profile;
+      return { ...authUser, ...profile } as User & ExtendedProfile;
     } catch (err) {
-      console.error('[Auth] fetchUserProfile exception:', err);
-      return null;
+      console.error('[AuthContext] Failed to load profile row:', err);
+      return authUser as User & ExtendedProfile;
     }
   };
 
-  // Initialize auth state
   useEffect(() => {
-    const init = async () => {
-      console.log('[Auth] init - checking existing session');
-      
+    // Handle initial session and OAuth callbacks
+    const getInitialSession = async () => {
       try {
-        const { data } = await supabase.auth.getSession();
-        console.log('[Auth] init session data', data);
+        console.log('[AuthContext] Getting initial session...');
         
-        if (data.session?.user) {
-          const profile = await fetchUserProfile(data.session.user.id);
-          
-          if (profile) {
-            setUser({ ...data.session.user, ...profile });
-          } else {
-            // No profile yet, but user is authenticated
-            console.log('[Auth] No profile found, user needs setup');
-            setUser({ 
-              ...data.session.user, 
-              id: data.session.user.id,
-              email: data.session.user.email,
-              is_premium: false,
-              is_admin: false,
-              is_pro: false,
-            });
-          }
+        // For OAuth callbacks, this will handle the code exchange automatically
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('[AuthContext] Error getting initial session:', error);
+          setError(error.message);
         } else {
-          setUser(null);
+          console.log('[AuthContext] Initial session loaded:', !!session, session?.user?.email);
+          setSession(session);
+          const mergedUser = await attachProfileData(session?.user ?? null);
+          setUser(mergedUser);
+          setError(null);
         }
-      } catch (err) {
-        console.error('[Auth] init error:', err);
-        setUser(null);
+      } catch (error: any) {
+        console.error('[AuthContext] Failed to get initial session:', error);
+        setError('Failed to initialize authentication');
       } finally {
         setIsLoading(false);
       }
     };
-    
-    init();
 
-    // Listen for auth changes
-    const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[Auth] onAuthStateChange', event, session?.user?.id);
-      
-      if (session?.user) {
-        // Give a small delay for profile creation to complete
-        if (event === 'SIGNED_IN') {
-          setTimeout(async () => {
-            const profile = await fetchUserProfile(session.user.id);
-            
-            if (profile) {
-              setUser({ ...session.user, ...profile });
-            } else {
-              setUser({ 
-                ...session.user, 
-                id: session.user.id,
-                email: session.user.email,
-                is_premium: false,
-                is_admin: false,
-                is_pro: false,
-              });
-            }
-          }, 1000); // 1 second delay for profile creation
-        } else {
-          const profile = await fetchUserProfile(session.user.id);
-          
-          if (profile) {
-            setUser({ ...session.user, ...profile });
-          } else {
-            setUser({ 
-              ...session.user, 
-              id: session.user.id,
-              email: session.user.email,
-              is_premium: false,
-              is_admin: false,
-              is_pro: false,
-            });
-          }
+    getInitialSession();
+
+    // Listen for auth changes (including OAuth completion)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('[AuthContext] Auth state changed:', event, !!session, session?.user?.email);
+        
+        setSession(session);
+        const mergedUser = await attachProfileData(session?.user ?? null);
+        setUser(mergedUser);
+        setIsLoading(false);
+        setError(null);
+        
+        // Log successful OAuth completion
+        if (event === 'SIGNED_IN' && session?.user) {
+          console.log('[AuthContext] User signed in successfully:', session.user.email);
         }
-      } else {
-        setUser(null);
       }
-      
-      setIsLoading(false);
-    });
-    
-    return () => listener?.subscription.unsubscribe();
-  }, []);
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [supabase.auth]);
 
   const login = async (email: string, password: string) => {
-    console.log('[Auth] login attempt', email);
+    console.log('[AuthContext] Login attempt:', email);
     setIsLoading(true);
     setError(null);
     
     try {
-      const { error: signInErr } = await supabase.auth.signInWithPassword({
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
-      if (signInErr) throw signInErr;
-      console.log('[Auth] login success');
+      if (signInError) {
+        console.error('[AuthContext] Login error:', signInError);
+        setError(signInError.message);
+        throw signInError;
+      }
       
-    } catch (err: any) {
-      console.error('[Auth] login error', err);
-      setError(err.message || "Login failed");
+      console.log('[AuthContext] Login successful');
+    } catch (error: any) {
+      console.error('[AuthContext] Login exception:', error);
+      setError(error.message || 'Login failed');
       setIsLoading(false);
-      throw err;
-    }
-  };
-
-  const logout = async () => {
-    console.log('[Auth] logout attempt');
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      setUser(null);
-    } catch (err: any) {
-      console.error('[Auth] logout error', err);
-      setError(err.message || "Logout failed");
-      throw err;
-    } finally {
-      setIsLoading(false);
+      throw error;
     }
   };
 
   const signup = async (username: string, displayName: string, password: string) => {
-    console.log('[Auth] signup attempt', username);
+    console.log('[AuthContext] Signup attempt:', username);
     setIsLoading(true);
     setError(null);
     
     try {
       const email = username.includes("@") ? username : `${username}@example.com`;
-      console.log('[Auth] signup using email', email);
+      console.log('[AuthContext] Signup using email:', email);
 
-      const { error } = await supabase.auth.signUp({
+      const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { username, display_name: displayName } },
+        options: { 
+          data: { 
+            username, 
+            display_name: displayName 
+          } 
+        },
       });
       
-      if (error) throw error;
+      if (signUpError) {
+        console.error('[AuthContext] Signup error:', signUpError);
+        setError(signUpError.message);
+        throw signUpError;
+      }
       
-    } catch (err: any) {
-      console.error('[Auth] signup error', err);
-      setError(err.message || "Signup failed");
+      console.log('[AuthContext] Signup successful');
+    } catch (error: any) {
+      console.error('[AuthContext] Signup exception:', error);
+      setError(error.message || 'Signup failed');
       setIsLoading(false);
-      throw err;
+      throw error;
     }
   };
 
   const loginWithGoogle = async () => {
-    console.log('[Auth] loginWithGoogle initiating');
-    setIsLoading(true);
+    console.log('[AuthContext] Google login initiated');
     setError(null);
     
     try {
       const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
-      console.log('[Auth] loginWithGoogle origin', origin);
+      const redirectTo = `${origin}/auth/callback`;
+      
+      console.log('[AuthContext] Google login redirect URL:', redirectTo);
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${origin}/auth/callback`,
+          redirectTo,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
       
-      if (error) throw error;
-      console.log('[Auth] OAuth redirect initiated');
-    } catch (err: any) {
-      console.error('[Auth] loginWithGoogle error', err);
-      setError(err.message || "Google sign-in failed");
-      setIsLoading(false);
-      throw err;
-    }
-  };
-
-  const refreshUser = async () => {
-    if (!user) return;
-
-    console.log('[Auth] refreshUser called for user:', user.id);
-    
-    try {
-      const profile = await fetchUserProfile(user.id);
-      
-      if (profile) {
-        setUser({ ...user, ...profile });
-        console.log('[Auth] User refreshed successfully');
+      if (error) {
+        console.error('[AuthContext] Google login error:', error);
+        setError(error.message);
+        throw error;
       }
-    } catch (error) {
-      console.error('[Auth] Error refreshing user:', error);
+      
+      console.log('[AuthContext] Google OAuth redirect initiated successfully');
+      // Don't set loading here as the redirect will happen
+    } catch (error: any) {
+      console.error('[AuthContext] Google login exception:', error);
+      setError(error.message || 'Google sign-in failed');
+      throw error;
     }
   };
 
-  const value: AuthContextValue = { 
-    user, 
-    isLoading, 
-    error, 
-    login, 
-    signup, 
-    loginWithGoogle, 
-    logout, 
-    refreshUser 
+  const signOut = async () => {
+    try {
+      console.log('[AuthContext] Signing out...');
+      setIsLoading(true);
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('[AuthContext] Error signing out:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
-  
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+
+  // --- NEW: refreshUser helper ---
+  const refreshUser = async () => {
+    console.log('[AuthContext] Refreshing user…');
+    setIsLoading(true);
+    try {
+      const { data: { user: freshUser }, error: refreshError } = await supabase.auth.getUser();
+      if (refreshError) {
+        console.error('[AuthContext] refreshUser error:', refreshError);
+        setError(refreshError.message);
+      } else {
+        const mergedUser = await attachProfileData(freshUser);
+        setUser(mergedUser);
+        setError(null);
+      }
+    } catch (e: any) {
+      console.error('[AuthContext] refreshUser exception:', e);
+      setError(e.message || 'Failed to refresh user');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const value = {
+    user,
+    session,
+    isLoading,
+    error,
+    login,
+    signup,
+    loginWithGoogle,
+    logout: signOut,
+    signOut,
+    refreshUser,
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");
-  return ctx;
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 }

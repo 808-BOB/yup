@@ -129,7 +129,11 @@ export async function POST(request: NextRequest) {
     // RSVP-related columns – add only if values are provided *and* the column
     // is expected to exist. The try/catch around the insert will retry without
     // them if Supabase says the column is unknown.
-    if (validatedData.allowGuestRsvp !== undefined) baseInsert.allow_guest_rsvp = validatedData.allowGuestRsvp;
+    if (validatedData.allowGuestRsvp !== undefined) {
+      baseInsert.allow_guest_rsvp = validatedData.allowGuestRsvp;
+      // For events that allow guest RSVPs, also enable public RSVP access
+      baseInsert.public_rsvp_enabled = validatedData.allowGuestRsvp;
+    }
     if (validatedData.allowPlusOne !== undefined) baseInsert.allow_plus_one = validatedData.allowPlusOne;
     if (validatedData.maxGuestsPerRsvp !== undefined) baseInsert.max_guests_per_rsvp = validatedData.maxGuestsPerRsvp;
     if (validatedData.customYesText) baseInsert.custom_yes_text = validatedData.customYesText;

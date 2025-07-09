@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "./button";
 import { Input } from "./input";
 import { Label } from "./label";
-import { cn } from "@/lib/utils";
+import { cn } from "../utils/utils";
 
 interface ColorPickerProps {
   label: string;
@@ -12,9 +12,26 @@ interface ColorPickerProps {
   onChange: (color: string) => void;
   disabled?: boolean;
   className?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
 }
 
-export function ColorPicker({ label, value, onChange, disabled, className }: ColorPickerProps) {
+// Helper function to ensure text contrast
+const getContrastingTextColor = (backgroundColor: string) => {
+  // Convert hex to RGB
+  const hex = backgroundColor.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  
+  // Calculate luminance
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  
+  // Return white for dark backgrounds, black for light backgrounds
+  return luminance < 0.5 ? '#ffffff' : '#000000';
+};
+
+export function ColorPicker({ label, value, onChange, disabled, className, primaryColor = '#6b7280', secondaryColor = '#1f2937' }: ColorPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleColorChange = (color: string) => {
@@ -43,17 +60,33 @@ export function ColorPicker({ label, value, onChange, disabled, className }: Col
           className={cn(
             "w-12 h-10 rounded-md border-2 transition-all duration-200",
             "border-gray-600 hover:border-pink-500 cursor-pointer flex-shrink-0",
-            "focus:outline-none focus:ring-2 focus:ring-pink-500/20"
+            "focus:outline-none focus:ring-2 focus:ring-pink-500/20",
+            "relative overflow-hidden"
           )}
           style={{ backgroundColor: value }}
           onClick={() => setIsOpen(!isOpen)}
           disabled={disabled}
-        />
+        >
+          {/* Checkered background for transparency indication */}
+          <div className="absolute inset-0 opacity-20" style={{
+            backgroundImage: `linear-gradient(45deg, #ccc 25%, transparent 25%), 
+                            linear-gradient(-45deg, #ccc 25%, transparent 25%), 
+                            linear-gradient(45deg, transparent 75%, #ccc 75%), 
+                            linear-gradient(-45deg, transparent 75%, #ccc 75%)`,
+            backgroundSize: '4px 4px',
+            backgroundPosition: '0 0, 0 2px, 2px -2px, -2px 0px'
+          }} />
+        </button>
         <Input
           value={value}
           onChange={(e) => handleColorChange(e.target.value)}
           placeholder="#000000 or hsl(0, 0%, 0%)"
-          className="flex-1 bg-black border-white text-white placeholder:text-gray-400"
+          className="flex-1 border-0"
+          style={{
+            backgroundColor: primaryColor,
+            color: getContrastingTextColor(primaryColor),
+            borderColor: primaryColor
+          }}
           disabled={disabled}
         />
       </div>
@@ -70,13 +103,24 @@ export function ColorPicker({ label, value, onChange, disabled, className }: Col
                 type="button"
                 className={cn(
                   "w-8 h-8 rounded border-2 transition-all duration-150",
-                  "border-gray-600 hover:border-pink-500 cursor-pointer",
-                  "focus:outline-none focus:ring-2 focus:ring-pink-500/20"
+                  "border-gray-600 hover:border-pink-500 cursor-pointer relative overflow-hidden",
+                  "focus:outline-none focus:ring-2 focus:ring-pink-500/20",
+                  value === color && "ring-2 ring-pink-500 border-pink-500"
                 )}
                 style={{ backgroundColor: color }}
                 onClick={() => handleColorChange(color)}
                 disabled={disabled}
-              />
+              >
+                {/* Checkered background for light colors */}
+                <div className="absolute inset-0 opacity-10" style={{
+                  backgroundImage: `linear-gradient(45deg, #666 25%, transparent 25%), 
+                                  linear-gradient(-45deg, #666 25%, transparent 25%), 
+                                  linear-gradient(45deg, transparent 75%, #666 75%), 
+                                  linear-gradient(-45deg, transparent 75%, #666 75%)`,
+                  backgroundSize: '2px 2px',
+                  backgroundPosition: '0 0, 0 1px, 1px -1px, -1px 0px'
+                }} />
+              </button>
             ))}
           </div>
           <Button

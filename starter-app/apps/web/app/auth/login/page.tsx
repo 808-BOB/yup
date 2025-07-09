@@ -6,32 +6,111 @@ import Image from "next/image";
 import { FcGoogle } from "react-icons/fc";
 
 import { useAuth } from "@/utils/auth-context";
-import { useToast } from "@/utils/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/ui/tabs";
 import { Input } from "@/ui/input";
 import { Button } from "@/ui/button";
 import { Toaster } from "@/ui/toaster";
 
-export default function AuthPage() {
+function AuthPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, signup, loginWithGoogle, user } = useAuth();
+  const { login, signup, loginWithGoogle, user, isLoading, error: authError } = useAuth();
   const { toast } = useToast();
 
   const [activeTab, setActiveTab] = React.useState<"login" | "signup">("login");
   const [isSubmitting, setSubmitting] = React.useState(false);
+  const [isRedirecting, setIsRedirecting] = React.useState(false);
   const [form, setForm] = React.useState({ username: "", password: "" });
   const [signupForm, setSignupForm] = React.useState({ username: "", displayName: "", password: "", confirm: "" });
 
   React.useEffect(() => {
     const mode = searchParams.get("mode");
     if (mode === "signup") setActiveTab("signup");
-  }, [searchParams]);
+    
+    // Handle OAuth errors from URL
+    const error = searchParams.get("error");
+    if (error) {
+      let errorMessage = "Authentication failed";
+      switch (error) {
+        case "access_denied":
+          errorMessage = "Access was denied. Please try again.";
+          break;
+        case "auth_error":
+          errorMessage = "Authentication error occurred.";
+          break;
+        case "no_session":
+          errorMessage = "No session found. Please try signing in again.";
+          break;
+        default:
+          errorMessage = `Authentication error: ${error}`;
+      }
+      toast({ 
+        title: "Sign-in Error", 
+        description: errorMessage, 
+        variant: "destructive" 
+      });
+    }
+  }, [searchParams, toast]);
 
+  // Show auth context errors
+  React.useEffect(() => {
+    if (authError) {
+      toast({ 
+        title: "Authentication Error", 
+        description: authError, 
+        variant: "destructive" 
+      });
+    }
+  }, [authError, toast]);
+
+  // Handle authenticated user redirect using Next.js router
+  React.useEffect(() => {
+    if (user && !isLoading && !isRedirecting) {
+      setIsRedirecting(true);
+      const redirectTo = searchParams.get("redirect") || "/my-events";
+      console.log('[Login] User authenticated, redirecting using Next.js router to:', redirectTo);
+      
+      // Use Next.js router for proper navigation
+      router.replace(redirectTo);
+    }
+  }, [user, isLoading, isRedirecting, searchParams, router]);
+
+  // Show loading state while auth is loading
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-950">
+        <div className="text-center text-white">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show redirecting state when user is authenticated and redirecting
+  if (user && isRedirecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-950">
+        <div className="text-center text-white">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Redirecting...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is already authenticated but not redirecting yet, don't show the form
   if (user) {
-    router.push("/events");
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-950">
+        <div className="text-center text-white">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Preparing redirect...</p>
+        </div>
+      </div>
+    );
   }
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -39,7 +118,8 @@ export default function AuthPage() {
     setSubmitting(true);
     try {
       await login(form.username, form.password);
-      router.push("/events");
+      // Don't manually redirect - let the useEffect handle it after auth state updates
+      console.log('[Login] Login successful, waiting for auth state update...');
     } catch {
       toast({ title: "Login failed", description: "Invalid credentials", variant: "destructive" });
     } finally {
@@ -56,7 +136,8 @@ export default function AuthPage() {
     setSubmitting(true);
     try {
       await signup(signupForm.username, signupForm.displayName, signupForm.password);
-      router.push("/events");
+      // Don't manually redirect - let the useEffect handle it after auth state updates
+      console.log('[Login] Signup successful, waiting for auth state update...');
     } catch (err: any) {
       toast({ title: "Signup failed", description: err.message, variant: "destructive" });
     } finally {
@@ -150,5 +231,20 @@ export default function AuthPage() {
       </div>
       <Toaster />
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <React.Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-950">
+        <div className="text-center text-white">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    }>
+      <AuthPageContent />
+    </React.Suspense>
   );
 } 

@@ -4,10 +4,11 @@ import { createClient } from '@supabase/supabase-js';
 // POST endpoint to handle logo uploads
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log('Logo upload endpoint called for user:', params.id);
+    const { id } = await params;
+    console.log('Logo upload endpoint called for user:', id);
 
     // Get the authorization header
     const authHeader = request.headers.get('authorization');
@@ -40,7 +41,7 @@ export async function POST(
     }
 
     // Check if user is trying to update their own logo
-    if (user.id !== params.id) {
+    if (user.id !== id) {
       return NextResponse.json({
         error: 'Unauthorized',
         message: 'You can only update your own branding'
@@ -176,9 +177,11 @@ export async function POST(
 // GET endpoint to retrieve user's current branding
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+    
     // Get the authorization header
     const authHeader = request.headers.get('authorization');
     if (!authHeader) {
@@ -220,7 +223,7 @@ export async function GET(
         custom_maybe_text,
         is_premium
       `)
-      .eq('id', params.id)
+      .eq('id', id)
       .single();
 
     if (error) {

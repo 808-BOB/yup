@@ -1,15 +1,25 @@
 "use client";
 
 import React from "react";
-import { AuthProvider } from "@/utils/auth-context";
+import { AuthProvider, useAuth } from "@/utils/auth-context";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 
-export default function Providers({ children }: { children: React.ReactNode }) {
+function InnerProviders({ children }: { children: any }) {
+  const { user } = useAuth();
+  
+  return (
+    <BrandingProvider userId={user?.id}>
+      {children}
+    </BrandingProvider>
+  );
+}
+
+export default function Providers({ children }: { children: any }) {
   return (
     <AuthProvider>
-      <BrandingProvider>
+      <InnerProviders>
         {children}
-      </BrandingProvider>
+      </InnerProviders>
     </AuthProvider>
   );
 }

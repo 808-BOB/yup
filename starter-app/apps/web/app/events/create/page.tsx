@@ -125,7 +125,7 @@ export default function CreateEvent() {
           
           // Redirect to upgrade page after a short delay
           setTimeout(() => {
-            router.push("/upgrade");
+            window.location.href = "/upgrade";
           }, 2000);
           
           return;
@@ -248,14 +248,14 @@ export default function CreateEvent() {
             <Button
               variant="ghost"
               onClick={handleCancel}
-              className="mb-4 p-0 h-auto font-normal text-gray-400 hover:text-white"
+              className="mb-4 p-0 h-auto font-normal text-gray-300 hover:text-white"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Cancel and go back
             </Button>
             
             <h1 className="text-3xl font-bold text-white mb-2">Create Event</h1>
-            <p className="text-gray-400">Step {currentStep} of {totalSteps}</p>
+            <p className="text-gray-300">Step {currentStep} of {totalSteps}</p>
           </div>
 
           {/* Progress bar */}
@@ -272,7 +272,7 @@ export default function CreateEvent() {
               <div className="space-y-6">
                 {/* Image Upload */}
                 <div className="space-y-4">
-                  <Label className="text-gray-400 uppercase text-xs tracking-wider">
+                  <Label className="text-white uppercase text-xs tracking-wider font-medium">
                     Event Image (Optional)
                   </Label>
                   
@@ -294,20 +294,20 @@ export default function CreateEvent() {
                     className="w-full"
                   />
                   
-                  <div className="text-sm text-gray-400 text-center">
+                  <div className="text-sm text-gray-300 text-center">
                     <p>PNG, JPEG, JPG, or GIF • Max 10MB • 16:9 recommended</p>
                   </div>
                 </div>
 
                 {/* Title */}
                 <div className="space-y-2">
-                  <Label htmlFor="title" className="text-gray-400 uppercase text-xs tracking-wider">
+                  <Label htmlFor="title" className="text-white uppercase text-xs tracking-wider font-medium">
                     Event Title
                   </Label>
                   <Input
                     id="title"
                     {...form.register("title")}
-                    className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12"
+                    className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12 text-white placeholder:text-gray-400"
                     placeholder="Enter title"
                   />
                   {form.formState.errors.title && (
@@ -317,14 +317,14 @@ export default function CreateEvent() {
 
                 {/* Date */}
                 <div className="space-y-2">
-                  <Label htmlFor="date" className="text-gray-400 uppercase text-xs tracking-wider">
+                  <Label htmlFor="date" className="text-white uppercase text-xs tracking-wider font-medium">
                     Date
                   </Label>
                   <Input
                     id="date"
                     type="date"
                     {...form.register("date")}
-                    className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12 text-gray-200"
+                    className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12 text-white placeholder:text-gray-400"
                   />
                   {form.formState.errors.date && (
                     <p className="text-primary text-sm">{form.formState.errors.date.message}</p>
@@ -334,30 +334,30 @@ export default function CreateEvent() {
                 {/* Time */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="startTime" className="text-gray-400 uppercase text-xs tracking-wider">
+                    <Label htmlFor="startTime" className="text-white uppercase text-xs tracking-wider font-medium">
                       Start Time
                     </Label>
-                    <Input
-                      id="startTime"
-                      type="time"
-                      {...form.register("startTime")}
-                      className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12 text-gray-200"
-                    />
+                                          <Input
+                        id="startTime"
+                        type="time"
+                        {...form.register("startTime")}
+                        className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12 text-white placeholder:text-gray-400"
+                      />
                     {form.formState.errors.startTime && (
                       <p className="text-primary text-sm">{form.formState.errors.startTime.message}</p>
                     )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="endTime" className="text-gray-400 uppercase text-xs tracking-wider">
+                    <Label htmlFor="endTime" className="text-white uppercase text-xs tracking-wider font-medium">
                       End Time
                     </Label>
-                    <Input
-                      id="endTime"
-                      type="time"
-                      {...form.register("endTime")}
-                      className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12 text-gray-200"
-                    />
+                                          <Input
+                        id="endTime"
+                        type="time"
+                        {...form.register("endTime")}
+                        className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12 text-white placeholder:text-gray-400"
+                      />
                     {form.formState.errors.endTime && (
                       <p className="text-primary text-sm">{form.formState.errors.endTime.message}</p>
                     )}
@@ -371,13 +371,13 @@ export default function CreateEvent() {
               <div className="space-y-6">
                 {/* Location */}
                 <div className="space-y-2">
-                  <Label htmlFor="location" className="text-gray-400 uppercase text-xs tracking-wider">
+                  <Label htmlFor="location" className="text-white uppercase text-xs tracking-wider font-medium">
                     Location
                   </Label>
                   <Input
                     id="location"
                     {...form.register("location")}
-                    className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12"
+                    className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12 text-white placeholder:text-gray-400"
                     placeholder="Enter event location"
                   />
                   {form.formState.errors.location && (
@@ -387,26 +387,26 @@ export default function CreateEvent() {
 
                 {/* Address */}
                 <div className="space-y-2">
-                  <Label htmlFor="address" className="text-gray-400 uppercase text-xs tracking-wider">
+                  <Label htmlFor="address" className="text-white uppercase text-xs tracking-wider font-medium">
                     Address (Optional)
                   </Label>
                   <Input
                     id="address"
                     {...form.register("address")}
-                    className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12"
+                    className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12 text-white placeholder:text-gray-400"
                     placeholder="Enter full address"
                   />
                 </div>
 
                 {/* Description */}
                 <div className="space-y-2">
-                  <Label htmlFor="description" className="text-gray-400 uppercase text-xs tracking-wider">
+                  <Label htmlFor="description" className="text-white uppercase text-xs tracking-wider font-medium">
                     Description (Optional)
                   </Label>
                   <Textarea
                     id="description"
                     {...form.register("description")}
-                    className="bg-transparent border border-gray-700 focus:border-primary rounded-none min-h-[120px] resize-none"
+                    className="bg-transparent border border-gray-700 focus:border-primary rounded-none min-h-[120px] resize-none text-white placeholder:text-gray-400"
                     placeholder="Describe your event..."
                   />
                 </div>
@@ -423,7 +423,7 @@ export default function CreateEvent() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label className="text-white">Allow guest RSVPs</Label>
-                      <p className="text-sm text-gray-400">Let invitees RSVP without an account</p>
+                      <p className="text-sm text-gray-300">Let invitees RSVP without an account</p>
                     </div>
                     <Switch
                       checked={form.watch("allowGuestRsvp")}
@@ -434,7 +434,7 @@ export default function CreateEvent() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label className="text-white">Allow plus ones</Label>
-                      <p className="text-sm text-gray-400">Let invitees bring additional guests</p>
+                      <p className="text-sm text-gray-300">Let invitees bring additional guests</p>
                     </div>
                     <Switch
                       checked={form.watch("allowPlusOne")}
@@ -444,7 +444,7 @@ export default function CreateEvent() {
 
                   {form.watch("allowPlusOne") && (
                     <div className="space-y-2">
-                      <Label htmlFor="maxGuestsPerRsvp" className="text-gray-400 uppercase text-xs tracking-wider">
+                      <Label htmlFor="maxGuestsPerRsvp" className="text-white uppercase text-xs tracking-wider font-medium">
                         Max guests per RSVP
                       </Label>
                       <Input
@@ -453,7 +453,7 @@ export default function CreateEvent() {
                         min="1"
                         max="10"
                         {...form.register("maxGuestsPerRsvp", { valueAsNumber: true })}
-                        className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12"
+                        className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12 text-white placeholder:text-gray-400"
                       />
                     </div>
                   )}

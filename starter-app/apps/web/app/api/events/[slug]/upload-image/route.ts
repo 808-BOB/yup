@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-export async function POST(req: NextRequest, { params }: { params: { slug: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
-    const { slug: eventSlugOrId } = params;
+    const { slug: eventSlugOrId } = await params;
     
     if (!eventSlugOrId) {
       return NextResponse.json({ error: 'Event slug/ID is required' }, { status: 400 });

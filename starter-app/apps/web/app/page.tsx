@@ -8,16 +8,13 @@ export default function HomePage() {
   const { user, isLoading } = useAuth();
 
   useEffect(() => {
-    if (!isLoading) {
-      if (user) {
-        // Check if user needs phone verification
-        if (!user.phone_number || user.phone_number.trim() === '') {
-          router.replace("/phone-verification");
-        } else {
-          router.replace("/my-events");
-        }
+    if (!isLoading && user) {
+      // Auth is guaranteed by middleware, so we only need to check phone verification
+      // Check if user needs phone verification
+      if (!(user as any).phone_number || (user as any).phone_number?.trim() === '') {
+        router.replace("/phone-verification");
       } else {
-        router.replace("/auth?mode=login");
+        router.replace("/my-events");
       }
     }
   }, [user, isLoading, router]);

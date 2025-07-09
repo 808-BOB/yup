@@ -52,9 +52,10 @@
     min-height: 100vh;
   }
 
-  /* Ensure all pages use the consistent dark background */
+  /* Ensure all pages use the branding background */
   .page-container {
     background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
     min-height: 100vh;
   }
 
@@ -80,5 +81,49 @@
     background-color: var(--tertiary-color);
     border-color: var(--tertiary-color);
     color: white;
+  }
+
+  /* Branding-responsive utility classes */
+  .bg-brand-primary {
+    background-color: var(--primary-color) !important;
+  }
+
+  .bg-brand-secondary {
+    background-color: var(--secondary-color) !important;
+  }
+
+  .bg-brand-tertiary {
+    background-color: var(--tertiary-color) !important;
+  }
+
+  .text-brand-primary {
+    color: var(--primary-color) !important;
+  }
+
+  .text-brand-secondary {
+    color: var(--secondary-color) !important;
+  }
+
+  .text-brand-tertiary {
+    color: var(--tertiary-color) !important;
+  }
+
+  .border-brand-primary {
+    border-color: var(--primary-color) !important;
+  }
+
+  /* Override common gray backgrounds to use branding */
+  .bg-gray-950 {
+    background-color: hsl(var(--background)) !important;
+  }
+
+  .bg-gray-900 {
+    background-color: hsl(var(--card)) !important;
+  }
+
+  /* Responsive text colors */
+  .text-white,
+  .text-gray-100 {
+    color: hsl(var(--foreground)) !important;
   }
 }

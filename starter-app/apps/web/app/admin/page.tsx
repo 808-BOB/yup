@@ -106,6 +106,7 @@ export default function AdminPage() {
     }
   }, [user]);
 
+  // Note: Auth is guaranteed by middleware, so we only need to check if user is loaded
   if (!user) {
     return (
       <div className="w-full max-w-md mx-auto px-8 pb-8 min-h-screen flex flex-col bg-gray-950">
@@ -113,7 +114,7 @@ export default function AdminPage() {
           <Header />
         </div>
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-center text-gray-400">Please log in to access admin settings.</p>
+          <p className="text-center text-gray-400">Loading admin settings...</p>
         </div>
       </div>
     );

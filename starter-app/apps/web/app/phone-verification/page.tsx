@@ -9,10 +9,12 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui/card";
-// import { Label } from "@/ui/label";
+import { Checkbox } from "@/ui/checkbox";
 import { Separator } from "@/ui/separator";
 import { Alert, AlertDescription } from "@/ui/alert";
-import { Phone, Shield, CheckCircle } from "lucide-react";
+import Phone from "lucide-react/dist/esm/icons/phone";
+import Shield from "lucide-react/dist/esm/icons/shield";
+import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
 
 export default function PhoneVerificationPage() {
   const router = useRouter();
@@ -24,13 +26,14 @@ export default function PhoneVerificationPage() {
   const [verificationCode, setVerificationCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [smsConsent, setSmsConsent] = useState(false);
 
   // If user already has a phone number, redirect to my-events
   React.useEffect(() => {
-    if (user?.phone_number) {
-      router.push("/my-events");
+    if ((user as any)?.phone_number) {
+      window.location.href = "/my-events";
     }
-  }, [user, router]);
+  }, [user]);
 
   // Format phone number as user types
   const formatPhoneNumber = (value: string) => {
@@ -58,6 +61,15 @@ export default function PhoneVerificationPage() {
       toast({
         title: "Invalid Phone Number",
         description: "Please enter a valid 10-digit phone number.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!smsConsent) {
+      toast({
+        title: "SMS Consent Required",
+        description: "Please agree to receive SMS messages to continue.",
         variant: "destructive",
       });
       return;
@@ -176,7 +188,7 @@ export default function PhoneVerificationPage() {
           
           // Refresh user data and redirect
           await refreshUser();
-          router.push("/my-events");
+          window.location.href = "/my-events";
         } else {
           console.error("Failed to update user profile:", updateData);
           throw new Error(updateData.error || "Failed to update user profile");
@@ -244,9 +256,10 @@ export default function PhoneVerificationPage() {
 
   const handleSkipForNow = () => {
     // Allow users to skip for now, but they'll be prompted again later
-    router.push("/my-events");
+    window.location.href = "/my-events";
   };
 
+  // Note: Auth is guaranteed by middleware, so we only need to check if user is loaded
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
@@ -293,17 +306,45 @@ export default function PhoneVerificationPage() {
                 />
               </div>
 
+              {/* SMS Consent Checkbox */}
+              <div className="space-y-3">
+                <div className="flex items-start space-x-3 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                  <Checkbox
+                    id="sms-consent"
+                    checked={smsConsent}
+                    onCheckedChange={(checked) => setSmsConsent(checked as boolean)}
+                    className="mt-0.5"
+                  />
+                  <div className="space-y-2">
+                    <label htmlFor="sms-consent" className="text-sm text-white font-medium cursor-pointer">
+                      SMS Consent Agreement
+                    </label>
+                    <p className="text-xs text-gray-300 leading-relaxed">
+                      I agree to receive SMS text messages from YUP.RSVP for account verification, 
+                      event notifications, and service updates. Message and data rates may apply. 
+                      I understand I can opt-out at any time by replying <strong>STOP</strong> to any message 
+                      or by updating my account settings.
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      By checking this box, you're providing explicit consent to receive automated SMS messages 
+                      as required by telecommunications regulations.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <Alert>
                 <Shield className="h-4 w-4" />
                 <AlertDescription>
                   Your phone number will be kept private and only used for account security and event notifications.
+                  Reply STOP to any message to opt-out.
                 </AlertDescription>
               </Alert>
 
               <div className="space-y-3">
                 <Button 
                   onClick={handleSendVerification}
-                  disabled={isLoading}
+                  disabled={isLoading || !smsConsent || !phoneNumber}
                   className="w-full"
                 >
                   {isLoading ? "Sending..." : "Send Verification Code"}
@@ -349,6 +390,14 @@ export default function PhoneVerificationPage() {
                   inputMode="numeric"
                 />
               </div>
+
+              <Alert>
+                <CheckCircle className="h-4 w-4" />
+                <AlertDescription>
+                  A 6-digit verification code has been sent to your phone. 
+                  Enter it above to verify your number.
+                </AlertDescription>
+              </Alert>
 
               <div className="space-y-3">
                 <Button 

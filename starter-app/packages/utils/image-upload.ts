@@ -29,12 +29,12 @@ export async function uploadProfilePicture(
     const filePath = `${fileName}`;
 
     // Delete existing profile picture if it exists
-    await supabase.storage
+    await supabase().storage
       .from('profile-pics')
       .remove([filePath]);
 
     // Upload new profile picture
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase().storage
       .from('profile-pics')
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -46,7 +46,7 @@ export async function uploadProfilePicture(
     }
 
     // Get public URL
-    const { data: publicUrlData } = supabase.storage
+    const { data: publicUrlData } = supabase().storage
       .from('profile-pics')
       .getPublicUrl(filePath);
 
@@ -91,7 +91,7 @@ export async function uploadEventImage(
     console.log('Uploading to path:', filePath);
 
     // Check authentication first
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase().auth.getUser();
     
     if (authError || !user) {
       console.error('Authentication check failed:', authError);
@@ -105,13 +105,13 @@ export async function uploadEventImage(
 
     // Delete existing event image if it exists
     console.log('Removing existing image if present...');
-    await supabase.storage
+    await supabase().storage
       .from('event-pics')
       .remove([filePath]);
 
     // Upload new event image
     console.log('Uploading new image...');
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { data: uploadData, error: uploadError } = await supabase().storage
       .from('event-pics')
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -142,7 +142,7 @@ export async function uploadEventImage(
     console.log('Upload successful:', uploadData);
 
     // Get public URL
-    const { data: publicUrlData } = supabase.storage
+    const { data: publicUrlData } = supabase().storage
       .from('event-pics')
       .getPublicUrl(filePath);
 
@@ -183,7 +183,7 @@ export async function deleteProfilePicture(userId: string): Promise<UploadResult
     
     for (const ext of extensions) {
       const filePath = `${userId}.${ext}`;
-      await supabase.storage
+      await supabase().storage
         .from('profile-pics')
         .remove([filePath]);
     }
@@ -208,7 +208,7 @@ export async function deleteEventImage(eventId: string): Promise<UploadResult> {
     
     for (const ext of extensions) {
       const filePath = `${eventId}.${ext}`;
-      await supabase.storage
+      await supabase().storage
         .from('event-pics')
         .remove([filePath]);
     }

@@ -1,6 +1,8 @@
 "use client";
 import * as React from "react";
-import { Upload, X, Camera } from "lucide-react";
+import Upload from "lucide-react/dist/esm/icons/upload";
+import X from "lucide-react/dist/esm/icons/x";
+import Camera from "lucide-react/dist/esm/icons/camera";
 import { Button } from "./button";
 import { cn } from "../utils/utils";
 

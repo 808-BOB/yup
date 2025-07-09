@@ -25,7 +25,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/ui/card";
-import { useRequireAuth } from "@/hooks/use-require-auth";
+// Note: useRequireAuth is no longer needed since middleware handles authentication
 import { type Event } from "@/types";
 import { ImageUpload } from "@/ui/image-upload";
 import { uploadEventImage } from "@/utils/image-upload";
@@ -45,7 +45,7 @@ const editEventSchema = z.object({
 type EditEventFormValues = z.infer<typeof editEventSchema>;
 
 export default function EditEventPage() {
-  useRequireAuth();
+  // Note: Auth is guaranteed by middleware
 
   const router = useRouter();
   const params = useParams();
@@ -187,8 +187,18 @@ export default function EditEventPage() {
     }
   };
 
+  // Note: Auth is guaranteed by middleware, so we only check if user is loaded
   if (!user) {
-    return null; // useRequireAuth will redirect
+    return (
+      <div className="w-full max-w-md mx-auto px-8 pb-8 min-h-screen flex flex-col bg-gray-950">
+        <div className="sticky top-0 z-50 bg-gray-950 pt-8">
+          <Header />
+        </div>
+        <main className="flex-1 flex items-center justify-center">
+          <p className="text-gray-400">Loading user data...</p>
+        </main>
+      </div>
+    );
   }
 
   if (loading) {

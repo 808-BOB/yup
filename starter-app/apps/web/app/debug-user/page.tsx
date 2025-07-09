@@ -52,8 +52,9 @@ export default function DebugUserPage() {
     debug();
   }, [user]);
 
+  // Note: Auth is guaranteed by middleware, so we only need to check if user is loaded
   if (!user) {
-    return <div className="p-8 text-white">Not logged in</div>;
+    return <div className="p-8 text-white">Loading user data...</div>;
   }
 
   return (

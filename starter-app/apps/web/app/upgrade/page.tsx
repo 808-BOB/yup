@@ -2,7 +2,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/utils/auth-context";
-import { Check, X, ArrowRight, Crown, Zap } from "lucide-react";
+import { useBranding } from "@/contexts/BrandingContext";
+import Check from "lucide-react/dist/esm/icons/check";
+import X from "lucide-react/dist/esm/icons/x";
+import ArrowRight from "lucide-react/dist/esm/icons/arrow-right";
+import Crown from "lucide-react/dist/esm/icons/crown";
+import Zap from "lucide-react/dist/esm/icons/zap";
 import Header from "@/dash/header";
 import { supabase } from "@/lib/supabase";
 
@@ -82,21 +87,15 @@ const tierFeatures = {
 export default function UpgradePage() {
   const router = useRouter();
   const { user } = useAuth();
+  const branding = useBranding();
   const [upgrading, setUpgrading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
-  const getCurrentPlan = () => {
-    if (!user) return "";
+  // Determine plan using flags already merged into the auth user object.
+  const isPremium = branding.isPremium; // branding checks row fields itself
+  const isPro = Boolean((user as any)?.is_pro);
 
-    const isPremium = Boolean((user as any)?.is_premium ?? (user as any)?.user_metadata?.is_premium);
-    const isPro = Boolean((user as any)?.is_pro ?? (user as any)?.user_metadata?.is_pro);
-
-    if (isPremium) return "premium";
-    if (isPro) return "pro";
-    return "free";
-  };
-
-  const currentPlan = getCurrentPlan();
+  const currentPlan = isPremium ? "premium" : isPro ? "pro" : "free";
 
   const handleUpgrade = async (plan: string) => {
     if (!user) {

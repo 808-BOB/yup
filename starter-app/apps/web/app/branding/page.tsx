@@ -2,7 +2,6 @@
 
 import { useBranding } from "@/contexts/BrandingContext";
 import { useAuth } from "@/utils/auth-context";
-import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
@@ -13,7 +12,6 @@ import { Badge } from "@/ui/badge";
 import { ColorPicker } from "@/ui/color-picker";
 import { useToast } from "@/hooks/use-toast";
 import Upload from "lucide-react/dist/esm/icons/upload";
-import Download from "lucide-react/dist/esm/icons/download";
 import RotateCcw from "lucide-react/dist/esm/icons/rotate-ccw";
 import Palette from "lucide-react/dist/esm/icons/palette";
 import Type from "lucide-react/dist/esm/icons/type";
@@ -24,18 +22,19 @@ import Check from "lucide-react/dist/esm/icons/check";
 import Users from "lucide-react/dist/esm/icons/users";
 import X from "lucide-react/dist/esm/icons/x";
 import Share2 from "lucide-react/dist/esm/icons/share-2";
-import { supabase } from "@/utils/supabase";
+import Eye from "lucide-react/dist/esm/icons/eye";
+import { getSupabaseClient } from "@/utils/supabase";
 import Header from "@/dash/header";
 
 export default function BrandingPage() {
   const { user, isLoading: authLoading } = useAuth();
   const branding = useBranding();
-  const router = useRouter();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isUploading, setIsUploading] = useState(false);
   const [previewLogo, setPreviewLogo] = useState<string | null>(branding.logoUrl);
+  const [activeTab, setActiveTab] = useState('colors');
 
   // Local state for RSVP text to prevent page refresh on every keystroke
   const [localRSVPText, setLocalRSVPText] = useState({
@@ -46,41 +45,6 @@ export default function BrandingPage() {
 
   // Debounce timer for RSVP text saving
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Check premium status from multiple sources
-  const isPremium = branding.isPremium ||
-                   (user as any)?.is_premium ||
-                   (user as any)?.user_metadata?.is_premium ||
-                   user?.username === 'subourbon' ||
-                   false;
-
-  // Redirect non-premium users away - but only after both auth and branding are loaded
-  useEffect(() => {
-    // Don't redirect while still loading
-    if (authLoading || branding.isLoading) {
-      console.log('Still loading, not redirecting yet:', { authLoading, brandingLoading: branding.isLoading });
-      return;
-    }
-
-    // If no user, redirect to login
-    if (!user) {
-      console.log('No user, redirecting to login');
-      router.replace("/auth/login");
-      return;
-    }
-
-    // Check premium status after everything is loaded
-    if (!isPremium) {
-      console.log('Branding page: User is not premium, redirecting to upgrade');
-      console.log('User details:', {
-        username: user.username,
-        brandingIsPremium: branding.isPremium,
-        userIsPremium: (user as any)?.is_premium,
-        metadataIsPremium: (user as any)?.user_metadata?.is_premium
-      });
-      router.replace("/upgrade");
-    }
-  }, [user, isPremium, authLoading, branding.isLoading, router, branding.isPremium]);
 
   // Update preview when branding changes
   useEffect(() => {
@@ -105,42 +69,12 @@ export default function BrandingPage() {
     };
   }, []);
 
-  // Show loading state while auth or branding is loading
+  // Show loading state while branding is loading
   if (authLoading || branding.isLoading) {
     return (
       <div className="w-full max-w-md mx-auto px-8 pb-8 min-h-screen flex flex-col page-container">
         <div className="flex-1 flex items-center justify-center">
           <p className="text-center text-gray-400">Loading branding settings...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show login prompt if no user
-  if (!user) {
-    return (
-      <div className="w-full max-w-md mx-auto px-8 pb-8 min-h-screen flex flex-col page-container">
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-center text-gray-400">Please log in to access branding settings.</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show premium requirement if not premium
-  if (!isPremium) {
-    return (
-      <div className="w-full max-w-md mx-auto px-8 pb-8 min-h-screen flex flex-col page-container">
-        <div className="sticky top-0 z-50 page-container pt-8">
-          <Header />
-        </div>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <p className="text-red-500">Premium subscription required.</p>
-            <Button onClick={() => router.push("/admin")} variant="outline">
-              Get Premium Access
-            </Button>
-          </div>
         </div>
       </div>
     );
@@ -195,23 +129,6 @@ export default function BrandingPage() {
     }, 1000);
   };
 
-  // Save RSVP text immediately (for manual save buttons if needed)
-  const saveRSVPText = async () => {
-    try {
-      await branding.updateCustomRSVPText(localRSVPText);
-      toast({
-        title: "RSVP text updated",
-        description: "All RSVP text has been saved.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update RSVP text. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !user) return;
@@ -242,7 +159,8 @@ export default function BrandingPage() {
     console.log('File details:', { name: file.name, size: file.size, type: file.type });
 
     try {
-      // Get current session for authorization
+      // Get current session for authorization using centralized client
+      const supabase = getSupabaseClient();
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !session) {
@@ -334,6 +252,7 @@ export default function BrandingPage() {
   const testStorageAccess = async () => {
     try {
       console.log('Testing storage access...');
+      const supabase = getSupabaseClient();
       const { data: { session } } = await supabase.auth.getSession();
       console.log('Current session:', !!session);
 
@@ -426,6 +345,31 @@ export default function BrandingPage() {
     }
   };
 
+  // Helper function to ensure text contrast
+  const getContrastingTextColor = (backgroundColor: string) => {
+    // Convert hex to RGB
+    const hex = backgroundColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    
+    // Calculate luminance
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    
+    // Return white for dark backgrounds, black for light backgrounds
+    return luminance < 0.5 ? '#ffffff' : '#000000';
+  };
+
+  // Helper function to add text shadow for better readability
+  const getTextShadowStyle = (backgroundColor: string) => {
+    const textColor = getContrastingTextColor(backgroundColor);
+    const shadowColor = textColor === '#ffffff' ? '#000000' : '#ffffff';
+    return {
+      color: textColor,
+      textShadow: `1px 1px 2px ${shadowColor}80, -1px -1px 2px ${shadowColor}40`
+    };
+  };
+
     return (
     <div className="min-h-screen bg-gray-950">
       <Header />
@@ -459,19 +403,51 @@ export default function BrandingPage() {
             </div>
           </div>
 
-          <Tabs defaultValue="colors" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 bg-gray-900 border border-gray-800">
-              <TabsTrigger value="colors" className="flex items-center gap-2 data-[state=active]:bg-gray-950 data-[state=active]:text-white text-gray-400">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="grid w-full grid-cols-4 border border-gray-800 bg-gray-900">
+              <TabsTrigger 
+                value="colors" 
+                className="flex items-center gap-2 border-0"
+                style={{
+                  backgroundColor: activeTab === 'colors' ? branding.theme.primary : 'transparent',
+                  color: activeTab === 'colors' ? getContrastingTextColor(branding.theme.primary) : '#9ca3af'
+                }}
+              >
                 <Palette className="w-4 h-4" />
                 Colors
               </TabsTrigger>
-              <TabsTrigger value="logo" className="flex items-center gap-2 data-[state=active]:bg-gray-950 data-[state=active]:text-white text-gray-400">
+              <TabsTrigger 
+                value="logo" 
+                className="flex items-center gap-2 border-0"
+                style={{
+                  backgroundColor: activeTab === 'logo' ? branding.theme.primary : 'transparent',
+                  color: activeTab === 'logo' ? getContrastingTextColor(branding.theme.primary) : '#9ca3af'
+                }}
+              >
                 <Image className="w-4 h-4" />
                 Logo
               </TabsTrigger>
-              <TabsTrigger value="text" className="flex items-center gap-2 data-[state=active]:bg-gray-950 data-[state=active]:text-white text-gray-400">
+              <TabsTrigger 
+                value="text" 
+                className="flex items-center gap-2 border-0"
+                style={{
+                  backgroundColor: activeTab === 'text' ? branding.theme.primary : 'transparent',
+                  color: activeTab === 'text' ? getContrastingTextColor(branding.theme.primary) : '#9ca3af'
+                }}
+              >
                 <Type className="w-4 h-4" />
                 RSVP Text
+              </TabsTrigger>
+              <TabsTrigger 
+                value="preview" 
+                className="flex items-center gap-2 border-0"
+                style={{
+                  backgroundColor: activeTab === 'preview' ? branding.theme.primary : 'transparent',
+                  color: activeTab === 'preview' ? getContrastingTextColor(branding.theme.primary) : '#9ca3af'
+                }}
+              >
+                <Eye className="w-4 h-4" />
+                Live Preview
               </TabsTrigger>
             </TabsList>
 
@@ -484,31 +460,8 @@ export default function BrandingPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="mb-6 p-4 bg-gray-950 rounded-md border border-gray-800">
-                    <h3 className="text-sm font-medium mb-3 text-white">YUP.RSVP Brand Colors</h3>
-                    <div className="flex flex-wrap gap-4 mb-4">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-6 h-6 rounded border border-gray-600"
-                          style={{ backgroundColor: "#ec4899" }}
-                        />
-                        <span className="text-sm text-gray-300">Primary: #ec4899</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-6 h-6 rounded border border-gray-600"
-                          style={{ backgroundColor: "#0a0a14" }}
-                        />
-                        <span className="text-sm text-gray-300">Secondary: #0a0a14</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-6 h-6 rounded border border-gray-600"
-                          style={{ backgroundColor: "#fafafa" }}
-                        />
-                        <span className="text-sm text-gray-300">Tertiary: #fafafa</span>
-                      </div>
-                    </div>
+                  {/* Quick Action Buttons */}
+                  <div className="flex flex-wrap gap-2 mb-6">
                     <Button
                       size="sm"
                       variant="outline"
@@ -518,322 +471,141 @@ export default function BrandingPage() {
                         await handleColorChange('tertiary', '#fafafa');
                         toast({
                           title: "Colors updated",
-                          description: "Reset to YUP.RSVP brand colors.",
+                          description: "YUP brand colors applied everywhere (app + invitations).",
                         });
                       }}
                       className="border-pink-500 text-pink-400 hover:bg-pink-500/10"
                     >
-                      Use YUP Brand Colors
+                      ↻ Use YUP Colors (Everywhere)
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        await handleColorChange('primary', '#ec4899');
+                        toast({
+                          title: "Colors updated", 
+                          description: "YUP brand colors applied to invitations only. App keeps your custom theme.",
+                        });
+                      }}
+                      className="border-blue-500 text-blue-400 hover:bg-blue-500/10"
+                    >
+                      ↻ Use YUP Colors (Invitations Only)
                     </Button>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Color Pickers - Simplified */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div className="space-y-2">
                       <ColorPicker
                         label="Primary Color"
                         value={branding.theme.primary}
                         onChange={(color) => handleColorChange('primary', color)}
+                        primaryColor={branding.theme.primary}
+                        secondaryColor={branding.theme.secondary}
                       />
-                      <p className="text-xs text-gray-400">Buttons, icons, accents</p>
+                      <p className="text-xs text-gray-500">Buttons & accents</p>
                     </div>
                     <div className="space-y-2">
                       <ColorPicker
                         label="Secondary Color"
                         value={branding.theme.secondary}
                         onChange={(color) => handleColorChange('secondary', color)}
+                        primaryColor={branding.theme.primary}
+                        secondaryColor={branding.theme.secondary}
                       />
-                      <p className="text-xs text-gray-400">Background color</p>
+                      <p className="text-xs text-gray-500">Background</p>
                     </div>
                     <div className="space-y-2">
                       <ColorPicker
                         label="Tertiary Color"
                         value={branding.theme.tertiary}
                         onChange={(color) => handleColorChange('tertiary', color)}
+                        primaryColor={branding.theme.primary}
+                        secondaryColor={branding.theme.secondary}
                       />
-                      <p className="text-xs text-gray-400">Text and content color</p>
+                      <p className="text-xs text-gray-500">Text & content</p>
                     </div>
                   </div>
 
-                  <div className="mt-6 p-4 bg-gray-950 rounded-md border border-gray-800">
-                    <h3 className="text-sm font-medium mb-3 text-white">Your Current Colors</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-6 h-6 rounded border border-gray-600"
+                  {/* Simplified Preview */}
+                  <div className="p-4 rounded-lg border bg-gray-950" style={{ 
+                    borderColor: branding.theme.primary + '40'
+                  }}>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-white">
+                        Live Preview
+                      </h3>
+                      {previewLogo && (
+                        <img
+                          src={previewLogo}
+                          alt="Brand Logo"
+                          className="h-8 w-auto object-contain"
+                        />
+                      )}
+                    </div>
+                    
+                    {/* RSVP Buttons Preview */}
+                    <div className="flex gap-2 mb-4">
+                      <Button
+                        size="sm"
+                        className="flex-1 text-xs"
+                        style={{ 
+                          backgroundColor: branding.theme.primary,
+                          color: getContrastingTextColor(branding.theme.primary),
+                          border: 'none'
+                        }}
+                      >
+                        {localRSVPText.yup}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 text-xs border-gray-600 text-gray-300 hover:bg-gray-800"
+                        style={{ 
+                          borderColor: branding.theme.primary + '60',
+                          backgroundColor: 'transparent',
+                          color: '#d1d5db'
+                        }}
+                      >
+                        {localRSVPText.maybe}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 text-xs border-gray-600 text-gray-300 hover:bg-gray-800"
+                        style={{ 
+                          borderColor: branding.theme.primary + '60',
+                          backgroundColor: 'transparent',
+                          color: '#d1d5db'
+                        }}
+                      >
+                        {localRSVPText.nope}
+                      </Button>
+                    </div>
+                    
+                    {/* Color Reference with better contrast */}
+                    <div className="grid grid-cols-3 gap-3 text-xs">
+                      <div className="text-center">
+                        <div 
+                          className="w-6 h-6 rounded mx-auto mb-1 border-2 border-white shadow-md" 
                           style={{ backgroundColor: branding.theme.primary }}
-                        />
-                        <div>
-                          <span className="text-sm text-gray-300 font-medium">Primary</span>
-                          <p className="text-xs text-gray-500">Buttons & accents</p>
-                        </div>
+                        ></div>
+                        <span className="text-gray-300">Primary</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-6 h-6 rounded border border-gray-600"
+                      <div className="text-center">
+                        <div 
+                          className="w-6 h-6 rounded mx-auto mb-1 border-2 border-white shadow-md" 
                           style={{ backgroundColor: branding.theme.secondary }}
-                        />
-                        <div>
-                          <span className="text-sm text-gray-300 font-medium">Secondary</span>
-                          <p className="text-xs text-gray-500">Background</p>
-                        </div>
+                        ></div>
+                        <span className="text-gray-300">Background</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-6 h-6 rounded border border-gray-600"
+                      <div className="text-center">
+                        <div 
+                          className="w-6 h-6 rounded mx-auto mb-1 border-2 border-white shadow-md" 
                           style={{ backgroundColor: branding.theme.tertiary }}
-                        />
-                        <div>
-                          <span className="text-sm text-gray-300 font-medium">Tertiary</span>
-                          <p className="text-xs text-gray-500">Text & content</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Event Invitation Preview */}
-                  <div className="mt-6 p-6 bg-gray-950 rounded-md border border-gray-800">
-                    <h3 className="text-sm font-medium mb-4 text-white">Event Invitation Preview</h3>
-                    
-                    {/* Mock the exact event page layout */}
-                    <div 
-                      className="rounded-lg p-4 border border-gray-700"
-                      style={{ backgroundColor: branding.theme.secondary }}
-                    >
-                      <div className="space-y-6">
-                        {/* Title and action buttons */}
-                        <div className="flex justify-between items-start">
-                          <h1 className="text-xl font-bold" style={{ color: branding.theme.tertiary }}>Sample Event</h1>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-xs border-gray-500"
-                              style={{ color: branding.theme.tertiary }}
-                            >
-                              <Share2 className="h-3 w-3 mr-1" /> Share
-                            </Button>
-                          </div>
-                        </div>
-
-                        {/* Sample Event Image */}
-                        <div className="w-full">
-                          <div 
-                            className="relative rounded-lg overflow-hidden border h-32 bg-gray-800 flex items-center justify-center"
-                            style={{ borderColor: `${branding.theme.primary}30` }}
-                          >
-                            <div className="text-center">
-                              <Image className="w-6 h-6 mx-auto mb-1" style={{ color: branding.theme.primary }} />
-                              <p className="text-xs opacity-60" style={{ color: branding.theme.tertiary }}>
-                                Event Image
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                          {/* Left column - Event details */}
-                          <div className="lg:col-span-2 space-y-4">
-                            {/* Status badges */}
-                            <div className="flex flex-wrap gap-2">
-                              <Badge 
-                                variant="outline" 
-                                className="text-xs"
-                                style={{ 
-                                  backgroundColor: `${branding.theme.primary}20`,
-                                  color: branding.theme.primary,
-                                  borderColor: `${branding.theme.primary}50`
-                                }}
-                              >
-                                {localRSVPText.yup || branding.customRSVPText.yup}
-                              </Badge>
-                              <Badge variant="outline" className="bg-gray-800 text-gray-300 text-xs">
-                                open
-                              </Badge>
-                            </div>
-
-                                                         {/* RSVP Buttons */}
-                             <div 
-                               className="flex gap-2 p-3 rounded-lg border"
-                               style={{ 
-                                 backgroundColor: `${branding.theme.primary}08`,
-                                 borderColor: `${branding.theme.primary}20`
-                               }}
-                             >
-                              <Button
-                                size="sm"
-                                className="flex-1 text-xs"
-                                style={{ 
-                                  backgroundColor: branding.theme.primary,
-                                  color: 'white'
-                                }}
-                              >
-                                <Check className="h-3 w-3 mr-1" />
-                                {localRSVPText.yup || branding.customRSVPText.yup}
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="flex-1 text-xs hover:bg-primary/10"
-                              >
-                                <Users className="h-3 w-3 mr-1" />
-                                {localRSVPText.maybe || branding.customRSVPText.maybe}
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="flex-1 text-xs hover:bg-muted/20"
-                              >
-                                <X className="h-3 w-3 mr-1" />
-                                {localRSVPText.nope || branding.customRSVPText.nope}
-                              </Button>
-                            </div>
-
-                                                         {/* Host info */}
-                             <div 
-                               className="flex items-center gap-3 p-3 rounded border"
-                               style={{ 
-                                 backgroundColor: `${branding.theme.primary}15`,
-                                 borderColor: `${branding.theme.primary}30`
-                               }}
-                             >
-                               <div className="h-12 w-12 rounded-full bg-gray-600 flex items-center justify-center">
-                                 {user?.user_metadata?.profile_image_url ? (
-                                   <img 
-                                     src={user.user_metadata.profile_image_url} 
-                                     alt="Host Profile" 
-                                     className="h-12 w-12 rounded-full object-cover" 
-                                   />
-                                 ) : (
-                                   <span className="text-sm font-medium" style={{ color: branding.theme.tertiary }}>
-                                     {user?.display_name?.charAt(0) || user?.email?.charAt(0) || 'H'}
-                                   </span>
-                                 )}
-                               </div>
-                               <div>
-                                 <p className="text-sm font-medium" style={{ color: branding.theme.tertiary }}>{user?.display_name || 'Host Name'}</p>
-                                 <p className="text-xs opacity-70" style={{ color: branding.theme.tertiary }}>Created {new Date().toLocaleDateString()}</p>
-                               </div>
-                             </div>
-
-                             {/* Date and Time */}
-                             <div className="flex items-start gap-3">
-                               <Calendar className="h-4 w-4 mt-1" style={{ color: branding.theme.primary }} />
-                               <div>
-                                 <h3 className="text-sm font-semibold mb-1" style={{ color: branding.theme.tertiary }}>When</h3>
-                                 <p className="text-xs opacity-80" style={{ color: branding.theme.tertiary }}>Saturday, February 15, 2025</p>
-                                 <p className="text-xs opacity-80" style={{ color: branding.theme.tertiary }}>7:00 PM - 10:00 PM</p>
-                               </div>
-                             </div>
-
-                             {/* Location */}
-                             <div className="flex items-start gap-3">
-                               <MapPin className="h-4 w-4 mt-1" style={{ color: branding.theme.primary }} />
-                               <div>
-                                 <h3 className="text-sm font-semibold mb-1" style={{ color: branding.theme.tertiary }}>Where</h3>
-                                 <p className="text-xs opacity-80" style={{ color: branding.theme.tertiary }}>Sample Venue</p>
-                                 <p className="text-xs opacity-60" style={{ color: branding.theme.tertiary }}>123 Example Street</p>
-                               </div>
-                             </div>
-                          </div>
-
-                                                     {/* Right column - RSVP Settings */}
-                           <div 
-                             className="rounded-lg p-4 border"
-                             style={{ 
-                               backgroundColor: `${branding.theme.primary}10`,
-                               borderColor: `${branding.theme.primary}25`
-                             }}
-                           >
-                             <h3 className="text-sm font-semibold mb-3" style={{ color: branding.theme.tertiary }}>RSVP Settings</h3>
-                             <div className="space-y-3">
-                               <div className="flex justify-between items-center">
-                                 <span className="text-xs opacity-80" style={{ color: branding.theme.tertiary }}>Guest RSVP</span>
-                                 <Badge 
-                                   variant="outline" 
-                                   className="text-xs"
-                                   style={{ 
-                                     backgroundColor: `${branding.theme.primary}25`,
-                                     color: branding.theme.primary,
-                                     borderColor: `${branding.theme.primary}50`
-                                   }}
-                                 >
-                                   Allowed
-                                 </Badge>
-                               </div>
-                               <div className="flex justify-between items-center">
-                                 <span className="text-xs opacity-80" style={{ color: branding.theme.tertiary }}>Plus One</span>
-                                 <Badge 
-                                   variant="outline" 
-                                   className="text-xs opacity-60"
-                                   style={{ 
-                                     backgroundColor: `${branding.theme.tertiary}10`,
-                                     color: branding.theme.tertiary,
-                                     borderColor: `${branding.theme.tertiary}30`
-                                   }}
-                                 >
-                                   Not Allowed
-                                 </Badge>
-                               </div>
-                               <div className="flex justify-between items-center">
-                                 <span className="text-xs opacity-80" style={{ color: branding.theme.tertiary }}>Max Guests</span>
-                                 <span className="text-xs font-medium" style={{ color: branding.theme.primary }}>
-                                   1
-                                 </span>
-                               </div>
-                               
-                               {/* Brand Logo Display */}
-                               {previewLogo && (
-                                 <div className="pt-4 border-t border-gray-600">
-                                   <div className="text-center">
-                                     <img
-                                       src={previewLogo}
-                                       alt="Brand Logo"
-                                       className="h-32 w-auto max-w-full mx-auto object-contain rounded"
-                                     />
-                                   </div>
-                                 </div>
-                               )}
-                             </div>
-                           </div>
-                        </div>
-
-                                                 {/* Responses section */}
-                         <div>
-                           <div className="flex justify-between items-center mb-3">
-                             <h3 className="text-sm font-semibold" style={{ color: branding.theme.tertiary }}>Responses</h3>
-                             <div className="flex gap-3 text-xs">
-                               <span style={{ color: branding.theme.primary }} className="font-medium">
-                                 8 {(localRSVPText.yup || branding.customRSVPText.yup).toLowerCase()}
-                               </span>
-                               <span className="opacity-70" style={{ color: branding.theme.tertiary }}>
-                                 2 {(localRSVPText.nope || branding.customRSVPText.nope).toLowerCase()}
-                               </span>
-                               <span style={{ color: `${branding.theme.primary}BB` }}>
-                                 3 {(localRSVPText.maybe || branding.customRSVPText.maybe).toLowerCase()}
-                               </span>
-                             </div>
-                           </div>
-                         </div>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4 p-3 bg-gray-900 rounded border border-gray-700">
-                      <p className="text-xs text-gray-400 text-center mb-2">
-                        <strong>Live Preview:</strong> This shows how your 3-color branding system works
-                      </p>
-                      <div className="grid grid-cols-3 gap-2 text-xs text-center">
-                        <div>
-                          <div className="w-3 h-3 rounded mx-auto mb-1" style={{ backgroundColor: branding.theme.primary }}></div>
-                          <span className="text-gray-500">Primary<br/>Buttons & Icons</span>
-                        </div>
-                        <div>
-                          <div className="w-3 h-3 rounded mx-auto mb-1" style={{ backgroundColor: branding.theme.secondary }}></div>
-                          <span className="text-gray-500">Secondary<br/>Background</span>
-                        </div>
-                        <div>
-                          <div className="w-3 h-3 rounded mx-auto mb-1" style={{ backgroundColor: branding.theme.tertiary }}></div>
-                          <span className="text-gray-500">Tertiary<br/>Text & Content</span>
-                        </div>
+                        ></div>
+                        <span className="text-gray-300">Text</span>
                       </div>
                     </div>
                   </div>
@@ -920,13 +692,18 @@ export default function BrandingPage() {
                     <Label htmlFor="yup-text" className="text-sm font-medium text-white">
                       Positive Response
                     </Label>
-                                          <Input
+                    <Input
                         id="yup-text"
                         value={localRSVPText.yup}
                         onChange={(e) => handleRSVPTextInputChange('yup', e.target.value)}
                         placeholder="Yup"
                         maxLength={20}
-                        className="bg-black border-white text-white placeholder:text-gray-400"
+                        className="border-0"
+                        style={{
+                          backgroundColor: branding.theme.primary,
+                          color: getContrastingTextColor(branding.theme.primary),
+                          borderColor: branding.theme.primary
+                        }}
                       />
                     </div>
                     <div className="space-y-2">
@@ -939,7 +716,12 @@ export default function BrandingPage() {
                         onChange={(e) => handleRSVPTextInputChange('nope', e.target.value)}
                         placeholder="Nope"
                         maxLength={20}
-                        className="bg-black border-white text-white placeholder:text-gray-400"
+                        className="border-0"
+                        style={{
+                          backgroundColor: branding.theme.primary,
+                          color: getContrastingTextColor(branding.theme.primary),
+                          borderColor: branding.theme.primary
+                        }}
                       />
                     </div>
                     <div className="space-y-2">
@@ -952,7 +734,12 @@ export default function BrandingPage() {
                         onChange={(e) => handleRSVPTextInputChange('maybe', e.target.value)}
                         placeholder="Maybe"
                         maxLength={20}
-                        className="bg-black border-white text-white placeholder:text-gray-400"
+                        className="border-0"
+                        style={{
+                          backgroundColor: branding.theme.primary,
+                          color: getContrastingTextColor(branding.theme.primary),
+                          borderColor: branding.theme.primary
+                        }}
                       />
                   </div>
                 </div>
@@ -962,35 +749,202 @@ export default function BrandingPage() {
                                       <div className="flex flex-wrap gap-3">
                       <Button
                         size="sm"
-                        className="text-white"
                         style={{
                           backgroundColor: branding.theme.primary,
-                          borderColor: branding.theme.primary
+                          borderColor: branding.theme.primary,
+                          color: getContrastingTextColor(branding.theme.primary)
                         }}
                       >
                         {localRSVPText.yup}
                       </Button>
                       <Button
                         size="sm"
-                        className="text-white"
                         style={{
                           backgroundColor: branding.theme.secondary,
-                          borderColor: branding.theme.secondary
+                          borderColor: branding.theme.secondary,
+                          color: getContrastingTextColor(branding.theme.secondary)
                         }}
                       >
                         {localRSVPText.nope}
                       </Button>
                       <Button
                         size="sm"
-                        className="text-white"
                         style={{
                           backgroundColor: branding.theme.tertiary,
-                          borderColor: branding.theme.tertiary
+                          borderColor: branding.theme.tertiary,
+                          color: getContrastingTextColor(branding.theme.tertiary)
                         }}
                       >
                         {localRSVPText.maybe}
                       </Button>
                     </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="preview" className="space-y-6">
+            <Card className="bg-gray-900 border-gray-800 shadow-lg">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-xl font-semibold md:text-2xl tracking-tight text-white">
+                  <Eye className="w-5 h-5" style={{ color: branding.theme.primary }} />
+                  Live Preview
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Full Event Invitation Preview */}
+                <div 
+                  className="rounded-lg p-6 max-w-sm mx-auto border-2 shadow-xl"
+                  style={{ 
+                    backgroundColor: branding.theme.secondary,
+                    borderColor: branding.theme.primary
+                  }}
+                >
+                  {/* Header with Logo */}
+                  <div className="text-center mb-6">
+                    {previewLogo ? (
+                      <img
+                        src={previewLogo}
+                        alt="Brand Logo"
+                        className="h-16 w-auto object-contain mx-auto mb-4"
+                      />
+                    ) : (
+                      <div className="h-16 flex items-center justify-center mb-4">
+                        <span 
+                          className="text-2xl font-bold"
+                          style={{ ...getTextShadowStyle(branding.theme.secondary) }}
+                        >
+                          Your Logo
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Event Info */}
+                  <div className="space-y-4 mb-6">
+                    <h2 
+                      className="text-xl font-bold text-center"
+                      style={{ ...getTextShadowStyle(branding.theme.secondary) }}
+                    >
+                      You're Invited!
+                    </h2>
+                    
+                    <div className="space-y-3 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4" style={{ color: branding.theme.primary }} />
+                        <span style={{ ...getTextShadowStyle(branding.theme.secondary) }}>
+                          Saturday, Dec 25, 2024
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4" style={{ color: branding.theme.primary }} />
+                        <span style={{ ...getTextShadowStyle(branding.theme.secondary) }}>
+                          123 Party Street
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4" style={{ color: branding.theme.primary }} />
+                        <span style={{ ...getTextShadowStyle(branding.theme.secondary) }}>
+                          15 people invited
+                        </span>
+                      </div>
+                    </div>
+
+                    <p 
+                      className="text-sm text-center leading-relaxed"
+                      style={{ ...getTextShadowStyle(branding.theme.secondary) }}
+                    >
+                      Join us for an amazing celebration! Food, drinks, and great company await.
+                    </p>
+                  </div>
+
+                  {/* RSVP Buttons */}
+                  <div className="space-y-3">
+                    <p 
+                      className="text-sm font-medium text-center"
+                      style={{ ...getTextShadowStyle(branding.theme.secondary) }}
+                    >
+                      Will you be there?
+                    </p>
+                    
+                    <div className="flex gap-2">
+                      <Button
+                        className="flex-1 font-medium"
+                        style={{ 
+                          backgroundColor: branding.theme.primary,
+                          color: getContrastingTextColor(branding.theme.primary),
+                          border: 'none'
+                        }}
+                      >
+                        <Check className="w-4 h-4 mr-1" />
+                        {localRSVPText.yup}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="flex-1 font-medium"
+                        style={{ 
+                          borderColor: branding.theme.primary,
+                          ...getTextShadowStyle(branding.theme.secondary),
+                          backgroundColor: 'transparent'
+                        }}
+                      >
+                        {localRSVPText.maybe}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="flex-1 font-medium"
+                        style={{ 
+                          borderColor: branding.theme.primary,
+                          ...getTextShadowStyle(branding.theme.secondary),
+                          backgroundColor: 'transparent'
+                        }}
+                      >
+                        <X className="w-4 h-4 mr-1" />
+                        {localRSVPText.nope}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="mt-6 pt-4 border-t border-opacity-20" style={{ borderColor: branding.theme.primary }}>
+                    <div className="flex items-center justify-center gap-2 text-xs">
+                      <Share2 className="w-3 h-3" style={{ color: branding.theme.primary }} />
+                      <span style={{ ...getTextShadowStyle(branding.theme.secondary) }}>
+                        Powered by YUP.RSVP
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Color Palette Reference */}
+                <div className="mt-8 p-4 bg-gray-950 rounded-lg border border-gray-800">
+                  <h3 className="text-sm font-medium mb-4 text-white text-center">Color Palette</h3>
+                  <div className="flex justify-center gap-6">
+                    <div className="text-center">
+                      <div 
+                        className="w-12 h-12 rounded-lg mx-auto mb-2 border-2 border-white shadow-lg" 
+                        style={{ backgroundColor: branding.theme.primary }}
+                      ></div>
+                      <span className="text-xs text-gray-300">Primary</span>
+                      <div className="text-xs text-gray-400 font-mono">{branding.theme.primary}</div>
+                    </div>
+                    <div className="text-center">
+                      <div 
+                        className="w-12 h-12 rounded-lg mx-auto mb-2 border-2 border-white shadow-lg" 
+                        style={{ backgroundColor: branding.theme.secondary }}
+                      ></div>
+                      <span className="text-xs text-gray-300">Background</span>
+                      <div className="text-xs text-gray-400 font-mono">{branding.theme.secondary}</div>
+                    </div>
+                    <div className="text-center">
+                      <div 
+                        className="w-12 h-12 rounded-lg mx-auto mb-2 border-2 border-white shadow-lg" 
+                        style={{ backgroundColor: branding.theme.tertiary }}
+                      ></div>
+                      <span className="text-xs text-gray-300">Text</span>
+                      <div className="text-xs text-gray-400 font-mono">{branding.theme.tertiary}</div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

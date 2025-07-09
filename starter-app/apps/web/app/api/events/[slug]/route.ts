@@ -3,8 +3,8 @@ import { supabaseServer } from "@/utils/supabase-server";
 import { supabase } from "@/lib/supabase";
 import type { NextRequest } from "next/server";
 
-export async function GET(req: NextRequest, { params }: { params: { slug: string } }) {
-  const { slug } = params;
+export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const supabase = supabaseServer();
 
   const { data, error } = await supabase
@@ -19,9 +19,9 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
   return NextResponse.json(data);
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { slug: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
-    const { slug } = params;
+    const { slug } = await params;
     console.log('PATCH /api/events/[slug] - Event slug/id:', slug);
     
     const body = await req.json();

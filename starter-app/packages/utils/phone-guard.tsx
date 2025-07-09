@@ -16,13 +16,13 @@ export function PhoneGuard({ children, redirectTo = "/phone-verification" }: Pho
     if (!isLoading) {
       if (!user) {
         // Not authenticated, redirect to login
-        router.replace("/auth?mode=login");
+        window.location.href = "/auth?mode=login";
         return;
       }
 
       // Check if user needs phone verification
       if (!user.phone_number || user.phone_number.trim() === '') {
-        router.replace(redirectTo);
+        window.location.href = redirectTo;
         return;
       }
     }

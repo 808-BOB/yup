@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import ChevronLeft from "lucide-react/dist/esm/icons/chevron-left";
 import Share2 from "lucide-react/dist/esm/icons/share-2";
 import Edit from "lucide-react/dist/esm/icons/edit";
@@ -23,6 +23,7 @@ import { Separator } from "@/components/ui/separator";
 import EventBrandingProvider from "@/dash/event-branding-provider";
 import { useCustomRSVPText } from "@/hooks/use-custom-rsvp-text";
 import { useAccessibleColors } from "@/hooks/use-accessible-colors";
+import GuestResponseForm from "@/ui/guest-response-form";
 import {
   Dialog,
   DialogContent,
@@ -85,6 +86,7 @@ interface EventData {
   custom_maybe_text?: string;
   rsvp_visibility: string;
   waitlist_enabled: boolean;
+  public_rsvp_enabled: boolean;
   host: {
     display_name: string;
     email: string;
@@ -125,7 +127,12 @@ export default function EventPage() {
   const { user } = useAuth();
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
+  
+  // Get invitation token from URL if present
+  const invitationToken = searchParams.get('inv');
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [event, setEvent] = useState<EventData | null>(null);
@@ -134,6 +141,9 @@ export default function EventPage() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [userResponse, setUserResponse] = useState<"yup" | "nope" | "maybe" | null>(null);
   const [responseCounts, setResponseCounts] = useState({ yupCount: 0, nopeCount: 0, maybeCount: 0 });
+  const [showGuestForm, setShowGuestForm] = useState(false);
+  const [lastNotificationSent, setLastNotificationSent] = useState<number>(0);
+  const [notificationDebounceTimer, setNotificationDebounceTimer] = useState<NodeJS.Timeout | null>(null);
   
   // Use hooks for custom branding
   const { primaryColor } = useAccessibleColors();
@@ -143,15 +153,16 @@ export default function EventPage() {
 
   useEffect(() => {
     const loadEventData = async () => {
-      if (!user || !eventSlug) return;
+      if (!eventSlug) return;
 
       try {
+        // Load event data (works for both authenticated and non-authenticated users)
         const { data: eventData, error: eventError } = await supabase
           .from('events')
           .select(`
             id, title, slug, date, location, address, start_time, end_time,
             description, image_url, host_id, created_at, status,
-            allow_guest_rsvp, allow_plus_one, max_guests_per_rsvp,
+            allow_guest_rsvp, allow_plus_one, max_guests_per_rsvp, public_rsvp_enabled,
             capacity, use_custom_rsvp_text, custom_yup_text,
             custom_nope_text, custom_maybe_text, rsvp_visibility,
             waitlist_enabled,
@@ -183,83 +194,116 @@ export default function EventPage() {
 
         setEvent(transformedEvent);
 
-        // Load responses with user details
-        const { data: responseData, error: responseError } = await supabase
-          .from('responses')
-          .select(`
-            *,
-            user:user_id (
-              id,
-              display_name,
-              email,
-              profile_image_url,
-              username
-            )
-          `)
-          .eq('event_id', eventData.id)
-          .order('created_at', { ascending: false });
+        // Determine if we should show guest form
+        // Show guest form if:
+        // 1. User is not authenticated AND event allows guest RSVPs, OR
+        // 2. User came from an invitation link (even if authenticated)
+        const shouldShowGuestForm = (!user && (transformedEvent.allow_guest_rsvp || transformedEvent.public_rsvp_enabled)) || !!invitationToken;
+        setShowGuestForm(shouldShowGuestForm);
 
-        if (responseError) throw responseError;
-
-        // Remove duplicate responses (keep latest response per user)
-        const uniqueResponses = responseData?.reduce((acc: Response[], response) => {
-          const existingResponseIndex = acc.findIndex(r => r.user_id === response.user_id);
-          if (existingResponseIndex >= 0) {
-            // If this response is newer than the existing one, replace it
-            if (new Date(response.created_at) > new Date(acc[existingResponseIndex].created_at)) {
-              acc[existingResponseIndex] = response;
-            }
-          } else {
-            acc.push(response);
-          }
-          return acc;
-        }, []) || [];
-
-        setResponses(uniqueResponses);
-
-        // Calculate response counts from deduplicated responses
-        const counts = uniqueResponses.reduce((acc, response) => {
-          switch (response.response_type) {
-            case 'yup':
-              acc.yupCount++;
-              break;
-            case 'nope':
-              acc.nopeCount++;
-              break;
-            case 'maybe':
-              acc.maybeCount++;
-              break;
-          }
-          return acc;
-        }, { yupCount: 0, nopeCount: 0, maybeCount: 0 });
-
-        setResponseCounts(counts);
-
-        // Set user's response from deduplicated responses
+        // Only load full responses data if user is authenticated
         if (user) {
-          const userLatestResponse = uniqueResponses.find(r => r.user_id === user.id);
-          setUserResponse(userLatestResponse?.response_type || null);
-        }
-
-        // Only create a maybe response if user is not host and has no response
-        if (user && user.id !== eventData.host_id && !uniqueResponses.some(r => r.user_id === user.id)) {
-          const { error: responseError } = await supabase
+          // Load responses with user details
+          const { data: responseData, error: responseError } = await supabase
             .from('responses')
-            .insert({
-              event_id: eventData.id,
-              user_id: user.id,
-              response_type: 'maybe',
-              guest_count: 1
-            });
+            .select(`
+              *,
+              user:user_id (
+                id,
+                display_name,
+                email,
+                profile_image_url,
+                username
+              )
+            `)
+            .eq('event_id', eventData.id)
+            .order('created_at', { ascending: false });
 
           if (responseError) throw responseError;
-          
-          // Update local state to reflect the new maybe response
-          setUserResponse('maybe');
-          setResponseCounts(prev => ({
-            ...prev,
-            maybeCount: prev.maybeCount + 1
-          }));
+
+          // Remove duplicate responses (keep latest response per user)
+          const uniqueResponses = responseData?.reduce((acc: Response[], response) => {
+            const existingResponseIndex = acc.findIndex(r => r.user_id === response.user_id);
+            if (existingResponseIndex >= 0) {
+              // If this response is newer than the existing one, replace it
+              if (new Date(response.created_at) > new Date(acc[existingResponseIndex].created_at)) {
+                acc[existingResponseIndex] = response;
+              }
+            } else {
+              acc.push(response);
+            }
+            return acc;
+          }, []) || [];
+
+          setResponses(uniqueResponses);
+
+          // Calculate response counts from deduplicated responses
+          const counts = uniqueResponses.reduce((acc, response) => {
+            switch (response.response_type) {
+              case 'yup':
+                acc.yupCount++;
+                break;
+              case 'nope':
+                acc.nopeCount++;
+                break;
+              case 'maybe':
+                acc.maybeCount++;
+                break;
+            }
+            return acc;
+          }, { yupCount: 0, nopeCount: 0, maybeCount: 0 });
+
+          setResponseCounts(counts);
+
+          // Set user's response from deduplicated responses
+          const userLatestResponse = uniqueResponses.find(r => r.user_id === user.id);
+          setUserResponse(userLatestResponse?.response_type || null);
+
+          // Only create a maybe response if user is not host and has no response
+          if (user.id !== eventData.host_id && !uniqueResponses.some(r => r.user_id === user.id)) {
+            const { error: responseError } = await supabase
+              .from('responses')
+              .insert({
+                event_id: eventData.id,
+                user_id: user.id,
+                response_type: 'maybe',
+                guest_count: 1
+              });
+
+            if (responseError) throw responseError;
+            
+            // Update local state to reflect the new maybe response
+            setUserResponse('maybe');
+            setResponseCounts(prev => ({
+              ...prev,
+              maybeCount: prev.maybeCount + 1
+            }));
+          }
+        } else {
+          // For non-authenticated users, just get basic response counts
+          const { data: responseData, error: responseError } = await supabase
+            .from('responses')
+            .select('response_type')
+            .eq('event_id', eventData.id);
+
+          if (!responseError && responseData) {
+            const counts = responseData.reduce((acc, response) => {
+              switch (response.response_type) {
+                case 'yup':
+                  acc.yupCount++;
+                  break;
+                case 'nope':
+                  acc.nopeCount++;
+                  break;
+                case 'maybe':
+                  acc.maybeCount++;
+                  break;
+              }
+              return acc;
+            }, { yupCount: 0, nopeCount: 0, maybeCount: 0 });
+
+            setResponseCounts(counts);
+          }
         }
 
       } catch (error) {
@@ -271,7 +315,46 @@ export default function EventPage() {
     };
 
     loadEventData();
-  }, [user, eventSlug, supabase]);
+  }, [user, eventSlug, invitationToken]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (notificationDebounceTimer) {
+        clearTimeout(notificationDebounceTimer);
+      }
+    };
+  }, [notificationDebounceTimer]);
+
+  // Handle guest response submission
+  const handleGuestResponse = async (responseData: any) => {
+    console.log('Guest response submitted:', responseData);
+    
+    // Update response counts immediately for better UX
+    if (responseData.response && responseData.response.response_type) {
+      setResponseCounts(prev => {
+        const newCounts = { ...prev };
+        switch (responseData.response.response_type) {
+          case 'yup':
+            newCounts.yupCount++;
+            break;
+          case 'nope':
+            newCounts.nopeCount++;
+            break;
+          case 'maybe':
+            newCounts.maybeCount++;
+            break;
+        }
+        return newCounts;
+      });
+    }
+
+    // Show success message
+    toast({
+      title: "RSVP Submitted! 🎉",
+      description: `Thank you for responding to ${event?.title}`,
+    });
+  };
 
   const handleResponse = async (response: "yup" | "nope" | "maybe") => {
     if (!event || !user) return;
@@ -348,38 +431,63 @@ export default function EventPage() {
         return newResponses;
       });
 
-      // Send SMS notification to host if they have a phone number
-      try {
-        if (event.host_id && user.id !== event.host_id) {
-          // Get host's phone number
-          const { data: hostData } = await supabase
-            .from("users")
-            .select("phone_number, display_name")
-            .eq("id", event.host_id)
-            .single();
+      // Debounced SMS notification to prevent spam
+      const sendDebouncedNotification = async (finalResponse: typeof response) => {
+        try {
+          if (event.host_id && user.id !== event.host_id) {
+            // Rate limiting: don't send if we just sent one recently (within 30 seconds)
+            const now = Date.now();
+            if (now - lastNotificationSent < 30000) {
+              console.log('SMS notification rate limited - too recent');
+              return;
+            }
 
-          if (hostData?.phone_number) {
-            const guestName = user.user_metadata?.display_name || user.email || 'Someone';
-            
-            await fetch('/api/sms/rsvp-notification', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                hostPhoneNumber: hostData.phone_number,
-                guestName,
-                eventName: event.title,
-                responseType: response,
-                guestCount: 1
-              }),
-            });
+            // Get host's phone number
+            const { data: hostData } = await supabase
+              .from("users")
+              .select("phone_number, display_name")
+              .eq("id", event.host_id)
+              .single();
+
+            if (hostData?.phone_number) {
+              const guestName = user.user_metadata?.display_name || user.email || 'Someone';
+              
+              console.log(`Sending SMS notification: ${guestName} → ${finalResponse}`);
+              
+              await fetch('/api/sms/rsvp-notification', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  hostPhoneNumber: hostData.phone_number,
+                  guestName,
+                  eventName: event.title,
+                  responseType: finalResponse,
+                  guestCount: 1
+                }),
+              });
+              
+              setLastNotificationSent(now);
+            }
           }
+        } catch (notificationError) {
+          console.error('Error sending RSVP notification:', notificationError);
+          // Don't fail the RSVP if notification fails
         }
-      } catch (notificationError) {
-        console.error('Error sending RSVP notification:', notificationError);
-        // Don't fail the RSVP if notification fails
+      };
+
+      // Clear any existing debounce timer
+      if (notificationDebounceTimer) {
+        clearTimeout(notificationDebounceTimer);
       }
+
+      // Set a new debounce timer - only send SMS after 3 seconds of no changes
+      const timer = setTimeout(() => {
+        sendDebouncedNotification(response);
+      }, 3000);
+      
+      setNotificationDebounceTimer(timer);
 
       toast({
         title: "Response updated",
@@ -440,6 +548,32 @@ export default function EventPage() {
   const customNopeText = event.host?.custom_nope_text || event.custom_nope_text || 'Nope';
   const customMaybeText = event.host?.custom_maybe_text || event.custom_maybe_text || 'Maybe';
 
+  // Helper function to ensure text contrast
+  const getContrastingTextColor = (backgroundColor: string) => {
+    // Convert hex to RGB
+    const hex = backgroundColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    
+    // Calculate luminance
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    
+    // Return white for dark backgrounds, black for light backgrounds
+    return luminance < 0.5 ? '#ffffff' : '#000000';
+  };
+
+  // Helper function to add text shadow for better readability
+  const getTextShadowStyle = (backgroundColor: string) => {
+    const textColor = getContrastingTextColor(backgroundColor);
+    const shadowColor = textColor === '#ffffff' ? '#000000' : '#ffffff';
+    return {
+      color: textColor,
+      textShadow: `1px 1px 2px ${shadowColor}80, -1px -1px 2px ${shadowColor}40`,
+      fontWeight: '500' // Make text slightly bolder for better visibility
+    };
+  };
+
   return (
     <EventBrandingProvider 
       hostBranding={hostBranding} 
@@ -465,7 +599,7 @@ export default function EventPage() {
 
           {/* Event card container */}
           <div 
-            className="rounded-lg p-6 border"
+            className="rounded-lg p-6 border shadow-xl hover:shadow-2xl transition-shadow duration-300"
             style={{ 
               backgroundColor: event.host?.brand_secondary_color || 'hsl(222, 84%, 8%)',
               borderColor: `${event.host?.brand_primary_color || '#00bcd4'}30`
@@ -475,28 +609,42 @@ export default function EventPage() {
             <div className="flex justify-between items-start mb-6">
               <h1 
                 className="text-2xl font-bold"
-                style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
+                style={{ 
+                  ...getTextShadowStyle(event.host?.brand_secondary_color || 'hsl(222, 84%, 8%)')
+                }}
               >
                 {event.title}
               </h1>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsShareModalOpen(true)}
-                  className="border-gray-600 text-gray-300 hover:bg-gray-800"
-                >
-                  <Share2 className="h-4 w-4 mr-1" /> Share
-                </Button>
-                {isOwner && (
+                {user && (
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => router.push(`/events/${event.slug}/edit`)}
+                    onClick={() => setIsShareModalOpen(true)}
                     className="border-gray-600 text-gray-300 hover:bg-gray-800"
                   >
-                    <Edit className="h-4 w-4 mr-1" /> Edit
+                    <Share2 className="h-4 w-4 mr-1" /> Share
                   </Button>
+                )}
+                {isOwner && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(`/events/${event.slug}/responses`)}
+                      className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                    >
+                      <Users className="h-4 w-4 mr-1" /> View Responses
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(`/events/${event.slug}/edit`)}
+                      className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                    >
+                      <Edit className="h-4 w-4 mr-1" /> Edit
+                    </Button>
+                  </>
                 )}
               </div>
             </div>
@@ -529,44 +677,107 @@ export default function EventPage() {
               </Badge>
             </div>
 
-            {/* RSVP Buttons for non-hosts */}
-            {!isOwner && (
-              <div className="flex gap-3 mb-6">
+            {/* RSVP Buttons for authenticated non-hosts */}
+            {user && !isOwner && (
+              <div className="grid grid-cols-3 gap-3 mb-6">
                 <Button
                   variant={userResponse === 'yup' ? 'default' : 'outline'}
-                  className="flex-1 text-xs hover:bg-muted/20"
+                  className="h-auto py-4 px-3 flex flex-col items-center gap-2 text-sm font-medium rounded-lg transition-all duration-200 hover:scale-105"
                   style={userResponse === 'yup' ? {
                     backgroundColor: event.host?.brand_primary_color || '#00bcd4',
-                    color: event.host?.brand_secondary_color || '#000000'
-                  } : {}}
+                    color: getContrastingTextColor(event.host?.brand_primary_color || '#00bcd4'),
+                    borderColor: event.host?.brand_primary_color || '#00bcd4',
+                    borderWidth: '2px'
+                  } : {
+                    backgroundColor: '#ffffff',
+                    borderColor: event.host?.brand_primary_color || '#00bcd4',
+                    color: event.host?.brand_primary_color || '#00bcd4',
+                    borderWidth: '2px'
+                  }}
                   onClick={() => handleResponse('yup')}
                 >
-                  <Check className="h-3 w-3 mr-1" />
+                  <Check className="w-4 h-4" />
                   {customYupText}
                 </Button>
                 <Button
                   variant={userResponse === 'maybe' ? 'default' : 'outline'}
-                  className="flex-1 text-xs hover:bg-muted/20"
+                  className="h-auto py-4 px-3 flex flex-col items-center gap-2 text-sm font-medium rounded-lg transition-all duration-200 hover:scale-105"
                   style={userResponse === 'maybe' ? {
                     backgroundColor: event.host?.brand_tertiary_color || '#ffffff',
-                    color: event.host?.brand_secondary_color || '#000000'
-                  } : {}}
+                    color: getContrastingTextColor(event.host?.brand_tertiary_color || '#ffffff'),
+                    borderColor: event.host?.brand_tertiary_color || '#ffffff',
+                    borderWidth: '2px'
+                  } : {
+                    backgroundColor: '#ffffff',
+                    borderColor: event.host?.brand_tertiary_color || '#ffffff',
+                    color: event.host?.brand_tertiary_color || '#ffffff',
+                    borderWidth: '2px'
+                  }}
                   onClick={() => handleResponse('maybe')}
                 >
-                  <Users className="h-3 w-3 mr-1" />
+                  <Users className="w-4 h-4" />
                   {customMaybeText}
                 </Button>
                 <Button
                   variant={userResponse === 'nope' ? 'default' : 'outline'}
-                  className="flex-1 text-xs hover:bg-muted/20"
+                  className="h-auto py-4 px-3 flex flex-col items-center gap-2 text-sm font-medium rounded-lg transition-all duration-200 hover:scale-105"
                   style={userResponse === 'nope' ? {
                     backgroundColor: '#6b7280',
-                    color: '#ffffff'
-                  } : {}}
+                    color: '#ffffff',
+                    borderColor: '#6b7280',
+                    borderWidth: '2px'
+                  } : {
+                    backgroundColor: '#ffffff',
+                    borderColor: '#6b7280',
+                    color: '#6b7280',
+                    borderWidth: '2px'
+                  }}
                   onClick={() => handleResponse('nope')}
                 >
-                  <X className="h-3 w-3 mr-1" />
+                  <X className="w-4 h-4" />
                   {customNopeText}
+                </Button>
+              </div>
+            )}
+
+            {/* Guest Response Form (for non-authenticated users or invitation links) */}
+            {showGuestForm && (
+              <div className="mb-6">
+                <GuestResponseForm
+                  eventSlug={event.slug}
+                  eventTitle={event.title}
+                  eventDate={formatDate(event.date)}
+                  eventLocation={event.location}
+                  maxGuestsPerRsvp={event.max_guests_per_rsvp}
+                  customRSVPText={{
+                    yup: customYupText,
+                    nope: customNopeText,
+                    maybe: customMaybeText
+                  }}
+                  brandColors={{
+                    primary: event.host?.brand_primary_color || '#3b82f6',
+                    secondary: event.host?.brand_secondary_color || '#f1f5f9',
+                    tertiary: event.host?.brand_tertiary_color || '#1e293b'
+                  }}
+                  invitationToken={invitationToken || undefined}
+                  onResponseSubmitted={handleGuestResponse}
+                  className="bg-gray-900 border-gray-700"
+                />
+              </div>
+            )}
+
+            {/* Show login prompt for non-authenticated users who can't use guest RSVP */}
+            {!user && !showGuestForm && (
+              <div className="text-center py-8 mb-6">
+                <p className="text-gray-400 mb-4">
+                  Please log in to RSVP to this event
+                </p>
+                <Button
+                  onClick={() => router.push('/auth/login')}
+                  style={{ backgroundColor: event.host?.brand_primary_color || '#3b82f6' }}
+                  className="text-white"
+                >
+                  Log In to RSVP
                 </Button>
               </div>
             )}
@@ -574,7 +785,7 @@ export default function EventPage() {
             {/* Event Image */}
             {event.image_url && (
               <div className="w-full mb-6">
-                <div className="relative rounded-lg overflow-hidden border"
+                <div className="relative rounded-lg overflow-hidden border shadow-lg hover:shadow-xl transition-shadow duration-200"
                      style={{ borderColor: `${event.host?.brand_primary_color || '#00bcd4'}30` }}>
                   <img
                     src={event.image_url}
@@ -596,7 +807,7 @@ export default function EventPage() {
               <div className="space-y-6">
                 {/* Host info */}
                 <div 
-                  className="flex items-center gap-3 p-3 rounded border"
+                  className="flex items-center gap-3 p-3 rounded border shadow-lg hover:shadow-xl transition-shadow duration-200"
                   style={{ 
                     backgroundColor: `${event.host?.brand_primary_color || '#00bcd4'}15`,
                     borderColor: `${event.host?.brand_primary_color || '#00bcd4'}30`
@@ -621,13 +832,18 @@ export default function EventPage() {
                   <div>
                     <p 
                       className="text-sm font-medium" 
-                      style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
+                      style={{ 
+                        ...getTextShadowStyle(event.host?.brand_primary_color || '#00bcd4')
+                      }}
                     >
                       {event.host?.display_name || 'Host Name'}
                     </p>
                     <p 
-                      className="text-xs opacity-70" 
-                      style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
+                      className="text-xs" 
+                      style={{ 
+                        ...getTextShadowStyle(event.host?.brand_primary_color || '#00bcd4'),
+                        opacity: 0.85
+                      }}
                     >
                       Created {new Date(event.created_at).toLocaleDateString()}
                     </p>
@@ -643,19 +859,27 @@ export default function EventPage() {
                   <div>
                     <h3 
                       className="text-sm font-semibold mb-1" 
-                      style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
+                      style={{ 
+                        ...getTextShadowStyle(event.host?.brand_secondary_color || 'hsl(222, 84%, 8%)')
+                      }}
                     >
                       When
                     </h3>
                     <p 
-                      className="text-xs opacity-80" 
-                      style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
+                      className="text-xs" 
+                      style={{ 
+                        ...getTextShadowStyle(event.host?.brand_secondary_color || 'hsl(222, 84%, 8%)'),
+                        opacity: 0.9
+                      }}
                     >
                       {formatDate(event.date)}
                     </p>
                     <p 
-                      className="text-xs opacity-80" 
-                      style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
+                      className="text-xs" 
+                      style={{ 
+                        ...getTextShadowStyle(event.host?.brand_secondary_color || 'hsl(222, 84%, 8%)'),
+                        opacity: 0.8
+                      }}
                     >
                       {timeRange}
                     </p>
@@ -671,20 +895,28 @@ export default function EventPage() {
                   <div>
                     <h3 
                       className="text-sm font-semibold mb-1" 
-                      style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
+                      style={{ 
+                        ...getTextShadowStyle(event.host?.brand_secondary_color || 'hsl(222, 84%, 8%)')
+                      }}
                     >
                       Where
                     </h3>
                     <p 
-                      className="text-xs opacity-80" 
-                      style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
+                      className="text-xs" 
+                      style={{ 
+                        ...getTextShadowStyle(event.host?.brand_secondary_color || 'hsl(222, 84%, 8%)'),
+                        opacity: 0.9
+                      }}
                     >
                       {event.location}
                     </p>
                     {event.address && (
                       <p 
-                        className="text-xs opacity-60" 
-                        style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
+                        className="text-xs" 
+                        style={{ 
+                          ...getTextShadowStyle(event.host?.brand_secondary_color || 'hsl(222, 84%, 8%)'),
+                          opacity: 0.8
+                        }}
                       >
                         {event.address}
                       </p>
@@ -695,7 +927,7 @@ export default function EventPage() {
 
               {/* Right column - RSVP Settings */}
               <div 
-                className="rounded-lg p-4 border"
+                className="rounded-lg p-4 border shadow-lg hover:shadow-xl transition-shadow duration-200"
                 style={{ 
                   backgroundColor: `${event.host?.brand_primary_color || '#00bcd4'}10`,
                   borderColor: `${event.host?.brand_primary_color || '#00bcd4'}25`
@@ -703,15 +935,20 @@ export default function EventPage() {
               >
                 <h3 
                   className="text-sm font-semibold mb-3" 
-                  style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
+                  style={{ 
+                    ...getTextShadowStyle(event.host?.brand_primary_color || '#00bcd4')
+                  }}
                 >
                   RSVP Settings
                 </h3>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span 
-                      className="text-xs opacity-80" 
-                      style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
+                      className="text-xs" 
+                      style={{ 
+                        ...getTextShadowStyle(event.host?.brand_primary_color || '#00bcd4'),
+                        opacity: 0.9
+                      }}
                     >
                       Guest RSVP
                     </span>
@@ -729,8 +966,11 @@ export default function EventPage() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span 
-                      className="text-xs opacity-80" 
-                      style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
+                      className="text-xs" 
+                      style={{ 
+                        ...getTextShadowStyle(event.host?.brand_primary_color || '#00bcd4'),
+                        opacity: 0.9
+                      }}
                     >
                       Plus One
                     </span>
@@ -748,8 +988,11 @@ export default function EventPage() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span 
-                      className="text-xs opacity-80" 
-                      style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
+                      className="text-xs" 
+                      style={{ 
+                        ...getTextShadowStyle(event.host?.brand_primary_color || '#00bcd4'),
+                        opacity: 0.9
+                      }}
                     >
                       Max Guests
                     </span>
@@ -772,8 +1015,11 @@ export default function EventPage() {
                             className="h-32 w-auto max-w-full mx-auto object-contain rounded"
                           />
                           <p 
-                            className="text-xs opacity-40 mt-1" 
-                            style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
+                            className="text-xs mt-1" 
+                            style={{ 
+                              ...getTextShadowStyle(event.host?.brand_primary_color || '#00bcd4'),
+                              opacity: 0.7
+                            }}
                           >
                             Brand Logo
                           </p>
@@ -786,8 +1032,11 @@ export default function EventPage() {
                               style={{ color: event.host?.brand_primary_color || '#00bcd4' }} 
                             />
                             <p 
-                              className="text-xs opacity-60" 
-                              style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
+                              className="text-xs" 
+                              style={{ 
+                                ...getTextShadowStyle(event.host?.brand_primary_color || '#00bcd4'),
+                                opacity: 0.7
+                              }}
                             >
                               No Brand Logo
                             </p>
@@ -800,40 +1049,45 @@ export default function EventPage() {
               </div>
             </div>
 
-            {/* Responses section */}
-            <div className="mt-6">
-              <div className="flex justify-between items-center mb-3">
-                <h3 
-                  className="text-sm font-semibold" 
-                  style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
-                >
-                  Responses
-                </h3>
-                <div className="flex gap-3 text-xs">
-                  <span 
-                    style={{ color: event.host?.brand_primary_color || '#00bcd4' }} 
-                    className="font-medium"
+            {/* Responses section - Only show to event owner */}
+            {isOwner && (
+              <div className="mt-6">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 
+                    className="text-sm font-semibold" 
+                    style={{ 
+                      ...getTextShadowStyle(event.host?.brand_secondary_color || 'hsl(222, 84%, 8%)')
+                    }}
                   >
-                    {responseCounts.yupCount} {customYupText.toLowerCase()}
-                  </span>
-                  <span 
-                    className="opacity-70" 
-                    style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
-                  >
-                    {responseCounts.nopeCount} {customNopeText.toLowerCase()}
-                  </span>
-                  <span style={{ color: `${event.host?.brand_primary_color || '#00bcd4'}BB` }}>
-                    {responseCounts.maybeCount} {customMaybeText.toLowerCase()}
-                  </span>
+                    Responses
+                  </h3>
+                  <div className="flex gap-3 text-xs">
+                    <span 
+                      style={{ color: event.host?.brand_primary_color || '#00bcd4' }} 
+                      className="font-medium"
+                    >
+                      {responseCounts.yupCount} {customYupText.toLowerCase()}
+                    </span>
+                    <span 
+                      className="opacity-70" 
+                      style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
+                    >
+                      {responseCounts.nopeCount} {customNopeText.toLowerCase()}
+                    </span>
+                    <span style={{ color: `${event.host?.brand_primary_color || '#00bcd4'}BB` }}>
+                      {responseCounts.maybeCount} {customMaybeText.toLowerCase()}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           <ShareEventModal
             isOpen={isShareModalOpen}
             onClose={() => setIsShareModalOpen(false)}
             event={event as any}
+            userResponse={userResponse}
           />
         </div>
       </div>

@@ -9,7 +9,7 @@ export function useRequireAuth(redirectPath: string = '/auth?mode=login') {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.replace(redirectPath);
+      window.location.href = redirectPath;
     }
-  }, [user, isLoading, redirectPath, router]);
+  }, [user, isLoading, redirectPath]);
 } 

@@ -9,10 +9,25 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/utils/use-toast";
 import { useAuth } from "@/utils/auth-context";
+import { useBranding } from "@/contexts/BrandingContext";
 import { supabase } from "@/lib/supabase";
 import ShareEventModal from "./share-event-modal";
-import { useAccessibleColors } from "@/hooks/use-accessible-colors";
 import { type Event } from "@/types";
+
+// Helper function to ensure text contrast
+const getContrastingTextColor = (backgroundColor: string) => {
+  // Convert hex to RGB
+  const hex = backgroundColor.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  
+  // Calculate luminance
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  
+  // Return white for dark backgrounds, black for light backgrounds
+  return luminance < 0.5 ? '#ffffff' : '#000000';
+};
 
 interface EventCardProps {
   event: Event & {
@@ -38,10 +53,10 @@ export default function EventCard({
   const timeRange = formattedEndTime ? `${formattedStartTime} - ${formattedEndTime}` : formattedStartTime;
   const { toast } = useToast();
   const { user } = useAuth();
+  const branding = useBranding();
   const userId = user?.id;
   const router = useRouter();
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const { accessibleTextColor, primaryColor } = useAccessibleColors();
 
   // Use the response counts from the API if available
   const [responseCounts, setResponseCounts] = useState(
@@ -90,10 +105,10 @@ export default function EventCard({
   const actualUserResponse = userResponse;
 
   const getBorderColor = () => {
-    if (isOwner) return "border-primary/30";
-    if (actualUserResponse === "yup") return "border-green-700";
-    if (actualUserResponse === "nope") return "border-red-800";
-    return "border-gray-800";
+    if (isOwner) return { borderColor: branding.theme.primary + '4D' }; // 30% opacity
+    if (actualUserResponse === "yup") return { borderColor: "#065f46" };
+    if (actualUserResponse === "nope") return { borderColor: "#991b1b" };
+    return { borderColor: "#374151" };
   };
 
   const handleCardClick = () => {
@@ -103,16 +118,33 @@ export default function EventCard({
   return (
     <>
       <Card
-        className={`w-full bg-gray-900/95 backdrop-blur-sm ${getBorderColor()} hover:border-gray-700 transition-colors relative z-10 shadow-lg cursor-pointer`}
+        className="w-full backdrop-blur-sm hover:border-gray-700 transition-colors relative z-10 shadow-lg cursor-pointer"
+        style={{
+          ...getBorderColor(),
+          backgroundColor: branding.theme.secondary + 'F2', // 95% opacity
+        }}
         onClick={handleCardClick}
       >
         <CardContent className="p-4">
           <div className="flex flex-col">
             {/* Title and badges row */}
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <h3 className="font-bold tracking-tight text-base">{event.title}</h3>
+              <h3 
+                className="font-bold tracking-tight text-base"
+                style={{ color: getContrastingTextColor(branding.theme.secondary) }}
+              >
+                {event.title}
+              </h3>
               {isOwner && (
-                <Badge variant="outline" className="text-xs bg-primary/10 border-primary/20 text-primary">
+                <Badge 
+                  variant="outline" 
+                  className="text-xs"
+                  style={{
+                    backgroundColor: branding.theme.primary + '1A', // 10% opacity
+                    borderColor: branding.theme.primary + '33', // 20% opacity
+                    color: branding.theme.primary
+                  }}
+                >
                   Your Event
                 </Badge>
               )}
@@ -125,7 +157,12 @@ export default function EventCard({
               })() && (
                 <Badge
                   variant="outline"
-                  className="text-xs bg-gray-800 border-gray-700 text-gray-400"
+                  className="text-xs"
+                  style={{
+                    backgroundColor: branding.theme.secondary + 'CC', // 80% opacity
+                    borderColor: getContrastingTextColor(branding.theme.secondary) + '66', // 40% opacity
+                    color: getContrastingTextColor(branding.theme.secondary) + 'CC' // 80% opacity
+                  }}
                 >
                   Archived
                 </Badge>
@@ -165,12 +202,25 @@ export default function EventCard({
 
             {/* Date and time */}
             <div className="flex flex-col gap-1 mb-2">
-              <p className="text-sm text-gray-400">{formatDate(event.date)}</p>
-              <p className="text-sm text-gray-300 font-medium">{timeRange}</p>
+              <p 
+                className="text-sm font-medium"
+                style={{ color: getContrastingTextColor(branding.theme.secondary) + 'CC' }} // 80% opacity
+              >
+                {formatDate(event.date)}
+              </p>
+              <p 
+                className="text-sm font-medium"
+                style={{ color: getContrastingTextColor(branding.theme.secondary) }}
+              >
+                {timeRange}
+              </p>
             </div>
 
             {/* Location */}
-            <div className="text-sm text-gray-400 mb-4">
+            <div 
+              className="text-sm mb-4"
+              style={{ color: getContrastingTextColor(branding.theme.secondary) + 'CC' }} // 80% opacity
+            >
               <span>📍 {event.location}</span>
             </div>
 
@@ -183,7 +233,8 @@ export default function EventCard({
                     e.stopPropagation();
                     setIsShareModalOpen(true);
                   }}
-                  className="text-sm text-gray-400 hover:text-white flex items-center gap-1"
+                  className="text-sm flex items-center gap-1 hover:opacity-80"
+                  style={{ color: getContrastingTextColor(branding.theme.secondary) + 'CC' }} // 80% opacity
                 >
                   <Share2 className="h-4 w-4" /> Share
                 </button>
@@ -193,7 +244,8 @@ export default function EventCard({
                       e.stopPropagation();
                       router.push(`/events/${event.slug}/edit`);
                     }}
-                    className="text-sm text-gray-400 hover:text-white flex items-center gap-1"
+                    className="text-sm flex items-center gap-1 hover:opacity-80"
+                    style={{ color: getContrastingTextColor(branding.theme.secondary) + 'CC' }} // 80% opacity
                   >
                     <Edit className="h-4 w-4" /> Edit
                   </button>
@@ -203,11 +255,22 @@ export default function EventCard({
               {/* Response counts */}
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-green-400 font-medium">
+                  <span 
+                    className="text-sm font-medium"
+                    style={{ color: branding.theme.primary }}
+                  >
                     {responseCounts.yupCount || 0} yup
                   </span>
-                  <span className="text-sm text-gray-500">•</span>
-                  <span className="text-sm text-red-400 font-medium">
+                  <span 
+                    className="text-sm"
+                    style={{ color: getContrastingTextColor(branding.theme.secondary) + '80' }} // 50% opacity
+                  >
+                    •
+                  </span>
+                  <span 
+                    className="text-sm font-medium"
+                    style={{ color: getContrastingTextColor(branding.theme.secondary) + 'CC' }} // 80% opacity
+                  >
                     {responseCounts.nopeCount || 0} nope
                   </span>
                 </div>
@@ -217,7 +280,8 @@ export default function EventCard({
               <Link
                 href={`/events/${event.slug}/responses`}
                 onClick={(e) => e.stopPropagation()}
-                className="text-primary hover:text-primary/80 text-sm font-medium"
+                className="text-sm font-medium hover:opacity-80"
+                style={{ color: branding.theme.primary }}
               >
                 View RSVPs
               </Link>
@@ -230,6 +294,7 @@ export default function EventCard({
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         event={event}
+        userResponse={userResponse}
       />
     </>
   );

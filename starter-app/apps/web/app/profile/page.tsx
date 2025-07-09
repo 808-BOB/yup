@@ -8,7 +8,13 @@ import { Input } from "@/ui/input";
 import Header from "@/dash/header";
 import { useAuth } from "@/utils/auth-context";
 import { supabase } from "@/lib/supabase";
-import { Camera, Edit2, Check, X, CreditCard, Crown, Zap } from "lucide-react";
+import Camera from "lucide-react/dist/esm/icons/camera";
+import Edit2 from "lucide-react/dist/esm/icons/edit-2";
+import Check from "lucide-react/dist/esm/icons/check";
+import X from "lucide-react/dist/esm/icons/x";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
+import Crown from "lucide-react/dist/esm/icons/crown";
+import Zap from "lucide-react/dist/esm/icons/zap";
 
 interface AccountStats {
   createdEvents: number;
@@ -194,29 +200,37 @@ export default function ProfilePage() {
     setIsUploadingImage(true);
 
     try {
-      // Convert file to base64 for now (avoiding storage bucket complexity)
-      const base64Image = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+      // Upload to Supabase Storage (profile-pics bucket)
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}/avatar-${Date.now()}.${fileExt}`;
 
-      // Update user profile with base64 image
+      const { error: uploadError } = await supabase.storage
+        .from('profile-pics')
+        .upload(filePath, file, { upsert: true, contentType: file.type });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data } = supabase.storage.from('profile-pics').getPublicUrl(filePath);
+      const publicUrl = data?.publicUrl;
+
+      if (!publicUrl) throw new Error('Failed to obtain public URL for uploaded image');
+
+      // Update users table with the URL (much smaller than base64)
       const { error: updateError } = await supabase
-        .from("users")
-        .update({ profile_image_url: base64Image })
-        .eq("id", user.id);
+        .from('users')
+        .update({ profile_image_url: publicUrl })
+        .eq('id', user.id);
 
       if (updateError) throw updateError;
 
-      // Update auth metadata
+      // Update auth metadata with the URL (optional, lightweight)
       await supabase.auth.updateUser({
-        data: { profile_image_url: base64Image },
+        data: { profile_image_url: publicUrl },
       });
 
-      setProfileImageUrl(base64Image);
-      alert("Profile picture updated successfully!");
+      setProfileImageUrl(publicUrl);
+      alert('Profile picture updated successfully!');
     } catch (error: any) {
       console.error("Error uploading profile picture:", error);
       alert("Failed to update profile picture: " + error.message);
@@ -255,7 +269,8 @@ export default function ProfilePage() {
       .slice(0, 2);
   };
 
-  if (isLoading || !user) {
+  // Note: Auth is guaranteed by middleware, so we only check loading state
+  if (!user) {
     return (
       <div className="w-full max-w-md mx-auto px-8 pb-8 min-h-screen flex flex-col bg-gray-950">
         <div className="sticky top-0 z-50 bg-gray-950 pt-8">
