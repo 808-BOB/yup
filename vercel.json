@@ -1,0 +1,11 @@
+{
+  "buildCommand": "cd starter-app && pnpm install && pnpm build",
+  "outputDirectory": "starter-app/apps/web/.next",
+  "installCommand": "npm install -g pnpm@9.15.0",
+  "framework": null,
+  "functions": {
+    "starter-app/apps/web/app/api/**/*.ts": {
+      "runtime": "nodejs18.x"
+    }
+  }
+} 

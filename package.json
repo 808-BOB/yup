@@ -4,6 +4,7 @@
   "type": "module",
   "license": "MIT",
   "private": true,
+  "packageManager": "pnpm@9.15.0",
   "scripts": {
     "dev": "cd starter-app && pnpm dev",
     "build": "cd starter-app && pnpm build",
