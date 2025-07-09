@@ -1,4 +1,3 @@
 packages:
-  - 'starter-app'
   - 'starter-app/apps/*'
   - 'starter-app/packages/*' 

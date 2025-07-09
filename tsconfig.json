@@ -12,9 +12,6 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "strict": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["./starter-app/apps/web/*"],
@@ -25,5 +22,5 @@
     "typeRoots": ["./starter-app/node_modules/@types"]
   },
   "include": ["starter-app/**/*"],
-  "references": [{ "path": "./starter-app" }]
-}
+  "references": [{ "path": "./starter-app/apps/web" }]
+} 

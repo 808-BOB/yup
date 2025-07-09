@@ -1,39 +1,25 @@
 {
-  "name": "yup-rsvp",
-  "version": "1.0.0",
-  "type": "module",
-  "license": "MIT",
+  "name": "yup-monorepo",
   "private": true,
-  "packageManager": "pnpm@9.15.0",
+  "version": "1.0.0",
+  "packageManager": "pnpm@10.0.0",
   "scripts": {
-    "dev": "cd starter-app && pnpm dev",
-    "build": "cd starter-app && pnpm build",
-    "start": "cd starter-app && pnpm start",
-    "install-deps": "cd starter-app && pnpm install",
-    "lint": "cd starter-app && pnpm lint",
-    "type-check": "cd starter-app && pnpm type-check",
-    "clean": "cd starter-app && pnpm clean"
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "type-check": "turbo run type-check",
+    "format": "prettier --write ."
   },
-  "engines": {
-    "node": ">=18.0.0",
-    "pnpm": ">=9.0.0"
-  },
-  "description": "Yup.RSVP - Next.js event management and RSVP application with Supabase backend",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/your-username/yup-rsvp"
-  },
-  "keywords": [
-    "nextjs",
-    "rsvp",
-    "events",
-    "supabase",
-    "typescript",
-    "tailwindcss",
-    "stripe",
-    "monorepo"
-  ],
   "devDependencies": {
-    "typescript": "^5.7.2"
-  }
-}
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3",
+    "prettier": "^3.6.2",
+    "eslint": "^9.30.1",
+    "vitest": "^1.5.0"
+  },
+  "workspaces": [
+    "starter-app/apps/*",
+    "starter-app/packages/*"
+  ]
+} 
