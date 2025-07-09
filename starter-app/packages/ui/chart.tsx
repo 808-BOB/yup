@@ -74,26 +74,27 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null;
   }
 
+  // Create CSS custom properties object instead of using dangerouslySetInnerHTML
+  const cssVars = React.useMemo(() => {
+    const vars: Record<string, string> = {};
+    
+    colorConfig.forEach(([key, itemConfig]) => {
+      // For now, we'll use the light theme color or the direct color
+      const color = itemConfig.theme?.light || itemConfig.color;
+      if (color) {
+        vars[`--color-${key}`] = color;
+      }
+    });
+    
+    return vars;
+  }, [colorConfig]);
+
   return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color =
-      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
-      itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
-  })
-  .join("\n")}
-}
-`,
-          )
-          .join("\n"),
-      }}
+    <div
+      data-chart={id}
+      style={cssVars}
+      className="sr-only"
+      aria-hidden="true"
     />
   );
 };
