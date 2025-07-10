@@ -176,7 +176,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
-      const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+      // Use production URL from environment variable or fallback to current origin
+      const origin = typeof window !== "undefined" 
+        ? window.location.origin 
+        : process.env.NEXT_PUBLIC_SITE_URL || "https://REPLACE_WITH_YOUR_ACTUAL_VERCEL_URL.vercel.app";
       const redirectTo = `${origin}/auth/callback`;
       
       console.log('[AuthContext] Google login redirect URL:', redirectTo);

@@ -252,7 +252,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create RSVP link - using the invitation token for tracking
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://REPLACE_WITH_YOUR_ACTUAL_VERCEL_URL.vercel.app';
     
     const results = [];
     const errors = [];
