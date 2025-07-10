@@ -1,10 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  return NextResponse.json({
-    success: false,
-    message: "Twilio testing is temporarily disabled"
-  });
+  try {
+    // Basic environment check
+    const envCheck = {
+      hasAccountSid: !!process.env.TWILIO_ACCOUNT_SID,
+      hasAuthToken: !!process.env.TWILIO_AUTH_TOKEN,
+      hasPhoneNumber: !!process.env.TWILIO_PHONE_NUMBER,
+      hasVerifyServiceSid: !!process.env.TWILIO_VERIFY_SERVICE_SID,
+    };
+
+    return NextResponse.json({
+      success: true,
+      message: "Twilio configuration check",
+      environment: envCheck,
+      allConfigured: Object.values(envCheck).every(Boolean)
+    });
+  } catch (error) {
+    return NextResponse.json({
+      success: false,
+      error: "Failed to check Twilio configuration"
+    }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {
