@@ -7,6 +7,7 @@ import { getSupabaseClient } from './supabase';
 interface ExtendedProfile {
   display_name?: string | null;
   profile_image_url?: string | null;
+  phone_number?: string | null;
   is_premium?: boolean | null;
   is_pro?: boolean | null;
   is_admin?: boolean | null;
@@ -28,29 +29,66 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  console.log('🚀 [AuthProvider] Component mounting...');
+  
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const supabase = getSupabaseClient();
+  console.log('🔧 [AuthProvider] Creating Supabase client...');
+  let supabase;
+  try {
+    supabase = getSupabaseClient();
+    console.log('✅ [AuthProvider] Supabase client created successfully');
+  } catch (err) {
+    console.error('❌ [AuthProvider] Failed to create Supabase client:', err);
+    setError('Failed to initialize Supabase client');
+    setIsLoading(false);
+    return (
+      <AuthContext.Provider value={{
+        user: null,
+        session: null,
+        isLoading: false,
+        error: 'Failed to initialize Supabase client',
+        login: async () => { throw new Error('Supabase not available'); },
+        signup: async () => { throw new Error('Supabase not available'); },
+        loginWithGoogle: async () => { throw new Error('Supabase not available'); },
+        logout: async () => { throw new Error('Supabase not available'); },
+        signOut: async () => { throw new Error('Supabase not available'); },
+        refreshUser: async () => { throw new Error('Supabase not available'); },
+      }}>
+        {children}
+      </AuthContext.Provider>
+    );
+  }
 
   // Helper to merge additional profile columns into the auth user
   const attachProfileData = async (authUser: User | null): Promise<(User & ExtendedProfile) | null> => {
     if (!authUser) return null;
 
     try {
-      const { data: profile, error } = await supabase
+      console.log('[AuthContext] Fetching profile for user:', authUser.id);
+      
+      // Add timeout to profile query
+      const profilePromise = supabase
         .from('users')
-        .select('display_name, profile_image_url, is_premium, is_pro, is_admin')
+        .select('display_name, profile_image_url, phone_number, is_premium, is_pro, is_admin')
         .eq('id', authUser.id)
         .single();
+        
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Profile query timeout')), 5000);
+      });
+
+      const { data: profile, error } = await Promise.race([profilePromise, timeoutPromise]) as any;
 
       if (error) {
         console.warn('[AuthContext] No profile row found / error fetching profile:', error.message);
         return authUser as User & ExtendedProfile;
       }
 
+      console.log('[AuthContext] Profile data fetched successfully:', profile);
       return { ...authUser, ...profile } as User & ExtendedProfile;
     } catch (err) {
       console.error('[AuthContext] Failed to load profile row:', err);
@@ -64,27 +102,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         console.log('[AuthContext] Getting initial session...');
         
+        // Add a timeout to prevent infinite loading
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Auth initialization timeout')), 10000);
+        });
+        
         // For OAuth callbacks, this will handle the code exchange automatically
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const sessionPromise = supabase.auth.getSession();
+        
+        const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]) as any;
         
         if (error) {
           console.error('[AuthContext] Error getting initial session:', error);
           setError(error.message);
+          setSession(null);
+          setUser(null);
         } else {
           console.log('[AuthContext] Initial session loaded:', !!session, session?.user?.email);
           setSession(session);
-          const mergedUser = await attachProfileData(session?.user ?? null);
-          setUser(mergedUser);
+          
+          if (session?.user) {
+            console.log('[AuthContext] Fetching profile data for user:', session.user.id);
+            const mergedUser = await attachProfileData(session.user);
+            console.log('[AuthContext] Profile data attached:', !!mergedUser);
+            setUser(mergedUser);
+          } else {
+            console.log('[AuthContext] No user in session');
+            setUser(null);
+          }
           setError(null);
         }
       } catch (error: any) {
         console.error('[AuthContext] Failed to get initial session:', error);
         setError('Failed to initialize authentication');
+        setSession(null);
+        setUser(null);
       } finally {
+        console.log('[AuthContext] Setting isLoading to false');
         setIsLoading(false);
       }
     };
 
+    console.log('[AuthContext] Starting auth initialization...');
     getInitialSession();
 
     // Listen for auth changes (including OAuth completion)

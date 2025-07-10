@@ -54,6 +54,11 @@ export function BrandingProvider({ children, userId }: { children: React.ReactNo
     if (userId) {
       loadBrandingData(userId);
     } else {
+      // No user, use defaults
+      setTheme(defaultTheme);
+      setLogoUrl(null);
+      setCustomRSVPText(defaultRSVPText);
+      setIsPremium(false);
       setIsLoading(false);
     }
   }, [userId]);

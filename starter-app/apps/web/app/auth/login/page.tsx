@@ -14,10 +14,19 @@ import { Button } from "@/ui/button";
 import { Toaster } from "@/ui/toaster";
 
 function AuthPageContent() {
+  console.log('📱 [LoginPage] Component rendering...');
+  
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, signup, loginWithGoogle, user, isLoading, error: authError } = useAuth();
   const { toast } = useToast();
+  
+  console.log('📱 [LoginPage] Auth state:', { 
+    user: !!user, 
+    isLoading, 
+    error: authError,
+    userEmail: user?.email 
+  });
 
   const [activeTab, setActiveTab] = React.useState<"login" | "signup">("login");
   const [isSubmitting, setSubmitting] = React.useState(false);
@@ -79,6 +88,7 @@ function AuthPageContent() {
 
   // Show loading state while auth is loading
   if (isLoading) {
+    console.log('📱 [LoginPage] Showing loading state - isLoading:', isLoading);
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <div className="text-center text-white">
@@ -91,6 +101,7 @@ function AuthPageContent() {
 
   // Show redirecting state when user is authenticated and redirecting
   if (user && isRedirecting) {
+    console.log('📱 [LoginPage] Showing redirecting state - user:', !!user, 'isRedirecting:', isRedirecting);
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <div className="text-center text-white">
@@ -103,6 +114,7 @@ function AuthPageContent() {
 
   // If user is already authenticated but not redirecting yet, don't show the form
   if (user) {
+    console.log('📱 [LoginPage] Showing preparing redirect state - user:', !!user);
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <div className="text-center text-white">
@@ -112,6 +124,8 @@ function AuthPageContent() {
       </div>
     );
   }
+
+  console.log('📱 [LoginPage] Showing login form - user:', !!user, 'isLoading:', isLoading);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

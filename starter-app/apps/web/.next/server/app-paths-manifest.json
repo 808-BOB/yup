@@ -1,8 +1,5 @@
 {
-  "/api/test-twilio/route": "app/api/test-twilio/route.js",
-  "/api/test/sms-diagnostic/route": "app/api/test/sms-diagnostic/route.js",
-  "/api/sms/send-invite/route": "app/api/sms/send-invite/route.js",
-  "/api/auth/verify-phone/route": "app/api/auth/verify-phone/route.js",
-  "/api/auth/send-verification/route": "app/api/auth/send-verification/route.js",
-  "/test-sms/page": "app/test-sms/page.js"
+  "/test-sms/page": "app/test-sms/page.js",
+  "/my-events/page": "app/my-events/page.js",
+  "/auth/login/page": "app/auth/login/page.js"
 }

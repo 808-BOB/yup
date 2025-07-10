@@ -55,6 +55,21 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/auth/send-verification/route.js"
+    ],
+    "/phone-verification/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/phone-verification/page.js"
+    ],
+    "/my-events/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/my-events/page.js"
+    ],
+    "/api/events/my/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/events/my/route.js"
     ]
   }
 }
