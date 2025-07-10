@@ -167,16 +167,31 @@ export function BrandingProvider({ children, userId }: { children: React.ReactNo
         // Check premium status from multiple fields
         const premiumStatus = userProfile.is_premium || userProfile.is_pro || false;
 
-        setTheme(loadedTheme);
-        setLogoUrl(userProfile.logo_url || null);
-        setCustomRSVPText(loadedRSVPText);
+        // Only apply custom branding if user is premium, otherwise use defaults
+        if (premiumStatus) {
+          console.log('[Branding] User is premium - applying custom branding');
+          setTheme(loadedTheme);
+          setLogoUrl(userProfile.logo_url || null);
+          setCustomRSVPText(loadedRSVPText);
+        } else {
+          console.log('[Branding] User is not premium - using default branding (custom branding saved in DB but not applied)');
+          setTheme(defaultTheme);
+          setLogoUrl(null);
+          setCustomRSVPText(defaultRSVPText);
+        }
+        
         setIsPremium(premiumStatus);
 
         console.log('[Branding] Branding data loaded:', {
-          theme: loadedTheme,
-          logoUrl: userProfile.logo_url,
-          customRSVPText: loadedRSVPText,
+          theme: premiumStatus ? loadedTheme : defaultTheme,
+          logoUrl: premiumStatus ? (userProfile.logo_url || null) : null,
+          customRSVPText: premiumStatus ? loadedRSVPText : defaultRSVPText,
           isPremium: premiumStatus,
+          savedInDb: { // This shows what's saved in DB regardless of premium status
+            theme: loadedTheme,
+            logoUrl: userProfile.logo_url,
+            customRSVPText: loadedRSVPText,
+          }
         });
       }
     } catch (error) {
@@ -194,6 +209,10 @@ export function BrandingProvider({ children, userId }: { children: React.ReactNo
   const updateTheme = async (newTheme: Partial<BrandingTheme>) => {
     if (!userId) {
       throw new Error('User not authenticated');
+    }
+
+    if (!isPremium) {
+      throw new Error('Premium subscription required to customize branding');
     }
 
     try {
@@ -228,6 +247,10 @@ export function BrandingProvider({ children, userId }: { children: React.ReactNo
       throw new Error('User not authenticated');
     }
 
+    if (!isPremium) {
+      throw new Error('Premium subscription required to customize branding');
+    }
+
     try {
       console.log('[Branding] Updating logo:', newLogoUrl);
 
@@ -253,6 +276,10 @@ export function BrandingProvider({ children, userId }: { children: React.ReactNo
   const updateCustomRSVPText = async (newText: Partial<CustomRSVPText>) => {
     if (!userId) {
       throw new Error('User not authenticated');
+    }
+
+    if (!isPremium) {
+      throw new Error('Premium subscription required to customize branding');
     }
 
     try {
@@ -285,6 +312,10 @@ export function BrandingProvider({ children, userId }: { children: React.ReactNo
   const resetToDefault = async () => {
     if (!userId) {
       throw new Error('User not authenticated');
+    }
+
+    if (!isPremium) {
+      throw new Error('Premium subscription required to customize branding');
     }
 
     try {

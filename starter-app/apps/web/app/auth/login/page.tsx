@@ -126,6 +126,7 @@ function AuthPageContent() {
   }
 
   console.log('📱 [LoginPage] Showing login form - user:', !!user, 'isLoading:', isLoading);
+  console.log('📱 [LoginPage] About to render login form JSX');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,6 +160,8 @@ function AuthPageContent() {
     }
   };
 
+  console.log('📱 [LoginPage] RENDERING LOGIN FORM JSX NOW');
+  
   return (
     <div className="min-h-screen flex flex-col bg-gray-950 text-white">
       <div className="max-w-md mx-auto w-full px-4 pt-20 pb-16">
@@ -249,12 +252,14 @@ function AuthPageContent() {
 }
 
 export default function AuthPage() {
+  console.log('📱 [AuthPage] Main component rendering');
+  
   return (
     <React.Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <div className="text-center text-white">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading...</p>
+          <p>Loading... (Suspense fallback)</p>
         </div>
       </div>
     }>
