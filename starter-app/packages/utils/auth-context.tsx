@@ -19,8 +19,9 @@ interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
-  signup: (username: string, displayName: string, password: string) => Promise<void>;
+  signup: (email: string, displayName: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>; // alias for signOut (legacy)
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -30,12 +31,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   console.log('🚀 [AuthProvider] Component mounting...');
-  
+
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   console.log('🔧 [AuthProvider] Creating Supabase client...');
   let supabase;
   try {
@@ -54,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login: async () => { throw new Error('Supabase not available'); },
         signup: async () => { throw new Error('Supabase not available'); },
         loginWithGoogle: async () => { throw new Error('Supabase not available'); },
+        resetPassword: async () => { throw new Error('Supabase not available'); },
         logout: async () => { throw new Error('Supabase not available'); },
         signOut: async () => { throw new Error('Supabase not available'); },
         refreshUser: async () => { throw new Error('Supabase not available'); },
@@ -63,28 +65,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
   }
 
-  // Helper to merge additional profile columns into the auth user
+    // Helper to merge additional profile columns into the auth user
   const attachProfileData = async (authUser: User | null): Promise<(User & ExtendedProfile) | null> => {
     if (!authUser) return null;
 
     try {
       console.log('[AuthContext] Fetching profile for user:', authUser.id);
-      
+
       // Add timeout to profile query
       const profilePromise = supabase
         .from('users')
         .select('display_name, profile_image_url, phone_number, is_premium, is_pro, is_admin')
         .eq('id', authUser.id)
         .single();
-        
+
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Profile query timeout')), 5000);
       });
 
       const { data: profile, error } = await Promise.race([profilePromise, timeoutPromise]) as any;
 
-      if (error) {
-        console.warn('[AuthContext] No profile row found / error fetching profile:', error.message);
+      if (error && error.code === 'PGRST116') {
+        // Profile row missing — create it
+        console.log('[AuthContext] Profile not found, creating new profile for user:', authUser.id);
+
+        const defaultUsername = authUser.email?.split('@')[0] ?? authUser.id.slice(0, 8);
+        const displayName = authUser.user_metadata?.display_name ?? authUser.user_metadata?.full_name ?? defaultUsername;
+
+        const { data: newProfile, error: insertError } = await supabase
+          .from('users')
+          .insert({
+            id: authUser.id,
+            username: defaultUsername,
+            display_name: displayName,
+            email: authUser.email,
+          })
+          .select('display_name, profile_image_url, phone_number, is_premium, is_pro, is_admin')
+          .single();
+
+        if (insertError) {
+          console.error('[AuthContext] Failed to create profile:', insertError);
+          return authUser as User & ExtendedProfile;
+        }
+
+        console.log('[AuthContext] Profile created successfully:', newProfile);
+        return { ...authUser, ...newProfile } as User & ExtendedProfile;
+      } else if (error) {
+        console.warn('[AuthContext] Error fetching profile:', error.message);
         return authUser as User & ExtendedProfile;
       }
 
@@ -101,17 +128,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const getInitialSession = async () => {
       try {
         console.log('[AuthContext] Getting initial session...');
-        
+
         // Add a timeout to prevent infinite loading
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => reject(new Error('Auth initialization timeout')), 10000);
         });
-        
+
         // For OAuth callbacks, this will handle the code exchange automatically
         const sessionPromise = supabase.auth.getSession();
-        
+
         const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]) as any;
-        
+
         if (error) {
           console.error('[AuthContext] Error getting initial session:', error);
           setError(error.message);
@@ -120,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           console.log('[AuthContext] Initial session loaded:', !!session, session?.user?.email);
           setSession(session);
-          
+
           if (session?.user) {
             console.log('[AuthContext] Fetching profile data for user:', session.user.id);
             const mergedUser = await attachProfileData(session.user);
@@ -146,17 +173,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('[AuthContext] Starting auth initialization...');
     getInitialSession();
 
-    // Listen for auth changes (including OAuth completion)
+        // Listen for auth changes (including OAuth completion)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: string, session: Session | null) => {
         console.log('[AuthContext] Auth state changed:', event, !!session, session?.user?.email);
-        
+
         setSession(session);
         const mergedUser = await attachProfileData(session?.user ?? null);
         setUser(mergedUser);
         setIsLoading(false);
         setError(null);
-        
+
         // Log successful OAuth completion
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('[AuthContext] User signed in successfully:', session.user.email);
@@ -173,19 +200,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('[AuthContext] Login attempt:', email);
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      
+
       if (signInError) {
         console.error('[AuthContext] Login error:', signInError);
         setError(signInError.message);
         throw signInError;
       }
-      
+
       console.log('[AuthContext] Login successful');
     } catch (error: any) {
       console.error('[AuthContext] Login exception:', error);
@@ -195,52 +222,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signup = async (username: string, displayName: string, password: string) => {
-    console.log('[AuthContext] Signup attempt:', username);
+    const signup = async (email: string, displayName: string, password: string) => {
+    console.log('[AuthContext] Signup attempt:', email);
     setIsLoading(true);
     setError(null);
-    
-    try {
-      const email = username.includes("@") ? username : `${username}@example.com`;
-      console.log('[AuthContext] Signup using email:', email);
 
-      const { error: signUpError } = await supabase.auth.signUp({
+    try {
+      // Get redirect URL for email confirmation
+      const origin = typeof window !== "undefined"
+        ? window.location.origin
+        : process.env.NEXT_PUBLIC_SITE_URL || "https://yup.rsvp";
+      const redirectTo = `${origin}/auth/callback`;
+
+      console.log('[AuthContext] Email confirmation redirect URL:', redirectTo);
+
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
-        options: { 
-          data: { 
-            username, 
-            display_name: displayName 
-          } 
+        options: {
+          data: {
+            display_name: displayName
+          },
+          emailRedirectTo: redirectTo
         },
       });
-      
+
       if (signUpError) {
         console.error('[AuthContext] Signup error:', signUpError);
         setError(signUpError.message);
         throw signUpError;
       }
-      
-      console.log('[AuthContext] Signup successful');
+
+      if (data.user && !data.user.email_confirmed_at) {
+        console.log('[AuthContext] Signup successful - email verification required');
+        setError('Please check your email and click the verification link to complete your registration.');
+      } else {
+        console.log('[AuthContext] Signup successful');
+      }
     } catch (error: any) {
       console.error('[AuthContext] Signup exception:', error);
       setError(error.message || 'Signup failed');
       setIsLoading(false);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const loginWithGoogle = async () => {
+    const loginWithGoogle = async () => {
     console.log('[AuthContext] Google login initiated');
     setError(null);
-    
+
     try {
       // Use production URL from environment variable or fallback to current origin
-      const origin = typeof window !== "undefined" 
-        ? window.location.origin 
+      const origin = typeof window !== "undefined"
+        ? window.location.origin
         : process.env.NEXT_PUBLIC_SITE_URL || "https://yup.rsvp";
       const redirectTo = `${origin}/auth/callback`;
-      
+
       console.log('[AuthContext] Google login redirect URL:', redirectTo);
 
       const { error } = await supabase.auth.signInWithOAuth({
@@ -253,18 +292,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           },
         },
       });
-      
+
       if (error) {
         console.error('[AuthContext] Google login error:', error);
         setError(error.message);
         throw error;
       }
-      
+
       console.log('[AuthContext] Google OAuth redirect initiated successfully');
       // Don't set loading here as the redirect will happen
     } catch (error: any) {
       console.error('[AuthContext] Google login exception:', error);
       setError(error.message || 'Google sign-in failed');
+      throw error;
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    console.log('[AuthContext] Password reset requested for:', email);
+    setError(null);
+
+    try {
+      // Get redirect URL for password reset
+      const origin = typeof window !== "undefined"
+        ? window.location.origin
+        : process.env.NEXT_PUBLIC_SITE_URL || "https://yup.rsvp";
+      const redirectTo = `${origin}/auth/callback`;
+
+      console.log('[AuthContext] Password reset redirect URL:', redirectTo);
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo,
+      });
+
+      if (error) {
+        console.error('[AuthContext] Password reset error:', error);
+        setError(error.message);
+        throw error;
+      }
+
+      console.log('[AuthContext] Password reset email sent successfully');
+    } catch (error: any) {
+      console.error('[AuthContext] Password reset exception:', error);
+      setError(error.message || 'Password reset failed');
       throw error;
     }
   };
@@ -311,6 +381,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     signup,
     loginWithGoogle,
+    resetPassword,
     logout: signOut,
     signOut,
     refreshUser,
