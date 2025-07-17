@@ -1,4 +1,5 @@
 import twilio from 'twilio';
+import { logSMSComplianceEvent, normalizePhoneNumber as normalizePhone } from './sms-compliance';
 
 // Initialize Twilio client
 const client = twilio(
@@ -62,7 +63,7 @@ export async function sendVerificationCode(phoneNumber: string): Promise<VerifyR
     }
 
     // Normalize phone number
-    const normalizedPhoneNumber = normalizePhoneNumber(phoneNumber);
+    const normalizedPhoneNumber = normalizePhone(phoneNumber);
     console.log('Sending verification code:', { 
       original: phoneNumber, 
       normalized: normalizedPhoneNumber,
@@ -87,6 +88,15 @@ export async function sendVerificationCode(phoneNumber: string): Promise<VerifyR
       status: verification.status,
       sid: verification.sid
     });
+
+    // Log compliance event
+    await logSMSComplianceEvent(
+      normalizedPhoneNumber,
+      'message_sent',
+      'Verification code sent',
+      'verification',
+      verification.sid
+    );
 
     return {
       success: true,
@@ -143,7 +153,7 @@ export async function verifyCode(phoneNumber: string, code: string): Promise<Ver
     }
 
     // Normalize phone number to match the format used when sending
-    const normalizedPhoneNumber = normalizePhoneNumber(phoneNumber);
+    const normalizedPhoneNumber = normalizePhone(phoneNumber);
     
     // Remove any whitespace from code
     const cleanCode = code.replace(/\s/g, '');

@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
         description,
         image_url,
         host_id,
-        created_at
+          created_at
       `)
       .in('id', uniqueEventIds)
       .neq("host_id", user.id) // Don't include events they're hosting

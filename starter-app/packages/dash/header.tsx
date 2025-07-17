@@ -99,75 +99,75 @@ export default function Header() {
   return (
     <header className="w-full mb-6 py-3 px-4 border-b border-gray-800 sticky top-0 z-50 bg-gray-950">
       <div className="container mx-auto flex justify-between items-center max-w-4xl">
-        <div className="flex items-center gap-3">
-          {/* YUP Logo with brand color mask */}
-          <div 
-            className="cursor-pointer"
-            onClick={() => router.push(user ? "/my-events" : "/")}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                router.push(user ? "/my-events" : "/");
-              }
-            }}
-            tabIndex={0}
-            role="button"
-            aria-label="Navigate to dashboard"
-          >
-            <img
-              src={defaultLogo}
-              alt="Yup.RSVP"
+      <div className="flex items-center gap-3">
+        {/* YUP Logo with brand color mask */}
+        <div 
+          className="cursor-pointer"
+          onClick={() => router.push(user ? "/my-events" : "/")}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              router.push(user ? "/my-events" : "/");
+            }
+          }}
+          tabIndex={0}
+          role="button"
+          aria-label="Navigate to dashboard"
+        >
+          <img
+            src={defaultLogo}
+            alt="Yup.RSVP"
               className="h-8 sm:h-12 w-auto max-w-[160px] sm:max-w-[200px] object-contain transition-all duration-200"
-              style={{
-                // Bulletproof visibility: adapt to any background color
-                filter: (() => {
-                  const baseShadow = isLightBackground 
-                    ? 'drop-shadow(0 1px 3px rgba(0,0,0,0.4))'  // Dark shadow on light bg
-                    : 'drop-shadow(0 1px 3px rgba(255,255,255,0.3))'; // Light shadow on dark bg
-                  
-                  if (isLightBackground) {
-                    // Light background: make logo dark/black
-                    return `brightness(0) saturate(100%) contrast(2) ${baseShadow}`;
-                  } else {
-                    // Dark background: make logo white/light
-                    return `brightness(0) saturate(100%) invert(1) contrast(1.8) brightness(1.2) ${baseShadow}`;
-                  }
-                })(),
-                // Ensure smooth transitions when colors change
-                transition: 'filter 0.3s ease-in-out'
-              }}
-            />
-          </div>
-
-          {/* Separator and Brand Logo (for premium users with custom logos) */}
-          {isPremium && branding.logoUrl && branding.logoUrl !== defaultLogo && (
-            <>
-              <div className="w-px h-8 sm:h-12 bg-gray-600"></div>
-              <img
-                src={branding.logoUrl}
-                alt="Brand Logo"
-                className="h-8 sm:h-12 w-auto max-w-[160px] sm:max-w-[200px] object-contain"
-              />
-            </>
-          )}
+            style={{
+              // Bulletproof visibility: adapt to any background color
+              filter: (() => {
+                const baseShadow = isLightBackground 
+                  ? 'drop-shadow(0 1px 3px rgba(0,0,0,0.4))'  // Dark shadow on light bg
+                  : 'drop-shadow(0 1px 3px rgba(255,255,255,0.3))'; // Light shadow on dark bg
+                
+                if (isLightBackground) {
+                  // Light background: make logo dark/black
+                  return `brightness(0) saturate(100%) contrast(2) ${baseShadow}`;
+                } else {
+                  // Dark background: make logo white/light
+                  return `brightness(0) saturate(100%) invert(1) contrast(1.8) brightness(1.2) ${baseShadow}`;
+                }
+              })(),
+              // Ensure smooth transitions when colors change
+              transition: 'filter 0.3s ease-in-out'
+            }}
+          />
         </div>
+
+        {/* Separator and Brand Logo (for premium users with custom logos) */}
+        {isPremium && branding.logoUrl && branding.logoUrl !== defaultLogo && (
+          <>
+              <div className="w-px h-8 sm:h-12 bg-gray-600"></div>
+            <img
+              src={branding.logoUrl}
+              alt="Brand Logo"
+                className="h-8 sm:h-12 w-auto max-w-[160px] sm:max-w-[200px] object-contain"
+            />
+          </>
+        )}
+      </div>
         
-        <div className="flex items-center gap-4">
-          {user && (
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => router.push("/events/create")}
+      <div className="flex items-center gap-4">
+        {user && (
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => router.push("/events/create")}
               className="rounded-sm h-8 w-8 p-0 sm:h-10 sm:w-10 hover:opacity-90"
               style={{
                 backgroundColor: branding.theme.primary,
                 color: getContrastingTextColor(branding.theme.primary),
                 border: 'none'
               }}
-            >
-              <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
-          )}
+          >
+            <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+          </Button>
+        )}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

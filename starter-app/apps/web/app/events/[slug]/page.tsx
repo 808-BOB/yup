@@ -203,81 +203,81 @@ export default function EventPage() {
 
         // Only load full responses data if user is authenticated
         if (user) {
-          // Load responses with user details
-          const { data: responseData, error: responseError } = await supabase
-            .from('responses')
-            .select(`
-              *,
-              user:user_id (
-                id,
-                display_name,
-                email,
-                profile_image_url,
-                username
-              )
-            `)
-            .eq('event_id', eventData.id)
-            .order('created_at', { ascending: false });
+        // Load responses with user details
+        const { data: responseData, error: responseError } = await supabase
+          .from('responses')
+          .select(`
+            *,
+            user:user_id (
+              id,
+              display_name,
+              email,
+              profile_image_url,
+              username
+            )
+          `)
+          .eq('event_id', eventData.id)
+          .order('created_at', { ascending: false });
 
-          if (responseError) throw responseError;
+        if (responseError) throw responseError;
 
-          // Remove duplicate responses (keep latest response per user)
-          const uniqueResponses = responseData?.reduce((acc: Response[], response) => {
-            const existingResponseIndex = acc.findIndex(r => r.user_id === response.user_id);
-            if (existingResponseIndex >= 0) {
-              // If this response is newer than the existing one, replace it
-              if (new Date(response.created_at) > new Date(acc[existingResponseIndex].created_at)) {
-                acc[existingResponseIndex] = response;
-              }
-            } else {
-              acc.push(response);
+        // Remove duplicate responses (keep latest response per user)
+        const uniqueResponses = responseData?.reduce((acc: Response[], response) => {
+          const existingResponseIndex = acc.findIndex(r => r.user_id === response.user_id);
+          if (existingResponseIndex >= 0) {
+            // If this response is newer than the existing one, replace it
+            if (new Date(response.created_at) > new Date(acc[existingResponseIndex].created_at)) {
+              acc[existingResponseIndex] = response;
             }
-            return acc;
-          }, []) || [];
+          } else {
+            acc.push(response);
+          }
+          return acc;
+        }, []) || [];
 
-          setResponses(uniqueResponses);
+        setResponses(uniqueResponses);
 
-          // Calculate response counts from deduplicated responses
-          const counts = uniqueResponses.reduce((acc, response) => {
-            switch (response.response_type) {
-              case 'yup':
-                acc.yupCount++;
-                break;
-              case 'nope':
-                acc.nopeCount++;
-                break;
-              case 'maybe':
-                acc.maybeCount++;
-                break;
-            }
-            return acc;
-          }, { yupCount: 0, nopeCount: 0, maybeCount: 0 });
+        // Calculate response counts from deduplicated responses
+        const counts = uniqueResponses.reduce((acc, response) => {
+          switch (response.response_type) {
+            case 'yup':
+              acc.yupCount++;
+              break;
+            case 'nope':
+              acc.nopeCount++;
+              break;
+            case 'maybe':
+              acc.maybeCount++;
+              break;
+          }
+          return acc;
+        }, { yupCount: 0, nopeCount: 0, maybeCount: 0 });
 
-          setResponseCounts(counts);
+        setResponseCounts(counts);
 
-          // Set user's response from deduplicated responses
+        // Set user's response from deduplicated responses
           const userLatestResponse = uniqueResponses.find(r => r.user_id === user.id);
           setUserResponse(userLatestResponse?.response_type || null);
 
-          // Only create a maybe response if user is not host and has no response
+        // Only create a maybe response if user is not host and has no response
           if (user.id !== eventData.host_id && !uniqueResponses.some(r => r.user_id === user.id)) {
-            const { error: responseError } = await supabase
-              .from('responses')
-              .insert({
-                event_id: eventData.id,
-                user_id: user.id,
-                response_type: 'maybe',
-                guest_count: 1
-              });
+          const { error: responseError } = await supabase
+            .from('responses')
+            .insert({
+              event_id: eventData.id,
+              user_id: user.id,
+              response_type: 'maybe',
+              guest_count: 1
+            });
 
-            if (responseError) throw responseError;
-            
-            // Update local state to reflect the new maybe response
-            setUserResponse('maybe');
-            setResponseCounts(prev => ({
-              ...prev,
-              maybeCount: prev.maybeCount + 1
-            }));
+          if (responseError) throw responseError;
+          
+          // Update local state to reflect the new maybe response
+          setUserResponse('maybe');
+          setResponseCounts(prev => ({
+            ...prev,
+            maybeCount: prev.maybeCount + 1
+          }));
           }
         } else {
           // For non-authenticated users, just get basic response counts
@@ -433,8 +433,8 @@ export default function EventPage() {
 
       // Debounced SMS notification to prevent spam
       const sendDebouncedNotification = async (finalResponse: typeof response) => {
-        try {
-          if (event.host_id && user.id !== event.host_id) {
+      try {
+        if (event.host_id && user.id !== event.host_id) {
             // Rate limiting: don't send if we just sent one recently (within 30 seconds)
             const now = Date.now();
             if (now - lastNotificationSent < 30000) {
@@ -442,39 +442,39 @@ export default function EventPage() {
               return;
             }
 
-            // Get host's phone number
-            const { data: hostData } = await supabase
-              .from("users")
-              .select("phone_number, display_name")
-              .eq("id", event.host_id)
-              .single();
+          // Get host's phone number
+          const { data: hostData } = await supabase
+            .from("users")
+            .select("phone_number, display_name")
+            .eq("id", event.host_id)
+            .single();
 
-            if (hostData?.phone_number) {
-              const guestName = user.user_metadata?.display_name || user.email || 'Someone';
+          if (hostData?.phone_number) {
+            const guestName = user.user_metadata?.display_name || user.email || 'Someone';
               
               console.log(`Sending SMS notification: ${guestName} → ${finalResponse}`);
-              
-              await fetch('/api/sms/rsvp-notification', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  hostPhoneNumber: hostData.phone_number,
-                  guestName,
-                  eventName: event.title,
+            
+            await fetch('/api/sms/rsvp-notification', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                hostPhoneNumber: hostData.phone_number,
+                guestName,
+                eventName: event.title,
                   responseType: finalResponse,
-                  guestCount: 1
-                }),
-              });
+                guestCount: 1
+              }),
+            });
               
               setLastNotificationSent(now);
-            }
           }
-        } catch (notificationError) {
-          console.error('Error sending RSVP notification:', notificationError);
-          // Don't fail the RSVP if notification fails
         }
+      } catch (notificationError) {
+        console.error('Error sending RSVP notification:', notificationError);
+        // Don't fail the RSVP if notification fails
+      }
       };
 
       // Clear any existing debounce timer
@@ -617,14 +617,14 @@ export default function EventPage() {
               </h1>
               <div className="flex gap-2">
                 {user && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsShareModalOpen(true)}
-                    className="border-gray-600 text-gray-300 hover:bg-gray-800"
-                  >
-                    <Share2 className="h-4 w-4 mr-1" /> Share
-                  </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsShareModalOpen(true)}
+                  className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                >
+                  <Share2 className="h-4 w-4 mr-1" /> Share
+                </Button>
                 )}
                 {isOwner && (
                   <>
@@ -636,14 +636,14 @@ export default function EventPage() {
                     >
                       <Users className="h-4 w-4 mr-1" /> View Responses
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => router.push(`/events/${event.slug}/edit`)}
-                      className="border-gray-600 text-gray-300 hover:bg-gray-800"
-                    >
-                      <Edit className="h-4 w-4 mr-1" /> Edit
-                    </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.push(`/events/${event.slug}/edit`)}
+                    className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                  >
+                    <Edit className="h-4 w-4 mr-1" /> Edit
+                  </Button>
                   </>
                 )}
               </div>
@@ -1051,35 +1051,35 @@ export default function EventPage() {
 
             {/* Responses section - Only show to event owner */}
             {isOwner && (
-              <div className="mt-6">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 
-                    className="text-sm font-semibold" 
+            <div className="mt-6">
+              <div className="flex justify-between items-center mb-3">
+                <h3 
+                  className="text-sm font-semibold" 
                     style={{ 
                       ...getTextShadowStyle(event.host?.brand_secondary_color || 'hsl(222, 84%, 8%)')
                     }}
+                >
+                  Responses
+                </h3>
+                <div className="flex gap-3 text-xs">
+                  <span 
+                    style={{ color: event.host?.brand_primary_color || '#00bcd4' }} 
+                    className="font-medium"
                   >
-                    Responses
-                  </h3>
-                  <div className="flex gap-3 text-xs">
-                    <span 
-                      style={{ color: event.host?.brand_primary_color || '#00bcd4' }} 
-                      className="font-medium"
-                    >
-                      {responseCounts.yupCount} {customYupText.toLowerCase()}
-                    </span>
-                    <span 
-                      className="opacity-70" 
-                      style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
-                    >
-                      {responseCounts.nopeCount} {customNopeText.toLowerCase()}
-                    </span>
-                    <span style={{ color: `${event.host?.brand_primary_color || '#00bcd4'}BB` }}>
-                      {responseCounts.maybeCount} {customMaybeText.toLowerCase()}
-                    </span>
-                  </div>
+                    {responseCounts.yupCount} {customYupText.toLowerCase()}
+                  </span>
+                  <span 
+                    className="opacity-70" 
+                    style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
+                  >
+                    {responseCounts.nopeCount} {customNopeText.toLowerCase()}
+                  </span>
+                  <span style={{ color: `${event.host?.brand_primary_color || '#00bcd4'}BB` }}>
+                    {responseCounts.maybeCount} {customMaybeText.toLowerCase()}
+                  </span>
                 </div>
               </div>
+            </div>
             )}
           </div>
 

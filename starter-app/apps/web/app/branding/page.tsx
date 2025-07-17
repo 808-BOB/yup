@@ -692,7 +692,7 @@ export default function BrandingPage() {
                     <Label htmlFor="yup-text" className="text-sm font-medium text-white">
                       Positive Response
                     </Label>
-                    <Input
+                                          <Input
                         id="yup-text"
                         value={localRSVPText.yup}
                         onChange={(e) => handleRSVPTextInputChange('yup', e.target.value)}

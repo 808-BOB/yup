@@ -1,11 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import twilio from 'twilio';
-
-// Initialize Twilio client
-const client = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
+import { sendCompliantSMS, SMSTemplates } from '@/utils/sms-compliance';
 
 async function sendRSVPNotificationSMS(
   hostPhoneNumber: string,
@@ -19,20 +13,19 @@ async function sendRSVPNotificationSMS(
       throw new Error('Missing required Twilio environment variables');
     }
 
-    const responseText = responseType === "yup" ? "YES" : responseType === "nope" ? "NO" : "MAYBE";
-    const guestText = guestCount > 1 ? ` (bringing ${guestCount - 1} guest${guestCount > 2 ? 's' : ''})` : '';
+    // Use the compliance template for RSVP notifications
+    const template = SMSTemplates.rsvpNotification(guestName, eventName, responseType, guestCount);
     
-    const message = `🎉 RSVP Update: ${guestName} responded ${responseText} to "${eventName}"${guestText}`;
-    
-    const result = await client.messages.create({
-      body: message,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to: hostPhoneNumber,
-    });
+    const result = await sendCompliantSMS(
+      hostPhoneNumber,
+      template.message,
+      template.options
+    );
 
     return {
-      success: true,
-      messageSid: result.sid,
+      success: result.success,
+      messageSid: result.messageSid,
+      error: result.error
     };
   } catch (error) {
     console.error('Error sending SMS:', error);

@@ -337,12 +337,12 @@ export default function CreateEvent() {
                     <Label htmlFor="startTime" className="text-white uppercase text-xs tracking-wider font-medium">
                       Start Time
                     </Label>
-                                          <Input
-                        id="startTime"
-                        type="time"
-                        {...form.register("startTime")}
+                    <Input
+                      id="startTime"
+                      type="time"
+                      {...form.register("startTime")}
                         className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12 text-white placeholder:text-gray-400"
-                      />
+                    />
                     {form.formState.errors.startTime && (
                       <p className="text-primary text-sm">{form.formState.errors.startTime.message}</p>
                     )}
@@ -352,12 +352,12 @@ export default function CreateEvent() {
                     <Label htmlFor="endTime" className="text-white uppercase text-xs tracking-wider font-medium">
                       End Time
                     </Label>
-                                          <Input
-                        id="endTime"
-                        type="time"
-                        {...form.register("endTime")}
+                    <Input
+                      id="endTime"
+                      type="time"
+                      {...form.register("endTime")}
                         className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12 text-white placeholder:text-gray-400"
-                      />
+                    />
                     {form.formState.errors.endTime && (
                       <p className="text-primary text-sm">{form.formState.errors.endTime.message}</p>
                     )}

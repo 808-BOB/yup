@@ -38,7 +38,7 @@ function UpgradeSuccessContent() {
 
   return (
     <div className="min-h-screen bg-gray-950">
-      <Header />
+        <Header />
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-2xl mx-auto text-center">
           <div className="mb-8">
@@ -49,11 +49,11 @@ function UpgradeSuccessContent() {
             <h1 className="text-4xl font-bold text-white mb-4">
               Welcome to {plan === 'pro' ? 'Yup Pro' : 'Yup Premium'}!
             </h1>
-            
+
             <p className="text-xl text-gray-300 mb-8">
               Your subscription has been successfully activated. You now have access to all premium features.
-            </p>
-          </div>
+              </p>
+            </div>
 
           <div className="grid gap-6 md:grid-cols-3 mb-12">
             {benefits.map((benefit, index) => {
@@ -70,16 +70,16 @@ function UpgradeSuccessContent() {
                 </Card>
               );
             })}
-          </div>
+            </div>
 
           <div className="space-y-4">
-            <Button
+              <Button
               onClick={() => router.push("/my-events")}
               className="bg-primary hover:bg-primary/90 text-white px-8 py-3 text-lg"
-            >
+              >
               Go to My Events
-            </Button>
-            
+              </Button>
+              
             <div>
               <Button
                 variant="outline"

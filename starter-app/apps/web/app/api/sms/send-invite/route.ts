@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import twilio from 'twilio';
 import { supabase } from '@/lib/supabase';
+import { sendCompliantSMS, SMSTemplates, normalizePhoneNumber } from '@/utils/sms-compliance';
 
 // Initialize Twilio client - using same config as verification
 const client = twilio(
@@ -8,26 +9,7 @@ const client = twilio(
   process.env.TWILIO_AUTH_TOKEN
 );
 
-/**
- * Normalize phone number to E.164 format (same as verification system)
- */
-function normalizePhoneNumber(phoneNumber: string): string {
-  // Remove all non-digit characters except +
-  let normalized = phoneNumber.replace(/[^\d+]/g, '');
-  
-  // If it doesn't start with +, assume it's US number and add +1
-  if (!normalized.startsWith('+')) {
-    if (normalized.length === 10) {
-      normalized = '+1' + normalized;
-    } else if (normalized.length === 11 && normalized.startsWith('1')) {
-      normalized = '+' + normalized;
-    } else {
-      normalized = '+' + normalized;
-    }
-  }
-  
-  return normalized;
-}
+// Normalize phone number function is now imported from sms-compliance
 
 /**
  * Fetch host branding data from database
@@ -63,7 +45,7 @@ async function getHostBranding(hostId: string) {
 }
 
 /**
- * Create branded SMS message
+ * Create branded SMS message (without compliance footer - will be added by compliance system)
  */
 function createBrandedMessage(
   eventName: string,
@@ -77,19 +59,19 @@ function createBrandedMessage(
   const customMaybe = hostBranding?.custom_maybe_text || 'Maybe';
   
   // Create a branded message that mentions the custom RSVP options
-  let message = `Hi! ${hostName} invited you to "${eventName}" on ${eventDate}.\n\n`;
+  let message = `Hi! ${hostName} invited you to "${eventName}" on ${eventDate}.`;
   
   // Add custom branding mention if host has premium branding
   if (hostBranding?.is_premium && (hostBranding?.logo_url || hostBranding?.brand_primary_color)) {
-    message += `🎨 This invite includes custom branding - check it out!\n\n`;
+    message += ` 🎨 This invite includes custom branding - check it out!`;
   }
   
   // Add custom RSVP text if different from defaults
   if (customYup !== 'Yup' || customNope !== 'Nope' || customMaybe !== 'Maybe') {
-    message += `Reply with: "${customYup}" / "${customMaybe}" / "${customNope}"\n\n`;
+    message += ` Reply with: "${customYup}" / "${customMaybe}" / "${customNope}"`;
   }
   
-  message += `RSVP: ${rsvpLink}`;
+  message += ` RSVP: ${rsvpLink}`;
   
   return message;
 }
@@ -129,26 +111,27 @@ async function sendEventInviteSMS(
     console.log('Sending branded SMS message:', message);
     console.log('From:', process.env.TWILIO_PHONE_NUMBER, 'To:', normalizedTo);
     
-    const result = await client.messages.create({
-      body: message,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to: normalizedTo,
-    });
+    // Send compliant SMS
+    const result = await sendCompliantSMS(
+      normalizedTo,
+      message,
+      { campaignType: 'invitation' }
+    );
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to send SMS');
+    }
 
     console.log('Twilio response:', result);
 
-    // For trial accounts, check if the message was actually queued properly
-    if (result.status === 'queued') {
-      console.log('⚠️  Message queued - if you\'re on trial account and not receiving SMS:');
-      console.log('1. Verify your phone number is verified in Twilio Console');
-      console.log('2. Check for carrier filtering/delays');
-      console.log('3. Message ID for tracking:', result.sid);
-    }
+    // For compliance system, we just log success
+    console.log('✅ SMS sent successfully via compliance system');
+    console.log('Message ID for tracking:', result.messageSid);
 
     return {
       success: true,
-      messageSid: result.sid,
-      status: result.status,
+      messageSid: result.messageSid,
+      status: 'sent', // Default status for compliance system
       hostBranding: hostBranding ? {
         hasLogo: !!hostBranding.logo_url,
         hasCustomColors: !!hostBranding.brand_primary_color,

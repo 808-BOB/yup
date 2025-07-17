@@ -30,8 +30,11 @@ export default function PhoneVerificationPage() {
 
   // If user already has a phone number, redirect to my-events
   React.useEffect(() => {
+    const devHosts = ["localhost", "127.0.0.1", "yup.rsvp"];
     if ((user as any)?.phone_number) {
-      window.location.href = "/my-events";
+      const isLocal = devHosts.includes(window.location.hostname);
+      const redirectUrl = isLocal ? "/my-events" : "https://yup.rsvp/my-events";
+      window.location.href = redirectUrl;
     }
   }, [user]);
 
@@ -188,7 +191,10 @@ export default function PhoneVerificationPage() {
           
           // Refresh user data and redirect
           await refreshUser();
-          window.location.href = "/my-events";
+          const devHosts = ["localhost", "127.0.0.1", "yup.rsvp"];
+          const isLocal = devHosts.includes(window.location.hostname);
+          const redirectUrl = isLocal ? "/my-events" : "https://yup.rsvp/my-events";
+          window.location.href = redirectUrl;
         } else {
           console.error("Failed to update user profile:", updateData);
           throw new Error(updateData.error || "Failed to update user profile");
@@ -256,7 +262,10 @@ export default function PhoneVerificationPage() {
 
   const handleSkipForNow = () => {
     // Allow users to skip for now, but they'll be prompted again later
-    window.location.href = "/my-events";
+    const devHosts = ["localhost", "127.0.0.1", "yup.rsvp"];
+    const isLocal = devHosts.includes(window.location.hostname);
+    const redirectUrl = isLocal ? "/my-events" : "https://yup.rsvp/my-events";
+    window.location.href = redirectUrl;
   };
 
   // Note: Auth is guaranteed by middleware, so we only need to check if user is loaded
@@ -323,11 +332,11 @@ export default function PhoneVerificationPage() {
                       I agree to receive SMS text messages from YUP.RSVP for account verification, 
                       event notifications, and service updates. Message and data rates may apply. 
                       I understand I can opt-out at any time by replying <strong>STOP</strong> to any message 
-                      or by updating my account settings.
+                      or by visiting <strong>{process.env.NEXT_PUBLIC_SITE_URL}/sms/opt-out</strong>.
                     </p>
                     <p className="text-xs text-gray-400">
                       By checking this box, you're providing explicit consent to receive automated SMS messages 
-                      as required by telecommunications regulations.
+                      as required by telecommunications regulations. Terms of service: <strong>{process.env.NEXT_PUBLIC_SITE_URL}/terms</strong>
                     </p>
                   </div>
                 </div>

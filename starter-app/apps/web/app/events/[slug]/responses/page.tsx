@@ -367,20 +367,20 @@ export default function EventResponsesPage() {
         style={{ backgroundColor: event.host?.brand_secondary_color || '#0a0a14' }}
       >
         <Header />
-        
+
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           <main className="space-y-6">
-            <div className="flex items-center gap-4 mb-6">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.back()}
+        <div className="flex items-center gap-4 mb-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.back()}
                 className="text-gray-300 hover:bg-gray-800"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
-            </div>
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+        </div>
 
             <div className="space-y-2">
               <h1 
@@ -397,7 +397,7 @@ export default function EventResponsesPage() {
               </p>
             </div>
 
-            {/* Response Summary */}
+        {/* Response Summary */}
             <div className="grid grid-cols-3 gap-4">
               <Card 
                 className="border shadow-lg hover:shadow-xl transition-shadow duration-200"
@@ -419,8 +419,8 @@ export default function EventResponsesPage() {
                   >
                     {customYupText}
                   </p>
-                </CardContent>
-              </Card>
+            </CardContent>
+          </Card>
               
               <Card 
                 className="border shadow-lg hover:shadow-xl transition-shadow duration-200"
@@ -442,8 +442,8 @@ export default function EventResponsesPage() {
                   >
                     {customNopeText}
                   </p>
-                </CardContent>
-              </Card>
+            </CardContent>
+          </Card>
               
               <Card 
                 className="border shadow-lg hover:shadow-xl transition-shadow duration-200"
@@ -465,12 +465,12 @@ export default function EventResponsesPage() {
                   >
                     {customMaybeText}
                   </p>
-                </CardContent>
-              </Card>
-            </div>
+            </CardContent>
+          </Card>
+        </div>
 
             {/* Advanced Analytics (only for premium/pro hosts) */}
-            {isOwner && hasAdvancedAnalytics && (
+        {isOwner && hasAdvancedAnalytics && (
               <Card 
                 className="border shadow-lg hover:shadow-xl transition-shadow duration-200"
                 style={{ 
@@ -478,7 +478,7 @@ export default function EventResponsesPage() {
                   borderColor: event.host?.brand_primary_color + '30' || '#374151'
                 }}
               >
-                <CardHeader>
+            <CardHeader>
                   <CardTitle 
                     className="text-xl flex items-center gap-2"
                     style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
@@ -487,12 +487,12 @@ export default function EventResponsesPage() {
                       className="h-5 w-5" 
                       style={{ color: event.host?.brand_primary_color || '#3b82f6' }}
                     />
-                    Analytics
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+                Analytics
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
                   <div className="grid grid-cols-2 gap-6">
-                    <div>
+                <div>
                       <p 
                         className="text-sm mb-2"
                         style={{ color: event.host?.brand_tertiary_color + '80' || '#9ca3af' }}
@@ -505,8 +505,8 @@ export default function EventResponsesPage() {
                       >
                         {responseRate}%
                       </p>
-                    </div>
-                    <div>
+                </div>
+                <div>
                       <p 
                         className="text-sm mb-2"
                         style={{ color: event.host?.brand_tertiary_color + '80' || '#9ca3af' }}
@@ -519,11 +519,11 @@ export default function EventResponsesPage() {
                       >
                         {totalResponses}
                       </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
             {/* Separator */}
             <Separator 
@@ -531,7 +531,7 @@ export default function EventResponsesPage() {
               style={{ backgroundColor: event.host?.brand_primary_color + '30' || '#374151' }}
             />
 
-            {/* Response List */}
+        {/* Response List */}
             <Card 
               className="border-2 shadow-xl"
               style={{ 
@@ -539,7 +539,7 @@ export default function EventResponsesPage() {
                 borderColor: event.host?.brand_primary_color + '60' || '#374151'
               }}
             >
-              <CardHeader>
+          <CardHeader>
                 <CardTitle 
                   className="text-xl flex items-center gap-2"
                   style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
@@ -549,9 +549,9 @@ export default function EventResponsesPage() {
                     style={{ color: event.host?.brand_primary_color || '#3b82f6' }}
                   />
                   Responses ({totalResponses})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
                 <div className="space-y-3">
                   {responses.length === 0 ? (
                     <div className="text-center py-8">
@@ -568,15 +568,15 @@ export default function EventResponsesPage() {
                     </div>
                   ) : (
                     responses.map((response) => (
-                      <div
-                        key={response.id}
+                <div
+                  key={response.id}
                         className="flex items-center justify-between p-4 rounded-lg border transition-all duration-150"
                         style={{ 
                           backgroundColor: event.host?.brand_secondary_color + 'CC' || '#1f293780',
                           borderColor: event.host?.brand_primary_color + '20' || '#374151'
                         }}
-                      >
-                        <div className="flex items-center gap-3">
+                >
+                  <div className="flex items-center gap-3">
                           <div 
                             className="h-10 w-10 rounded-full flex items-center justify-center overflow-hidden border-2"
                             style={{ 
@@ -584,22 +584,22 @@ export default function EventResponsesPage() {
                               borderColor: event.host?.brand_primary_color + '40' || '#4b5563'
                             }}
                           >
-                            {response.users?.profile_image_url ? (
-                              <img
-                                src={response.users.profile_image_url}
+                      {response.users?.profile_image_url ? (
+                        <img
+                          src={response.users.profile_image_url}
                                 alt={response.users?.display_name || response.guest_name || 'User'}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
                               <span 
                                 className="text-sm font-medium"
                                 style={{ color: event.host?.brand_primary_color || '#ffffff' }}
                               >
                                 {(response.users?.display_name || response.guest_name || 'U').charAt(0).toUpperCase()}
-                              </span>
-                            )}
-                          </div>
-                          <div>
+                        </span>
+                      )}
+                    </div>
+                    <div>
                             <p 
                               className="font-medium"
                               style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
@@ -618,43 +618,43 @@ export default function EventResponsesPage() {
                                   Guest
                                 </Badge>
                               )}
-                            </p>
-                            {isOwner && (
+                      </p>
+                      {isOwner && (
                               <p 
                                 className="text-sm"
                                 style={{ color: event.host?.brand_tertiary_color + '70' || '#9ca3af' }}
                               >
                                 {response.users?.email || response.guest_email || 'No email'}
-                              </p>
-                            )}
+                        </p>
+                      )}
                             <p 
                               className="text-xs"
                               style={{ color: event.host?.brand_tertiary_color + '60' || '#6b7280' }}
                             >
                               {new Date(response.created_at).toLocaleDateString()} at {new Date(response.created_at).toLocaleTimeString()}
                             </p>
-                          </div>
-                        </div>
-                        <Badge
-                          variant="outline"
+                    </div>
+                  </div>
+                  <Badge
+                    variant="outline"
                           className="border"
                           style={getResponseBadgeStyle(response.response_type)}
-                        >
+                  >
                           <span className="flex items-center gap-1 font-medium">
-                            {getResponseIcon(response.response_type)}
+                      {getResponseIcon(response.response_type)}
                             {response.response_type === 'yup' ? customYupText : 
                              response.response_type === 'nope' ? customNopeText : 
                              customMaybeText}
-                          </span>
-                        </Badge>
-                      </div>
+                    </span>
+                  </Badge>
+                </div>
                     ))
                   )}
-                </div>
-              </CardContent>
-            </Card>
-          </main>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
+      </main>
+    </div>
       </div>
     </EventBrandingProvider>
   );

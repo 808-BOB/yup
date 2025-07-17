@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
     
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
+    
     // Get the authenticated user using the access token
     const { data: { user }, error: userError } = await supabase.auth.getUser(accessToken);
     if (userError) throw userError;

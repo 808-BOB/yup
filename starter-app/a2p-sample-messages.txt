@@ -1,0 +1,21 @@
+# Sample Messages for A2P Campaign Registration
+
+## Verification Message
+Your YUP.RSVP verification code is 123456
+
+Reply STOP to opt out. Terms: yup.rsvp/terms. Msg&data rates may apply
+
+## Event Invitation
+John invited you to "Birthday Party" on March 15, 2024. RSVP: yup.rsvp/events/birthday-party
+
+Reply STOP to opt out. Terms: yup.rsvp/terms. Msg&data rates may apply
+
+## RSVP Notification
+🎉 RSVP Update: Sarah responded YES to "Birthday Party"
+
+Reply STOP to opt out
+
+## Event Reminder
+Reminder: "Birthday Party" is March 15, 2024 at 7:00 PM. Update your RSVP: yup.rsvp/events/birthday-party
+
+Reply STOP to opt out. Terms: yup.rsvp/terms. Msg&data rates may apply
