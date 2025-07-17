@@ -1,30 +1,35 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 
 export async function middleware(req: NextRequest) {
   // Create a Next.js response object that we can pass to the Supabase helper
   const res = NextResponse.next()
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_PROJECT_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return req.cookies.get(name)?.value
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          const existing = req.cookies.get(name)?.value
-          if (existing === value) return // avoid duplicate set-cookie bloating headers
-          res.cookies.set({ name, value, ...options })
-        },
-        remove(name: string, options: CookieOptions) {
-          res.cookies.set({ name, value: '', ...options })
-        },
+  // Use centralized environment variables
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_PROJECT_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Missing Supabase environment variables in middleware')
+    return res
+  }
+
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      get(name: string) {
+        return req.cookies.get(name)?.value
       },
-    }
-  )
+      set(name: string, value: string, options: CookieOptions) {
+        const existing = req.cookies.get(name)?.value
+        if (existing === value) return // avoid duplicate set-cookie bloating headers
+        res.cookies.set({ name, value, ...options })
+      },
+      remove(name: string, options: CookieOptions) {
+        res.cookies.set({ name, value: '', ...options })
+      },
+    },
+  })
 
   // Public routes that don't require authentication
   const publicRoutes = [

@@ -1,5 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { createServiceSupabaseClient, getSupabaseClient } from '@/lib/supabase';
 
 export async function POST(request: Request) {
   try {
@@ -14,11 +14,8 @@ export async function POST(request: Request) {
 
     const accessToken = authHeader.replace('Bearer ', '');
 
-    // Create server-side Supabase client
-    const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_PROJECT_URL)!;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    // Create client-side Supabase client for user authentication
+    const supabase = getSupabaseClient();
     
     // Get the authenticated user using the access token
     const { data: { user }, error: userError } = await supabase.auth.getUser(accessToken);
@@ -32,16 +29,7 @@ export async function POST(request: Request) {
     }
 
     // Create service role client for admin operations
-    const serviceSupabase = createClient(
-      supabaseUrl,
-      (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_API_KEY)!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
+    const serviceSupabase = createServiceSupabaseClient();
 
     // Update the user's admin status in the public.users table
     const { error: updateError } = await serviceSupabase

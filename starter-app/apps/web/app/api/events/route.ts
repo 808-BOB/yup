@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { insertEventSchema } from '@/utils/validators/event';
-import { supabase } from '@/lib/supabase';
+import { createServiceSupabaseClient } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,26 +9,8 @@ export async function POST(request: NextRequest) {
     // Validate event data
     const validatedData = insertEventSchema.parse(eventData);
 
-    // Check for environment variables (support multiple naming conventions)
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_PROJECT_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_API_KEY;
-    
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('Missing Supabase environment variables:', {
-        supabaseUrl: !!supabaseUrl,
-        supabaseServiceKey: !!supabaseServiceKey,
-        availableEnvs: Object.keys(process.env).filter(k => k.includes('SUPABASE'))
-      });
-      return NextResponse.json(
-        { 
-          error: 'Supabase not configured', 
-          details: 'Please set Supabase environment variables' 
-        },
-        { status: 500 }
-      );
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // Use centralized service client
+    const supabase = createServiceSupabaseClient();
 
     // Check user's plan and enforce limits
     const { data: userData, error: userError } = await supabase
@@ -213,7 +194,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createServiceSupabaseClient();
 
     let query = supabase
       .from('events')

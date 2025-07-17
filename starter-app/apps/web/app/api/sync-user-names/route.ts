@@ -1,19 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from '@supabase/supabase-js';
+import { createServiceSupabaseClient } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
     // Create a service role client for admin operations
-    const serviceSupabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
+    const serviceSupabase = createServiceSupabaseClient();
 
     // Get all users from auth.users
     const { data: authUsers, error: authError } = await serviceSupabase.auth.admin.listUsers();

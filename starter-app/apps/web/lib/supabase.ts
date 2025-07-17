@@ -1,4 +1,12 @@
-// Re-export from the centralized client configuration
-export * from '../../../packages/utils/supabase';
-import { getSupabaseClient } from '../../../packages/utils/supabase';
-export default getSupabaseClient(); 
+// Re-export centralized Supabase client
+export { 
+  getSupabaseClient,
+  createClientSupabaseClient,
+  createServerSupabaseClient,
+  createServiceSupabaseClient,
+  supabase
+} from '../../../packages/utils/supabase'
+
+// For backwards compatibility
+import { getSupabaseClient } from '../../../packages/utils/supabase'
+export default getSupabaseClient() 
