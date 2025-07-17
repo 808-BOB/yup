@@ -1,5 +1,6 @@
 "use client";
 
+import React, { Suspense } from "react";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/ui/card";
@@ -11,7 +12,7 @@ import ArrowLeft from "lucide-react/dist/esm/icons/arrow-left";
 import Phone from "lucide-react/dist/esm/icons/phone";
 import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
 
-export default function SMSOptOutPage() {
+function SMSOptOutPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -258,5 +259,13 @@ export default function SMSOptOutPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function SMSOptOutPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SMSOptOutPageInner />
+    </Suspense>
   );
 } 
