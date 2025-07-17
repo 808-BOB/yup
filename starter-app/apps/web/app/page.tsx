@@ -9,7 +9,7 @@ export default function HomePage() {
       {/* Blurred background image */}
       <div className="absolute inset-0 -z-10">
         <Image
-          src="/@party.jpeg"
+          src="/party.jpeg" // Fixed path, removed '@'
           alt="Event background"
           fill
           style={{ objectFit: "cover" }}
@@ -24,7 +24,7 @@ export default function HomePage() {
         <Link href="/auth/login">
           <button className="px-5 py-2 rounded-md bg-white/10 text-white hover:bg-white/20 font-semibold transition">Log In</button>
         </Link>
-        <Link href="/auth/login"> {/* Update to /auth/signup if you have a separate signup page */}
+        <Link href="/auth/signup"> {/* Redirects to signup page */}
           <button className="px-5 py-2 rounded-md bg-primary text-white hover:bg-primary/80 font-semibold transition">Sign Up</button>
         </Link>
       </div>
