@@ -7,7 +7,7 @@ export default function HomePage() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden flex flex-col">
       {/* Blurred background image */}
-      <div className="absolute inset-0 -z-10">
+      <div className="absolute inset-0 z-0 pointer-events-none">
         <Image
           src="/party.jpeg"
           alt="Event background"
@@ -22,12 +22,8 @@ export default function HomePage() {
 
       {/* Top-right navigation */}
       <div className="absolute top-0 right-0 p-6 flex gap-4 z-10">
-        <Link href="/auth/login">
-          <button className="px-5 py-2 rounded-md bg-white/10 text-white hover:bg-white/20 font-semibold transition">Log In</button>
-        </Link>
-        <Link href="/auth/login?mode=signup">
-          <button className="px-5 py-2 rounded-md bg-primary text-white hover:bg-primary/80 font-semibold transition">Sign Up</button>
-        </Link>
+        <Link href="/auth/login" className="px-5 py-2 rounded-md bg-white/10 text-white hover:bg-white/20 font-semibold transition">Log In</Link>
+        <Link href="/auth/login?mode=signup" className="px-5 py-2 rounded-md bg-primary text-white hover:bg-primary/80 font-semibold transition">Sign Up</Link>
       </div>
 
       {/* Centered main content */}
