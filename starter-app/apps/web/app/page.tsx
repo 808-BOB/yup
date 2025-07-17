@@ -9,7 +9,7 @@ export default function HomePage() {
       {/* Blurred background image */}
       <div className="absolute inset-0 -z-10">
         <Image
-          src="/@free-photo-of-joyful-outdoor-night-party-with-string-lights (1).jpeg"
+          src="/@party.jpeg"
           alt="Event background"
           fill
           style={{ objectFit: "cover" }}
