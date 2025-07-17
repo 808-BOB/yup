@@ -2,7 +2,6 @@
 export { 
   getSupabaseClient,
   createClientSupabaseClient,
-  createServerSupabaseClient,
   createServiceSupabaseClient,
   supabase
 } from '../../../packages/utils/supabase'
