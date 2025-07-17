@@ -90,7 +90,14 @@ export async function GET(request: NextRequest) {
       .order("created_at", { ascending: false });
 
     // Fetch responses for these events
-    let allResponses = [];
+    interface EventResponse {
+      event_id: string;
+      user_id: string;
+      response_type: 'yup' | 'nope' | 'maybe';
+      created_at: string;
+    }
+    
+    let allResponses: EventResponse[] = [];
     if (uniqueEventIds.length > 0) {
       const { data: responses, error: responsesError } = await serviceSupabase
         .from("responses")

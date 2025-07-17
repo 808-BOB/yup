@@ -1,27 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // Check environment variables
-    const config = {
-      accountSid: process.env.TWILIO_ACCOUNT_SID ? '✅ Set' : '❌ Missing',
-      authToken: process.env.TWILIO_AUTH_TOKEN ? '✅ Set' : '❌ Missing',
-      verifyServiceSid: process.env.TWILIO_VERIFY_SERVICE_SID ? '✅ Set' : '❌ Missing',
-      actualVerifyServiceSid: process.env.TWILIO_VERIFY_SERVICE_SID,
+    // Basic environment check
+    const envCheck = {
+      hasAccountSid: !!process.env.TWILIO_ACCOUNT_SID,
+      hasAuthToken: !!process.env.TWILIO_AUTH_TOKEN,
+      hasPhoneNumber: !!process.env.TWILIO_PHONE_NUMBER,
+      hasVerifyServiceSid: !!process.env.TWILIO_VERIFY_SERVICE_SID,
     };
 
     return NextResponse.json({
       success: true,
-      message: 'Twilio Environment Variables Check',
-      config,
-      nodeEnv: process.env.NODE_ENV,
+      message: "Twilio configuration check",
+      environment: envCheck,
+      allConfigured: Object.values(envCheck).every(Boolean)
     });
   } catch (error) {
-    console.error('Error in test-twilio API:', error);
-    return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      success: false,
+      error: "Failed to check Twilio configuration"
+    }, { status: 500 });
   }
 }
 

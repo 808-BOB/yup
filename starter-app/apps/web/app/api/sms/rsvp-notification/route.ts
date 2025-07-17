@@ -28,7 +28,7 @@ async function sendRSVPNotificationSMS(
       error: result.error
     };
   } catch (error) {
-    console.error('Error sending SMS:', error);
+    console.error('Error sending RSVP notification SMS:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -38,29 +38,14 @@ async function sendRSVPNotificationSMS(
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { 
-      hostPhoneNumber, 
-      guestName, 
-      eventName, 
-      responseType, 
-      guestCount = 1 
-    } = body;
+    const { hostPhoneNumber, guestName, eventName, responseType, guestCount } = await request.json();
 
     // Validate required fields
     if (!hostPhoneNumber || !guestName || !eventName || !responseType) {
-      return NextResponse.json(
-        { error: 'Missing required fields: hostPhoneNumber, guestName, eventName, responseType' },
-        { status: 400 }
-      );
-    }
-
-    // Validate response type
-    if (!['yup', 'nope', 'maybe'].includes(responseType)) {
-      return NextResponse.json(
-        { error: 'Invalid response type. Must be "yup", "nope", or "maybe"' },
-        { status: 400 }
-      );
+      return NextResponse.json({
+        success: false,
+        error: "Missing required fields: hostPhoneNumber, guestName, eventName, responseType"
+      }, { status: 400 });
     }
 
     // Send RSVP notification SMS
@@ -69,27 +54,28 @@ export async function POST(request: NextRequest) {
       guestName,
       eventName,
       responseType,
-      guestCount
+      guestCount || 1
     );
 
     if (result.success) {
       return NextResponse.json({
         success: true,
-        message: 'RSVP notification sent successfully',
         messageSid: result.messageSid,
+        message: "RSVP notification sent successfully"
       });
     } else {
-      return NextResponse.json(
-        { error: result.error },
-        { status: 500 }
-      );
+      return NextResponse.json({
+        success: false,
+        error: result.error || "Failed to send RSVP notification"
+      }, { status: 500 });
     }
+
   } catch (error) {
-    console.error('Error in RSVP notification API:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Error in rsvp-notification API:', error);
+    return NextResponse.json({
+      success: false,
+      error: "Internal server error"
+    }, { status: 500 });
   }
 }
 

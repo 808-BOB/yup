@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import twilio from 'twilio';
 import nodemailer from 'nodemailer';
+
+// Force dynamic rendering for this API route
+export const dynamic = 'force-dynamic';
 
 // Create Supabase client with service role
 const supabase = createClient(
@@ -13,12 +15,6 @@ const supabase = createClient(
       persistSession: false
     }
   }
-);
-
-// Initialize Twilio client
-const twilioClient = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
 );
 
 // Initialize email client (using nodemailer with your email service)
@@ -33,31 +29,13 @@ const emailClient = nodemailer.createTransport({
 interface InvitationData {
   eventId: number;
   hostId: string;
-  method: 'sms' | 'email';
+  method: 'email'; // Only support email now
   recipients: Array<{
-    phone?: string;
-    email?: string;
+    email: string;
     name?: string;
   }>;
   customMessage?: string;
   templateId?: number;
-}
-
-// Helper function to normalize phone number
-function normalizePhoneNumber(phoneNumber: string): string {
-  let normalized = phoneNumber.replace(/[^\d+]/g, '');
-  
-  if (!normalized.startsWith('+')) {
-    if (normalized.length === 10) {
-      normalized = '+1' + normalized;
-    } else if (normalized.length === 11 && normalized.startsWith('1')) {
-      normalized = '+' + normalized;
-    } else {
-      normalized = '+' + normalized;
-    }
-  }
-  
-  return normalized;
 }
 
 // Helper function to replace template placeholders
@@ -89,61 +67,6 @@ function formatEventDate(dateString: string): string {
     });
   } catch {
     return dateString;
-  }
-}
-
-// Send SMS invitation
-async function sendSMSInvitation(
-  invitation: any,
-  eventData: any,
-  hostData: any,
-  messageTemplate: string,
-  rsvpLink: string
-): Promise<{ success: boolean; messageSid?: string; error?: string }> {
-  try {
-    if (!invitation.recipient_phone) {
-      throw new Error('Phone number is required for SMS invitation');
-    }
-
-    const normalizedPhone = normalizePhoneNumber(invitation.recipient_phone);
-    const message = replacePlaceholders(
-      messageTemplate,
-      eventData,
-      hostData,
-      rsvpLink,
-      invitation.recipient_name
-    );
-
-    console.log('Sending SMS to:', normalizedPhone);
-    console.log('Message:', message);
-
-    const result = await twilioClient.messages.create({
-      body: message,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to: normalizedPhone,
-    });
-
-    // Update invitation with Twilio message SID
-    await supabase
-      .from('invitations')
-      .update({ 
-        twilio_message_sid: result.sid,
-        status: result.status === 'queued' ? 'sent' : result.status,
-        delivered_at: result.status === 'delivered' ? new Date().toISOString() : null
-      })
-      .eq('id', invitation.id);
-
-    return { success: true, messageSid: result.sid };
-  } catch (error: any) {
-    console.error('SMS sending error:', error);
-    
-    // Update invitation status to failed
-    await supabase
-      .from('invitations')
-      .update({ status: 'failed' })
-      .eq('id', invitation.id);
-
-    return { success: false, error: error.message };
   }
 }
 
@@ -246,14 +169,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate method
-    if (!['sms', 'email'].includes(method)) {
+    if (method !== 'email') {
       return NextResponse.json(
-        { error: 'Invalid method. Must be "sms" or "email"' },
+        { error: 'Invalid method. Only "email" is supported' },
         { status: 400 }
       );
     }
 
-    console.log('Processing invitation request:', { eventId, hostId, method, recipientCount: recipients.length });
+    console.log('Processing invitation request:', { eventId, hostId, recipientCount: recipients.length });
 
     // Fetch event data
     const { data: eventData, error: eventError } = await supabase
@@ -296,7 +219,7 @@ export async function POST(request: NextRequest) {
         .select('*')
         .eq('id', templateId)
         .eq('user_id', hostId)
-        .eq('template_type', method)
+        .eq('template_type', 'email') // Only email templates
         .single();
 
       if (templateError) {
@@ -312,16 +235,14 @@ export async function POST(request: NextRequest) {
         .from('invitation_templates')
         .select('*')
         .eq('user_id', hostId)
-        .eq('template_type', method)
+        .eq('template_type', 'email') // Only email templates
         .eq('is_default', true)
         .single();
 
       if (defaultError || !defaultTemplate) {
         // Create a basic default template
         template = {
-          message_template: method === 'sms' 
-            ? 'Hi! {{host_name}} invited you to "{{event_name}}" on {{event_date}}. RSVP here: {{rsvp_link}}'
-            : 'Hi!\n\n{{host_name}} has invited you to {{event_name}}.\n\nDate: {{event_date}}\nTime: {{event_time}}\nLocation: {{event_location}}\n\nPlease RSVP here: {{rsvp_link}}',
+          message_template: 'Hi!\n\n{{host_name}} has invited you to {{event_name}}.\n\nDate: {{event_date}}\nTime: {{event_time}}\nLocation: {{event_location}}\n\nPlease RSVP here: {{rsvp_link}}',
           subject: 'Invitation: {{event_name}}',
           use_custom_branding: false
         };
@@ -331,7 +252,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create RSVP link - using the invitation token for tracking
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yup.rsvp';
     
     const results = [];
     const errors = [];
@@ -340,11 +261,7 @@ export async function POST(request: NextRequest) {
     for (const recipient of recipients) {
       try {
         // Validate recipient data based on method
-        if (method === 'sms' && !recipient.phone) {
-          errors.push(`Missing phone number for recipient: ${recipient.name || 'Unknown'}`);
-          continue;
-        }
-        if (method === 'email' && !recipient.email) {
+        if (!recipient.email) {
           errors.push(`Missing email address for recipient: ${recipient.name || 'Unknown'}`);
           continue;
         }
@@ -355,9 +272,8 @@ export async function POST(request: NextRequest) {
           .insert({
             event_id: eventId,
             invited_by: hostId,
-            invitation_method: method,
-            recipient_phone: method === 'sms' ? recipient.phone : null,
-            recipient_email: method === 'email' ? recipient.email : null,
+            invitation_method: 'email',
+            recipient_email: recipient.email,
             recipient_name: recipient.name,
             custom_message: customMessage,
             status: 'sent'
@@ -366,7 +282,7 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (invitationError) {
-          errors.push(`Failed to create invitation for ${recipient.name || recipient.phone || recipient.email}: ${invitationError.message}`);
+          errors.push(`Failed to create invitation for ${recipient.name || recipient.email}: ${invitationError.message}`);
           continue;
         }
 
@@ -374,37 +290,29 @@ export async function POST(request: NextRequest) {
         const rsvpLink = `${baseUrl}/events/${eventData.slug}?inv=${invitationData.invitation_token}`;
 
         // Send invitation based on method
-        let sendResult;
-        if (method === 'sms') {
-          sendResult = await sendSMSInvitation(
-            invitationData,
-            eventData,
-            hostData,
-            customMessage || template.message_template,
-            rsvpLink
-          );
-        } else {
-          sendResult = await sendEmailInvitation(
-            invitationData,
-            eventData,
-            hostData,
-            template,
-            rsvpLink
-          );
-        }
+        type EmailResult = { success: boolean; messageId?: string; error?: string };
+        
+        let sendResult: EmailResult;
+        sendResult = await sendEmailInvitation(
+          invitationData,
+          eventData,
+          hostData,
+          template,
+          rsvpLink
+        );
 
         results.push({
           recipient: recipient,
           invitation_id: invitationData.id,
           invitation_token: invitationData.invitation_token,
           success: sendResult.success,
-          message_id: sendResult.messageSid || sendResult.messageId,
+          message_id: 'messageId' in sendResult ? sendResult.messageId : undefined,
           error: sendResult.error
         });
 
       } catch (error: any) {
         console.error('Error processing recipient:', error);
-        errors.push(`Failed to send to ${recipient.name || recipient.phone || recipient.email}: ${error.message}`);
+        errors.push(`Failed to send to ${recipient.name || recipient.email}: ${error.message}`);
       }
     }
 
@@ -478,7 +386,6 @@ export async function GET(request: NextRequest) {
     // Calculate summary statistics
     const summary = {
       total_sent: analytics?.length || 0,
-      sms_sent: analytics?.filter(a => a.invitation_method === 'sms').length || 0,
       email_sent: analytics?.filter(a => a.invitation_method === 'email').length || 0,
       delivered: analytics?.filter(a => a.final_status === 'delivered').length || 0,
       opened: analytics?.filter(a => a.final_status === 'opened').length || 0,
