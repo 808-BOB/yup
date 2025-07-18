@@ -2,18 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
-// Create a service role client to bypass RLS for test operations
-const serviceSupabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
-
 function generateSlug(title: string): string {
   return title
     .toLowerCase()
@@ -40,6 +28,33 @@ function generateTestUUID(): string {
 
 export async function POST(request: NextRequest) {
   try {
+    // Validate environment variables
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Missing required environment variables for test endpoint');
+      return NextResponse.json(
+        { 
+          error: "Configuration error", 
+          details: "Missing required Supabase environment variables",
+          missingVars: {
+            supabaseUrl: !supabaseUrl,
+            supabaseServiceKey: !supabaseServiceKey
+          }
+        },
+        { status: 500 }
+      );
+    }
+
+    // Create service role client to bypass RLS for test operations
+    const serviceSupabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
+
     const body = await request.json();
     const { title, date, location, description, hostId } = body;
 
@@ -115,6 +130,10 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// Add runtime configuration to prevent static generation
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // Example usage:
 // POST /api/test/create-event

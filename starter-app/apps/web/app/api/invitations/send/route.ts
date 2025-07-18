@@ -5,27 +5,6 @@ import nodemailer from 'nodemailer';
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';
 
-// Create Supabase client with service role
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
-
-// Initialize email client (using nodemailer with your email service)
-const emailClient = nodemailer.createTransport({
-  service: process.env.EMAIL_SERVICE || 'gmail', // or your email service
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
-
 interface InvitationData {
   eventId: number;
   hostId: string;
@@ -76,12 +55,28 @@ async function sendEmailInvitation(
   eventData: any,
   hostData: any,
   template: any,
-  rsvpLink: string
+  rsvpLink: string,
+  supabase: any
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
   try {
     if (!invitation.recipient_email) {
       throw new Error('Email address is required for email invitation');
     }
+
+    // Check if email configuration is available
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      console.log('Email not configured, skipping email invitation');
+      return { success: false, error: 'Email service not configured' };
+    }
+
+    // Initialize email client inside the function
+    const emailClient = nodemailer.createTransport({
+      service: process.env.EMAIL_SERVICE || 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
 
     const subject = replacePlaceholders(
       template.subject || 'You\'re invited to {{event_name}}',
@@ -151,6 +146,29 @@ async function sendEmailInvitation(
 
 export async function POST(request: NextRequest) {
   try {
+    // Validate Supabase environment variables
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Missing required Supabase environment variables');
+      return NextResponse.json(
+        { 
+          error: "Configuration error", 
+          details: "Missing required Supabase environment variables" 
+        },
+        { status: 500 }
+      );
+    }
+
+    // Create Supabase client with service role
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
+
     const {
       eventId,
       hostId,
@@ -298,7 +316,8 @@ export async function POST(request: NextRequest) {
           eventData,
           hostData,
           template,
-          rsvpLink
+          rsvpLink,
+          supabase
         );
 
         results.push({
@@ -353,6 +372,29 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Validate Supabase environment variables for analytics
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Missing required Supabase environment variables for analytics');
+      return NextResponse.json(
+        { 
+          error: "Configuration error", 
+          details: "Missing required Supabase environment variables for analytics" 
+        },
+        { status: 500 }
+      );
+    }
+
+    // Create Supabase client with service role for analytics
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
 
     // Verify user owns the event
     const { data: eventData, error: eventError } = await supabase

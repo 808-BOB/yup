@@ -9,13 +9,31 @@ import { cookies } from 'next/headers'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_PROJECT_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+// Handle missing environment variables gracefully
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables')
+  console.error('Missing Supabase environment variables:', {
+    url: !!supabaseUrl,
+    anonKey: !!supabaseAnonKey
+  });
 }
 
 // 1. Full-featured server client that uses Next.js cookies helper
 export async function createServerSupabaseClient() {
   const cookieStore = await cookies()
+
+  // Return mock client if environment variables are missing
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return {
+      from: () => ({
+        select: () => ({
+          eq: () => ({ single: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }) })
+        })
+      }),
+      auth: {
+        getUser: () => Promise.resolve({ data: { user: null }, error: new Error('Supabase not configured') })
+      }
+    } as any;
+  }
 
   return createServerClient(supabaseUrl!, supabaseAnonKey!, {
     cookies: {
@@ -42,6 +60,20 @@ export async function createServerSupabaseClient() {
 
 // 2. Lightweight helper used in many API routes (no cookies needed)
 export function supabaseServer() {
+  // Return mock client if environment variables are missing
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return {
+      from: () => ({
+        select: () => ({
+          eq: () => ({ single: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }) })
+        })
+      }),
+      auth: {
+        getUser: () => Promise.resolve({ data: { user: null }, error: new Error('Supabase not configured') })
+      }
+    } as any;
+  }
+
   return createClient(supabaseUrl!, supabaseAnonKey!, {
     auth: {
       persistSession: false,
@@ -58,4 +90,4 @@ export async function getServerUser() {
   return user
 }
 
-export default supabaseServer 
+export default supabaseServer

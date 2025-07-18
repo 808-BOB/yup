@@ -4,19 +4,24 @@ import { supabase } from "@/lib/supabase";
 import type { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const supabase = supabaseServer();
+  try {
+    const { slug } = await params;
+    const supabase = supabaseServer();
 
-  const { data, error } = await supabase
-    .from("events")
-    .select("*, responses(count:yupCount)")
-    .or(`slug.eq.${slug},id.eq.${slug}`)
-    .single();
+    const { data, error } = await supabase
+      .from("events")
+      .select("*, responses(count:yupCount)")
+      .or(`slug.eq.${slug},id.eq.${slug}`)
+      .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 404 });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 404 });
+    }
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error('Error in GET /api/events/[slug]:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-  return NextResponse.json(data);
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
@@ -39,6 +44,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ sl
     if (!image_url) {
       return NextResponse.json({ error: "image_url is required" }, { status: 400 });
     }
+
+    const supabase = supabaseServer();
 
     // Update the event in the database (support both slug and ID lookup)
     const { data, error } = await supabase
@@ -64,4 +71,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ sl
     console.error("Error updating event:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-} 
+}
+
+// Add runtime configuration to prevent static generation
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic'; 

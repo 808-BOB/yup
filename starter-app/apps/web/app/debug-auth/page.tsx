@@ -3,6 +3,9 @@ import { useAuth } from "@/utils/auth-context";
 import { supabase } from "@/lib/supabase";
 import { useState, useEffect } from "react";
 
+// Force dynamic rendering for this debug page
+export const dynamic = 'force-dynamic';
+
 export default function DebugAuthPage() {
   const { user, isLoading } = useAuth();
   const [sessionInfo, setSessionInfo] = useState<any>(null);

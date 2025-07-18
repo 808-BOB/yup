@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createClient } from '@supabase/supabase-js';
 
 export async function GET(
   request: NextRequest,
@@ -8,14 +8,46 @@ export async function GET(
   try {
     const { id } = await params;
 
+    // Validate required environment variables
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
+      console.error('Missing required environment variables for debug endpoint');
+      return NextResponse.json(
+        { 
+          error: "Configuration error", 
+          details: "Missing required Supabase environment variables",
+          missingVars: {
+            supabaseUrl: !supabaseUrl,
+            supabaseServiceKey: !supabaseServiceKey,
+            supabaseAnonKey: !supabaseAnonKey
+          }
+        },
+        { status: 500 }
+      );
+    }
+
     console.log('Debug: Checking user with ID:', id);
 
-    // Check if user exists in auth
-    const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(id);
+    // Create service role client for admin operations
+    const serviceSupabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
+
+    // Create regular client for user operations
+    const anonSupabase = createClient(supabaseUrl, supabaseAnonKey);
+
+    // Check if user exists in auth (requires service role)
+    const { data: authUser, error: authError } = await serviceSupabase.auth.admin.getUserById(id);
     console.log('Auth user result:', { authUser, authError });
 
-    // Check if user exists in users table
-    const { data: dbUser, error: dbError } = await supabase
+    // Check if user exists in users table with anon client
+    const { data: dbUser, error: dbError } = await anonSupabase
       .from('users')
       .select('*')
       .eq('id', id);
@@ -23,7 +55,7 @@ export async function GET(
     console.log('Database user query result:', { dbUser, dbError, count: dbUser?.length });
 
     // Also check with service role for RLS bypass
-    const { data: serviceRoleUser, error: serviceError } = await supabase
+    const { data: serviceRoleUser, error: serviceError } = await serviceSupabase
       .from('users')
       .select('*')
       .eq('id', id)
@@ -49,4 +81,8 @@ export async function GET(
       { status: 500 }
     );
   }
-} 
+}
+
+// Add runtime configuration to prevent static generation
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic'; 

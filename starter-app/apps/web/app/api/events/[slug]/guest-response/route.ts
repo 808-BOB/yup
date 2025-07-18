@@ -3,24 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 import twilio from 'twilio';
 import crypto from 'crypto';
 
-// Create Supabase client with service role for guest operations
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
-
-// Initialize Twilio client for host notifications
-const twilioClient = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
-
 interface GuestResponse {
   guestName: string;
   guestEmail?: string;
@@ -59,10 +41,16 @@ async function notifyHostOfGuestResponse(
   guestCount: number
 ): Promise<boolean> {
   try {
-    if (!process.env.TWILIO_PHONE_NUMBER) {
+    if (!process.env.TWILIO_PHONE_NUMBER || !process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
       console.log('Twilio not configured, skipping SMS notification');
       return false;
     }
+
+    // Create Twilio client inside the function
+    const twilioClient = twilio(
+      process.env.TWILIO_ACCOUNT_SID,
+      process.env.TWILIO_AUTH_TOKEN
+    );
 
     const responseText = responseType === "yup" ? "YES" : responseType === "nope" ? "NO" : "MAYBE";
     const guestText = guestCount > 1 ? ` (bringing ${guestCount - 1} guest${guestCount > 2 ? 's' : ''})` : '';
@@ -84,6 +72,29 @@ async function notifyHostOfGuestResponse(
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
+    // Validate Supabase environment variables
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Missing required Supabase environment variables');
+      return NextResponse.json(
+        { 
+          error: "Configuration error", 
+          details: "Missing required Supabase environment variables" 
+        },
+        { status: 500 }
+      );
+    }
+
+    // Create Supabase client with service role for guest operations
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
+
     const eventSlug = (await params).slug;
     const {
       guestName,
@@ -357,6 +368,29 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const eventSlug = (await params).slug;
 
+    // Validate Supabase environment variables
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Missing required Supabase environment variables');
+      return NextResponse.json(
+        { 
+          error: "Configuration error", 
+          details: "Missing required Supabase environment variables" 
+        },
+        { status: 500 }
+      );
+    }
+
+    // Create Supabase client with service role for guest operations
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
+
     // Fetch event data
     const { data: eventData, error: eventError } = await supabase
       .from('events')
@@ -459,4 +493,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       { status: 500 }
     );
   }
-} 
+}
+
+// Add runtime configuration to prevent static generation
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic'; 

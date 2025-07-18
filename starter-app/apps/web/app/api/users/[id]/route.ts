@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
 import { createClient } from '@supabase/supabase-js';
 
 export async function PUT(
@@ -18,6 +17,24 @@ export async function PUT(
       );
     }
 
+    // Validate Supabase environment variables
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('Missing required Supabase environment variables');
+      return NextResponse.json(
+        { 
+          error: "Configuration error", 
+          details: "Missing required Supabase environment variables" 
+        },
+        { status: 500 }
+      );
+    }
+
+    // Create Supabase client inside the function
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+
     // Get the authorization header with the access token
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -31,7 +48,7 @@ export async function PUT(
     const accessToken = authHeader.replace('Bearer ', '');
 
     // Set the session on the supabase client
-    const { data: { user }, error: userError } = await supabase.auth.getUser(accessToken);
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(accessToken);
     
     if (userError || !user) {
       console.error('Auth verification error:', userError);
@@ -147,8 +164,26 @@ export async function GET(
       );
     }
 
+    // Validate Supabase environment variables
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('Missing required Supabase environment variables');
+      return NextResponse.json(
+        { 
+          error: "Configuration error", 
+          details: "Missing required Supabase environment variables" 
+        },
+        { status: 500 }
+      );
+    }
+
+    // Create Supabase client inside the function
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+
     // Get the user profile from Supabase
-    const { data: user, error } = await supabase
+    const { data: user, error } = await supabaseClient
       .from('users')
       .select('*')
       .eq('id', id)
@@ -173,4 +208,8 @@ export async function GET(
       { status: 500 }
     );
   }
-} 
+}
+
+// Add runtime configuration to prevent static generation
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic'; 
