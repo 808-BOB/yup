@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log('[AuthContext] Fetching profile for user:', authUser.id);
 
-      // Add timeout to profile query
+      // Add timeout to profile query - increased timeout to 15 seconds
       const profilePromise = supabase
         .from('users')
         .select('display_name, profile_image_url, phone_number, is_premium, is_pro, is_admin')
@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Profile query timeout')), 5000);
+        setTimeout(() => reject(new Error('Profile query timeout')), 15000);
       });
 
       const { data: profile, error } = await Promise.race([profilePromise, timeoutPromise]) as any;
@@ -111,14 +111,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('[AuthContext] Profile created successfully:', newProfile);
         return { ...authUser, ...newProfile } as User & ExtendedProfile;
       } else if (error) {
-        console.warn('[AuthContext] Error fetching profile:', error.message);
+        if (error.message === 'Profile query timeout') {
+          console.warn('[AuthContext] Profile query timed out, proceeding with basic user data');
+        } else {
+          console.warn('[AuthContext] Error fetching profile:', error.message);
+        }
         return authUser as User & ExtendedProfile;
       }
 
       console.log('[AuthContext] Profile data fetched successfully:', profile);
       return { ...authUser, ...profile } as User & ExtendedProfile;
-    } catch (err) {
-      console.error('[AuthContext] Failed to load profile row:', err);
+    } catch (err: any) {
+      if (err?.message === 'Profile query timeout') {
+        console.warn('[AuthContext] Profile query timed out, proceeding with basic user data');
+      } else {
+        console.error('[AuthContext] Failed to load profile row:', err);
+      }
       return authUser as User & ExtendedProfile;
     }
   };

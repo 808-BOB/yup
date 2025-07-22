@@ -21,10 +21,10 @@ const getContrastingTextColor = (backgroundColor: string) => {
   const r = parseInt(hex.substr(0, 2), 16);
   const g = parseInt(hex.substr(2, 2), 16);
   const b = parseInt(hex.substr(4, 2), 16);
-  
+
   // Calculate luminance
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  
+
   // Return white for dark backgrounds, black for light backgrounds
   return luminance < 0.5 ? '#ffffff' : '#000000';
 };
@@ -129,15 +129,15 @@ export default function EventCard({
           <div className="flex flex-col">
             {/* Title and badges row */}
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <h3 
+              <h3
                 className="font-bold tracking-tight text-base"
                 style={{ color: getContrastingTextColor(branding.theme.secondary) }}
               >
                 {event.title}
               </h3>
               {isOwner && (
-                <Badge 
-                  variant="outline" 
+                <Badge
+                  variant="outline"
                   className="text-xs"
                   style={{
                     backgroundColor: branding.theme.primary + '1A', // 10% opacity
@@ -202,13 +202,13 @@ export default function EventCard({
 
             {/* Date and time */}
             <div className="flex flex-col gap-1 mb-2">
-              <p 
+              <p
                 className="text-sm font-medium"
                 style={{ color: getContrastingTextColor(branding.theme.secondary) + 'CC' }} // 80% opacity
               >
                 {formatDate(event.date)}
               </p>
-              <p 
+              <p
                 className="text-sm font-medium"
                 style={{ color: getContrastingTextColor(branding.theme.secondary) }}
               >
@@ -217,7 +217,7 @@ export default function EventCard({
             </div>
 
             {/* Location */}
-            <div 
+            <div
               className="text-sm mb-4"
               style={{ color: getContrastingTextColor(branding.theme.secondary) + 'CC' }} // 80% opacity
             >
@@ -255,23 +255,23 @@ export default function EventCard({
               {/* Response counts */}
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
-                  <span 
+                  <span
                     className="text-sm font-medium"
                     style={{ color: branding.theme.primary }}
                   >
-                    {responseCounts.yupCount || 0} yup
+                    {responseCounts.yupCount || 0} {branding.customRSVPText.yup.toLowerCase()}
                   </span>
-                  <span 
+                  <span
                     className="text-sm"
                     style={{ color: getContrastingTextColor(branding.theme.secondary) + '80' }} // 50% opacity
                   >
                     •
                   </span>
-                  <span 
+                  <span
                     className="text-sm font-medium"
                     style={{ color: getContrastingTextColor(branding.theme.secondary) + 'CC' }} // 80% opacity
                   >
-                    {responseCounts.nopeCount || 0} nope
+                    {responseCounts.nopeCount || 0} {branding.customRSVPText.nope.toLowerCase()}
                   </span>
                 </div>
               </div>
