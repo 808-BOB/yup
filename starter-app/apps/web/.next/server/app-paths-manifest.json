@@ -1,9 +1,10 @@
 {
   "/api/events/my/route": "app/api/events/my/route.js",
   "/api/events/invited/route": "app/api/events/invited/route.js",
-  "/my-events/page": "app/my-events/page.js",
   "/event-list/page": "app/event-list/page.js",
   "/events/[slug]/edit/page": "app/events/[slug]/edit/page.js",
+  "/my-events/page": "app/my-events/page.js",
   "/profile/page": "app/profile/page.js",
+  "/page": "app/page.js",
   "/upgrade/page": "app/upgrade/page.js"
 }
