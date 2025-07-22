@@ -53,6 +53,8 @@ export async function GET(request: NextRequest) {
 
     console.log('Invitation data:', invitationData?.length || 0);
     console.log('Response data:', responseData?.length || 0);
+    console.log('Invitation event IDs:', invitationData?.map(i => i.event_id) || []);
+    console.log('Response event IDs:', responseData?.map(r => r.event_id) || []);
 
     // Combine and deduplicate event IDs
     const invitedEventIds = [
@@ -62,6 +64,7 @@ export async function GET(request: NextRequest) {
 
     const uniqueEventIds = [...new Set(invitedEventIds)];
     console.log('Total unique invited event IDs:', uniqueEventIds.length);
+    console.log('Unique event IDs:', uniqueEventIds);
 
     // If no invited events, return empty array
     if (uniqueEventIds.length === 0) {
@@ -86,7 +89,7 @@ export async function GET(request: NextRequest) {
           created_at
       `)
       .in('id', uniqueEventIds)
-      .neq("host_id", user.id) // Don't include events they're hosting
+      // .neq("host_id", user.id) // Temporarily removed for testing - allow events where user is host
       .order("created_at", { ascending: false });
 
     // Fetch responses for these events

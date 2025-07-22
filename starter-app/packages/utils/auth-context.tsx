@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log('[AuthContext] Fetching profile for user:', authUser.id);
 
-      // Add timeout to profile query
+      // Add timeout to profile query with better error handling
       const profilePromise = supabase
         .from('users')
         .select('display_name, profile_image_url, phone_number, is_premium, is_pro, is_admin')
@@ -80,10 +80,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Profile query timeout')), 5000);
+        setTimeout(() => reject(new Error('Profile query timeout')), 15000);
       });
 
-      const { data: profile, error } = await Promise.race([profilePromise, timeoutPromise]) as any;
+      let profile, error;
+      try {
+        const result = await Promise.race([profilePromise, timeoutPromise]) as any;
+        profile = result.data;
+        error = result.error;
+      } catch (timeoutError) {
+        console.warn('[AuthContext] Profile query timed out, returning user without profile data');
+        return authUser as User & ExtendedProfile;
+      }
+
+      // If we get here, the query completed but we need to handle the result
+      if (!profile && !error) {
+        console.warn('[AuthContext] Profile query returned no data and no error, returning user without profile data');
+        return authUser as User & ExtendedProfile;
+      }
 
       if (error && error.code === 'PGRST116') {
         // Profile row missing — create it
@@ -129,15 +143,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         console.log('[AuthContext] Getting initial session...');
 
-        // Add a timeout to prevent infinite loading
+        // Add a timeout to prevent infinite loading (increased to 30 seconds)
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Auth initialization timeout')), 10000);
+          setTimeout(() => reject(new Error('Auth initialization timeout')), 30000);
         });
 
         // For OAuth callbacks, this will handle the code exchange automatically
         const sessionPromise = supabase.auth.getSession();
 
-        const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+        let session, error;
+        try {
+          const result = await Promise.race([sessionPromise, timeoutPromise]) as any;
+          session = result.data.session;
+          error = result.error;
+        } catch (timeoutError) {
+          console.warn('[AuthContext] Auth initialization timed out, continuing without session');
+          session = null;
+          error = null;
+        }
 
         if (error) {
           console.error('[AuthContext] Error getting initial session:', error);
@@ -168,6 +191,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('[AuthContext] Setting isLoading to false');
         setIsLoading(false);
       }
+
+      // Fallback: ensure loading state is cleared after a maximum time
+      setTimeout(() => {
+        if (isLoading) {
+          console.warn('[AuthContext] Force clearing loading state after timeout');
+          setIsLoading(false);
+        }
+      }, 35000); // 35 seconds total fallback
     };
 
     console.log('[AuthContext] Starting auth initialization...');

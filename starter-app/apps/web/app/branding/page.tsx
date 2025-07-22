@@ -466,15 +466,15 @@ export default function BrandingPage() {
                       size="sm"
                       variant="outline"
                       onClick={async () => {
-                        await handleColorChange('primary', '#ec4899');
-                        await handleColorChange('secondary', '#0a0a14');
-                        await handleColorChange('tertiary', '#fafafa');
+                        await handleColorChange('primary', '#FF00FF');
+                        await handleColorChange('secondary', '#1a1a1a');
+                        await handleColorChange('tertiary', '#f0f0f0');
                         toast({
                           title: "Colors updated",
                           description: "YUP brand colors applied everywhere (app + invitations).",
                         });
                       }}
-                      className="border-pink-500 text-pink-400 hover:bg-pink-500/10"
+                      className="border-[#FF00FF] text-[#FF00FF] hover:bg-[#FF00FF]/10"
                     >
                       ↻ Use YUP Colors (Everywhere)
                     </Button>
@@ -482,7 +482,7 @@ export default function BrandingPage() {
                       size="sm"
                       variant="outline"
                       onClick={async () => {
-                        await handleColorChange('primary', '#ec4899');
+                        await handleColorChange('primary', '#FF00FF');
                         toast({
                           title: "Colors updated", 
                           description: "YUP brand colors applied to invitations only. App keeps your custom theme.",
@@ -643,7 +643,7 @@ export default function BrandingPage() {
                         </Button>
                       </div>
                     ) : (
-                      <div className="w-64 h-32 bg-gray-950 rounded-md flex items-center justify-center border-2 border-dashed border-gray-700 transition-colors hover:border-pink-500">
+                      <div className="w-64 h-32 bg-gray-950 rounded-md flex items-center justify-center border-2 border-dashed border-gray-700 transition-colors hover:border-[#FF00FF]">
                         <div className="text-center">
                           <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
                           <p className="text-sm text-gray-400">No logo uploaded</p>

@@ -3,14 +3,15 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Share2, Edit, Check, X } from "lucide-react";
+import { ChevronRight, Share2, Edit, Check, X, MapPin } from "lucide-react";
 import { formatDate, formatTime } from "../utils/date-formatter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/utils/use-toast";
 import { useAuth } from "@/utils/auth-context";
 import { useBranding } from "@/contexts/BrandingContext";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseClient } from "@/utils/supabase";
 import ShareEventModal from "./share-event-modal";
 import { type Event } from "@/types";
 
@@ -69,6 +70,7 @@ export default function EventCard({
       if (!showStats || !event.id || event.response_counts) return;
 
       try {
+        const supabase = getSupabaseClient();
         const { data, error } = await supabase
           .from('responses')
           .select('response_type, user_id, created_at')
@@ -130,8 +132,7 @@ export default function EventCard({
             {/* Title and badges row */}
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <h3 
-                className="font-bold tracking-tight text-base"
-                style={{ color: getContrastingTextColor(branding.theme.secondary) }}
+                className="font-bold tracking-tight text-base text-white font-inter"
               >
                 {event.title}
               </h3>
@@ -151,9 +152,9 @@ export default function EventCard({
               {(() => {
                 const eventDate = new Date(event.date);
                 const now = new Date();
-                now.setDate(now.getDate() - 2); // archive threshold - same as page filter
-                const cutoff = now.toISOString().slice(0, 10);
-                return event.date < cutoff;
+                const twoDaysAgo = new Date(now);
+                twoDaysAgo.setDate(now.getDate() - 2);
+                return eventDate < twoDaysAgo;
               })() && (
                 <Badge
                   variant="outline"
@@ -203,14 +204,12 @@ export default function EventCard({
             {/* Date and time */}
             <div className="flex flex-col gap-1 mb-2">
               <p 
-                className="text-sm font-medium"
-                style={{ color: getContrastingTextColor(branding.theme.secondary) + 'CC' }} // 80% opacity
+                className="text-sm font-medium text-date"
               >
                 {formatDate(event.date)}
               </p>
               <p 
-                className="text-sm font-medium"
-                style={{ color: getContrastingTextColor(branding.theme.secondary) }}
+                className="text-sm font-medium text-date"
               >
                 {timeRange}
               </p>
@@ -218,10 +217,10 @@ export default function EventCard({
 
             {/* Location */}
             <div 
-              className="text-sm mb-4"
-              style={{ color: getContrastingTextColor(branding.theme.secondary) + 'CC' }} // 80% opacity
+              className="text-sm mb-4 text-date flex items-center gap-1"
             >
-              <span>📍 {event.location}</span>
+              <MapPin className="h-4 w-4" />
+              <span>{event.location}</span>
             </div>
 
             {/* Bottom section with responses and actions */}
@@ -233,8 +232,7 @@ export default function EventCard({
                     e.stopPropagation();
                     setIsShareModalOpen(true);
                   }}
-                  className="text-sm flex items-center gap-1 hover:opacity-80"
-                  style={{ color: getContrastingTextColor(branding.theme.secondary) + 'CC' }} // 80% opacity
+                  className="text-sm flex items-center gap-1 hover:opacity-80 text-date"
                 >
                   <Share2 className="h-4 w-4" /> Share
                 </button>
@@ -244,8 +242,7 @@ export default function EventCard({
                       e.stopPropagation();
                       router.push(`/events/${event.slug}/edit`);
                     }}
-                    className="text-sm flex items-center gap-1 hover:opacity-80"
-                    style={{ color: getContrastingTextColor(branding.theme.secondary) + 'CC' }} // 80% opacity
+                    className="text-sm flex items-center gap-1 hover:opacity-80 text-date"
                   >
                     <Edit className="h-4 w-4" /> Edit
                   </button>
@@ -256,35 +253,35 @@ export default function EventCard({
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
                   <span 
-                    className="text-sm font-medium"
-                    style={{ color: branding.theme.primary }}
+                    className="text-sm font-medium text-white"
                   >
                     {responseCounts.yupCount || 0} yup
                   </span>
                   <span 
-                    className="text-sm"
-                    style={{ color: getContrastingTextColor(branding.theme.secondary) + '80' }} // 50% opacity
+                    className="text-sm text-date"
                   >
                     •
                   </span>
                   <span 
-                    className="text-sm font-medium"
-                    style={{ color: getContrastingTextColor(branding.theme.secondary) + 'CC' }} // 80% opacity
+                    className="text-sm font-medium text-date"
                   >
                     {responseCounts.nopeCount || 0} nope
                   </span>
                 </div>
               </div>
 
-              {/* View RSVPs link */}
-              <Link
-                href={`/events/${event.slug}/responses`}
+              {/* View RSVPs button */}
+              <Button
+                size="sm"
+                variant="outline"
+                asChild
                 onClick={(e) => e.stopPropagation()}
-                className="text-sm font-medium hover:opacity-80"
-                style={{ color: branding.theme.primary }}
+                className="h-8 px-3 text-xs text-white"
               >
-                View RSVPs
-              </Link>
+                <Link href={`/events/${event.slug}/responses`}>
+                  View RSVPs
+                </Link>
+              </Button>
             </div>
           </div>
         </CardContent>

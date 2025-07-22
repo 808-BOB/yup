@@ -6,10 +6,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/utils/auth-context";
 import { useToast } from "@/utils/use-toast";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseClient } from "@/utils/supabase";
 import Header from "@/dash/header";
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
+import { DateTimeInput } from "@/ui/date-time-input";
 import { Textarea } from "@/ui/textarea";
 import {
   Form,
@@ -77,6 +78,7 @@ export default function EditEventPage() {
     const fetchEvent = async () => {
       if (!slug || !user) return;
 
+      const supabase = getSupabaseClient();
       try {
         const { data, error } = await supabase
           .from('events')
@@ -152,6 +154,7 @@ export default function EditEventPage() {
         }
       }
 
+      const supabase = getSupabaseClient();
       const { error } = await supabase
         .from('events')
         .update({
@@ -285,7 +288,7 @@ export default function EditEventPage() {
                     <FormItem>
                       <FormLabel className="text-gray-400">Date</FormLabel>
                       <FormControl>
-                        <Input
+                        <DateTimeInput
                           type="date"
                           className="bg-transparent border-gray-700 text-white"
                           {...field}
@@ -304,7 +307,7 @@ export default function EditEventPage() {
                       <FormItem>
                         <FormLabel className="text-gray-400">Start Time</FormLabel>
                         <FormControl>
-                          <Input
+                          <DateTimeInput
                             type="time"
                             className="bg-transparent border-gray-700 text-white"
                             {...field}
@@ -322,7 +325,7 @@ export default function EditEventPage() {
                       <FormItem>
                         <FormLabel className="text-gray-400">End Time</FormLabel>
                         <FormControl>
-                          <Input
+                          <DateTimeInput
                             type="time"
                             className="bg-transparent border-gray-700 text-white"
                             {...field}

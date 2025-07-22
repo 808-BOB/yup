@@ -1,7 +1,5 @@
 import { createBrowserClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
-// Removed server-specific imports to keep this file universal (usable in both client and server environments)
-// (no CookieOptions import – server-only logic moved)
 
 // Environment variables with fallback support
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_PROJECT_URL
@@ -17,6 +15,10 @@ export function createClientSupabaseClient() {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Missing Supabase environment variables:', {
+      url: supabaseUrl ? 'SET' : 'NOT SET',
+      key: supabaseAnonKey ? 'SET' : 'NOT SET'
+    });
     throw new Error('Missing required Supabase environment variables');
   }
 
@@ -26,12 +28,20 @@ export function createClientSupabaseClient() {
 export function getSupabaseClient() {
   if (typeof window === 'undefined') {
     // Server-side: create a new client each time
-    return createClient(supabaseUrl!, supabaseAnonKey!)
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Missing Supabase environment variables for server-side client');
+    }
+    return createClient(supabaseUrl, supabaseAnonKey)
   }
   
   // Client-side: use singleton
   if (!browserClient) {
-    browserClient = createClientSupabaseClient()
+    try {
+      browserClient = createClientSupabaseClient()
+    } catch (error) {
+      console.error('Failed to create Supabase browser client:', error);
+      throw error;
+    }
   }
   return browserClient
 }
@@ -53,15 +63,78 @@ export function createServiceSupabaseClient() {
 // For backwards compatibility, provide a default export
 // Create a lazy-loaded client that only initializes when first accessed
 export const supabase = {
-  get auth() { return getSupabaseClient().auth },
-  get from() { return getSupabaseClient().from },
-  get storage() { return getSupabaseClient().storage },
-  get realtime() { return getSupabaseClient().realtime },
-  get functions() { return getSupabaseClient().functions },
-  get channel() { return getSupabaseClient().channel },
-  get removeChannel() { return getSupabaseClient().removeChannel },
-  get removeAllChannels() { return getSupabaseClient().removeAllChannels },
-  get getChannels() { return getSupabaseClient().getChannels },
+  get auth() { 
+    try {
+      return getSupabaseClient().auth 
+    } catch (error) {
+      console.error('Failed to get Supabase auth:', error);
+      throw error;
+    }
+  },
+  get from() { 
+    try {
+      return getSupabaseClient().from 
+    } catch (error) {
+      console.error('Failed to get Supabase from:', error);
+      throw error;
+    }
+  },
+  get storage() { 
+    try {
+      return getSupabaseClient().storage 
+    } catch (error) {
+      console.error('Failed to get Supabase storage:', error);
+      throw error;
+    }
+  },
+  get realtime() { 
+    try {
+      return getSupabaseClient().realtime 
+    } catch (error) {
+      console.error('Failed to get Supabase realtime:', error);
+      throw error;
+    }
+  },
+  get functions() { 
+    try {
+      return getSupabaseClient().functions 
+    } catch (error) {
+      console.error('Failed to get Supabase functions:', error);
+      throw error;
+    }
+  },
+  get channel() { 
+    try {
+      return getSupabaseClient().channel 
+    } catch (error) {
+      console.error('Failed to get Supabase channel:', error);
+      throw error;
+    }
+  },
+  get removeChannel() { 
+    try {
+      return getSupabaseClient().removeChannel 
+    } catch (error) {
+      console.error('Failed to get Supabase removeChannel:', error);
+      throw error;
+    }
+  },
+  get removeAllChannels() { 
+    try {
+      return getSupabaseClient().removeAllChannels 
+    } catch (error) {
+      console.error('Failed to get Supabase removeAllChannels:', error);
+      throw error;
+    }
+  },
+  get getChannels() { 
+    try {
+      return getSupabaseClient().getChannels 
+    } catch (error) {
+      console.error('Failed to get Supabase getChannels:', error);
+      throw error;
+    }
+  },
 }
 
 export default supabase 

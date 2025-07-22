@@ -41,7 +41,7 @@ export function ColorPicker({ label, value, onChange, disabled, className, prima
   // Professional color presets with YUP.RSVP Pink, Black, White colors first
   const presetColors = [
     // YUP.RSVP brand colors (Pink, Black, White)
-    "#ec4899", "#0a0a14", "#fafafa", "#f8bbd9", "#fce4ec",
+    "#FF00FF", "#0a0a14", "#fafafa", "#f8bbd9", "#fce4ec",
     "#e91e63", "#ad1457", "#c2185b", "#d81b60",
     // Additional neutral variants
     "#ffffff", "#f9fafb", "#f3f4f6", "#e5e7eb", "#d1d5db",
@@ -59,8 +59,8 @@ export function ColorPicker({ label, value, onChange, disabled, className, prima
           type="button"
           className={cn(
             "w-12 h-10 rounded-md border-2 transition-all duration-200",
-            "border-gray-600 hover:border-pink-500 cursor-pointer flex-shrink-0",
-            "focus:outline-none focus:ring-2 focus:ring-pink-500/20",
+                    "border-gray-600 hover:border-[#FF00FF] cursor-pointer flex-shrink-0",
+        "focus:outline-none focus:ring-2 focus:ring-[#FF00FF]/20",
             "relative overflow-hidden"
           )}
           style={{ backgroundColor: value }}
@@ -103,9 +103,9 @@ export function ColorPicker({ label, value, onChange, disabled, className, prima
                 type="button"
                 className={cn(
                   "w-8 h-8 rounded border-2 transition-all duration-150",
-                  "border-gray-600 hover:border-pink-500 cursor-pointer relative overflow-hidden",
-                  "focus:outline-none focus:ring-2 focus:ring-pink-500/20",
-                  value === color && "ring-2 ring-pink-500 border-pink-500"
+                          "border-gray-600 hover:border-[#FF00FF] cursor-pointer relative overflow-hidden",
+        "focus:outline-none focus:ring-2 focus:ring-[#FF00FF]/20",
+        value === color && "ring-2 ring-[#FF00FF] border-[#FF00FF]"
                 )}
                 style={{ backgroundColor: color }}
                 onClick={() => handleColorChange(color)}

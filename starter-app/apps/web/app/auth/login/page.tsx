@@ -11,7 +11,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/ui/tabs";
 import { Input } from "@/ui/input";
 import { Button } from "@/ui/button";
-import { Toaster } from "@/ui/toaster";
 
 function AuthPageContent() {
   console.log('📱 [LoginPage] Component rendering...');
@@ -215,7 +214,7 @@ function AuthPageContent() {
                 <label className="text-gray-400 uppercase text-xs tracking-wider mb-2 block">Password</label>
                 <Input type="password" value={form.password} onChange={(e)=>setForm({...form, password: e.target.value})} placeholder="Enter your password" className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12" />
               </div>
-              <Button disabled={isSubmitting} className="btn-yup w-full h-12 rounded-none uppercase">
+              <Button disabled={isSubmitting} className="w-full h-12 rounded-none uppercase text-white">
                 {isSubmitting ? "Signing In..." : "Sign In"}
               </Button>
             </form>
@@ -247,7 +246,7 @@ function AuthPageContent() {
                       type="submit"
                       disabled={isSubmitting}
                       size="sm"
-                      className="btn-yup rounded-none"
+                      className="rounded-none text-white"
                     >
                       {isSubmitting ? "Sending..." : "Send Reset Link"}
                     </Button>
@@ -297,7 +296,7 @@ function AuthPageContent() {
                 <label className="text-gray-400 uppercase text-xs tracking-wider mb-2 block">Confirm Password</label>
                 <Input type="password" value={signupForm.confirm} onChange={(e)=>setSignupForm({...signupForm, confirm:e.target.value})} placeholder="Confirm your password" className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12" />
               </div>
-              <Button disabled={isSubmitting} className="btn-yup w-full h-12 rounded-none uppercase">
+              <Button disabled={isSubmitting} className="w-full h-12 rounded-none uppercase text-white">
                 {isSubmitting ? "Creating Account..." : "Create Account"}
               </Button>
             </form>
@@ -332,7 +331,6 @@ function AuthPageContent() {
           </div>
         </div>
       </div>
-      <Toaster />
     </div>
   );
 }

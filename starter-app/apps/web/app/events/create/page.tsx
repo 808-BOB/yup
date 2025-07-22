@@ -10,6 +10,7 @@ import Upload from "lucide-react/dist/esm/icons/upload";
 import Loader2 from "lucide-react/dist/esm/icons/loader-2";
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
+import { DateTimeInput } from "@/ui/date-time-input";
 import { Textarea } from "@/ui/textarea";
 import { Label } from "@/ui/label";
 import { Switch } from "@/ui/switch";
@@ -25,25 +26,25 @@ const Header = dynamic(() => import("@/dash/header"), { ssr: false });
 
 import { z } from "zod";
 
-// Define a simpler type to avoid infinite instantiation
+// Define FormValues to match the schema
 interface FormValues {
   title: string;
   date: string;
-  startTime: string;
-  endTime: string;
+  startTime?: string;
+  endTime?: string;
   location: string;
   address?: string;
   description?: string;
   imageUrl?: string;
   hostId: string;
-  status?: string;
+  status: string;
   slug?: string;
-  allowGuestRsvp?: boolean;
-  allowPlusOne?: boolean;
-  maxGuestsPerRsvp?: number;
+  allowGuestRsvp: boolean;
+  allowPlusOne: boolean;
+  maxGuestsPerRsvp: number;
   customYesText?: string;
   customNoText?: string;
-  useCustomRsvpText?: boolean;
+  useCustomRsvpText: boolean;
 }
 
 export default function CreateEvent() {
@@ -59,7 +60,7 @@ export default function CreateEvent() {
   const totalSteps = 3;
 
   const form = useForm<FormValues>({
-    // resolver: zodResolver(insertEventSchema), // Removed to avoid infinite type issues
+    // resolver: zodResolver(insertEventSchema), // Temporarily disabled to avoid type issues
     defaultValues: {
       title: "",
       date: "",
@@ -98,6 +99,22 @@ export default function CreateEvent() {
         variant: "destructive",
       });
       return;
+    }
+    
+    // Manual validation for required fields
+    if (!data.title || !data.date || !data.location) {
+      toast({
+        title: "Missing Required Fields",
+        description: "Please fill in all required fields: title, date, and location.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Handle time fields - if either start or end time is missing, set both to "TBD"
+    if (!data.startTime || !data.endTime) {
+      data.startTime = "TBD";
+      data.endTime = "TBD";
     }
     
     // Ensure hostId is set
@@ -339,7 +356,7 @@ export default function CreateEvent() {
                   <Label htmlFor="date" className="text-white uppercase text-xs tracking-wider font-medium">
                     Date
                   </Label>
-                  <Input
+                  <DateTimeInput
                     id="date"
                     type="date"
                     {...form.register("date")}
@@ -354,9 +371,9 @@ export default function CreateEvent() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="startTime" className="text-white uppercase text-xs tracking-wider font-medium">
-                      Start Time
+                      Start Time (Optional)
                     </Label>
-                    <Input
+                    <DateTimeInput
                       id="startTime"
                       type="time"
                       {...form.register("startTime")}
@@ -369,9 +386,9 @@ export default function CreateEvent() {
 
                   <div className="space-y-2">
                     <Label htmlFor="endTime" className="text-white uppercase text-xs tracking-wider font-medium">
-                      End Time
+                      End Time (Optional)
                     </Label>
-                    <Input
+                    <DateTimeInput
                       id="endTime"
                       type="time"
                       {...form.register("endTime")}
@@ -381,6 +398,10 @@ export default function CreateEvent() {
                       <p className="text-primary text-sm">{form.formState.errors.endTime.message}</p>
                     )}
                   </div>
+                </div>
+                
+                <div className="text-sm text-gray-400 text-center">
+                  <p>Leave time fields empty to show "TBD"</p>
                 </div>
               </div>
             )}
@@ -488,7 +509,7 @@ export default function CreateEvent() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="flex-1 bg-black border-gray-700 text-gray-300 hover:text-white uppercase tracking-wider rounded-none h-12"
+                  className="flex-1 uppercase tracking-wider rounded-none h-12"
                   onClick={prevStep}
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" /> Previous
@@ -498,7 +519,7 @@ export default function CreateEvent() {
               {currentStep < totalSteps ? (
                 <Button
                   type="button"
-                  className="flex-1 bg-primary hover:bg-primary/90 rounded-none h-12 uppercase tracking-wider"
+                  className="flex-1 rounded-none h-12 uppercase tracking-wider"
                   onClick={nextStep}
                 >
                   Next <ArrowRight className="h-4 w-4 ml-2" />
@@ -507,7 +528,7 @@ export default function CreateEvent() {
                 <Button
                   type="button"
                   onClick={form.handleSubmit(onSubmit)}
-                  className="flex-1 bg-primary hover:bg-primary/90 rounded-none h-12 uppercase tracking-wider"
+                  className="flex-1 rounded-none h-12 uppercase tracking-wider"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (

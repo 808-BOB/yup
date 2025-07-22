@@ -14,7 +14,7 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+          "border border-primary bg-background text-primary hover:bg-primary hover:text-white",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
@@ -42,19 +42,18 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, style, ...props }, ref) => {
-    const { accessibleTextColor, primaryColor } = useAccessibleColors();
     const Comp = asChild ? Slot : "button";
     
-    // Apply WCAG accessible text color for primary variant buttons
-    const accessibleStyle = variant === "default" && primaryColor ? {
-      color: accessibleTextColor,
+    // Primary buttons should always have white text according to style guide
+    const buttonStyle = variant === "default" ? {
+      color: '#ffffff',
       ...style
     } : style;
     
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
-        style={accessibleStyle}
+        style={buttonStyle}
         ref={ref}
         {...props}
       />

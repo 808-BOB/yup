@@ -130,8 +130,7 @@ export default function EventListPage() {
           <CardContent className="w-full p-6 flex flex-col gap-6">
             <div className="flex justify-between items-center mb-6">
               <h2 
-                className="text-xl font-bold tracking-tight uppercase"
-                style={{ color: branding.theme.primary }}
+                className="text-xl font-bold tracking-tight uppercase text-white"
               >
                 Invited Events
                 {filter !== "all" && ` - ${filter.toUpperCase()}`}

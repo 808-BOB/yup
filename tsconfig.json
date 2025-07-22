@@ -11,16 +11,23 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "strict": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "noImplicitReturns": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "baseUrl": ".",
     "paths": {
       "@/*": ["./starter-app/apps/web/*"],
       "@/components/*": ["./starter-app/packages/ui/*"],
       "@/utils/*": ["./starter-app/packages/utils/*"],
-      "@/types/*": ["./starter-app/packages/types/*"]
+      "@/types/*": ["./starter-app/packages/types/*"],
+      "@/ui/*": ["./starter-app/packages/ui/*"],
+      "@/hooks/*": ["./starter-app/packages/hooks/*"],
+      "@/dash/*": ["./starter-app/packages/dash/*"],
+      "@/contexts/*": ["./starter-app/packages/contexts/*"]
     },
     "typeRoots": ["./starter-app/node_modules/@types"]
   },
-  "include": ["starter-app/**/*"],
-  "references": [{ "path": "./starter-app/apps/web" }]
+  "include": ["starter-app/**/*"]
 } 

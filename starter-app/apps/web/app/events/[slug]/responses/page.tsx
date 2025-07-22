@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/utils/auth-context";
 import { useToast } from "@/utils/use-toast";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseClient } from "@/lib/supabase";
 import Header from "@/dash/header";
 import { Button } from "@/ui/button";
 import {
@@ -98,6 +98,21 @@ export default function EventResponsesPage() {
       console.log('fetchEventAndResponses: Starting data fetch for', { userId: user.id, slug });
 
       try {
+        // Initialize Supabase client with error handling
+        let supabase;
+        try {
+          supabase = getSupabaseClient();
+          if (!supabase) {
+            console.error('fetchEventAndResponses: Failed to initialize Supabase client');
+            throw new Error('Supabase client not available');
+          }
+        } catch (supabaseError) {
+          console.error('fetchEventAndResponses: Supabase client error:', supabaseError);
+          // Redirect to event details page as fallback
+          router.push(`/events/${slug}`);
+          return;
+        }
+
         // Fetch user plan information
         const { data: planData, error: planError } = await supabase
           .from('users')

@@ -3,6 +3,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Plus, User, LogOut, LogIn, UserPlus, Palette, Paintbrush, CreditCard, Shield } from "lucide-react";
 import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -97,10 +98,10 @@ export default function Header() {
   };
 
   return (
-    <header className="w-full mb-6 py-3 px-4 border-b border-gray-800 sticky top-0 z-50 bg-gray-950">
-      <div className="container mx-auto flex justify-between items-center max-w-4xl">
-      <div className="flex items-center gap-3">
-        {/* YUP Logo with brand color mask */}
+    <header className="w-full mb-6 py-6 shadow-md sticky top-0 z-[100] bg-black">
+      <div className="flex justify-between items-center max-w-lg mx-auto px-6">
+      <div className="flex items-center gap-3 flex-1 justify-start">
+        {/* YUP Logo - Image Version */}
         <div 
           className="cursor-pointer"
           onClick={() => router.push(user ? "/my-events" : "/")}
@@ -114,30 +115,14 @@ export default function Header() {
           role="button"
           aria-label="Navigate to dashboard"
         >
-          <img
-            src={defaultLogo}
-            alt="Yup.RSVP"
-              className="h-8 sm:h-12 w-auto max-w-[160px] sm:max-w-[200px] object-contain transition-all duration-200"
-            style={{
-              // Bulletproof visibility: adapt to any background color
-              filter: (() => {
-                const baseShadow = isLightBackground 
-                  ? 'drop-shadow(0 1px 3px rgba(0,0,0,0.4))'  // Dark shadow on light bg
-                  : 'drop-shadow(0 1px 3px rgba(255,255,255,0.3))'; // Light shadow on dark bg
-                
-                if (isLightBackground) {
-                  // Light background: make logo dark/black
-                  return `brightness(0) saturate(100%) contrast(2) ${baseShadow}`;
-                } else {
-                  // Dark background: make logo white/light
-                  return `brightness(0) saturate(100%) invert(1) contrast(1.8) brightness(1.2) ${baseShadow}`;
-                }
-              })(),
-              // Ensure smooth transitions when colors change
-              transition: 'filter 0.3s ease-in-out'
-            }}
+          <img 
+            src="/Yup-logo.png" 
+            alt="Yup.RSVP" 
+            className="h-8 sm:h-10 w-auto cursor-pointer" 
           />
         </div>
+
+
 
         {/* Separator and Brand Logo (for premium users with custom logos) */}
         {isPremium && branding.logoUrl && branding.logoUrl !== defaultLogo && (
@@ -158,14 +143,14 @@ export default function Header() {
             variant="default"
             size="sm"
             onClick={() => router.push("/events/create")}
-              className="rounded-sm h-8 w-8 p-0 sm:h-10 sm:w-10 hover:opacity-90"
+              className="rounded-sm h-8 w-8 p-0 sm:h-10 sm:w-10 hover:opacity-90 text-white"
               style={{
                 backgroundColor: branding.theme.primary,
-                color: getContrastingTextColor(branding.theme.primary),
+                color: 'white',
                 border: 'none'
               }}
           >
-            <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+            <Plus className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
           </Button>
         )}
 
@@ -198,15 +183,16 @@ export default function Header() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="rounded-sm w-8 h-8 flex items-center justify-center"
+                className="rounded-sm w-8 h-8 flex items-center justify-center text-white"
                 style={{
                   backgroundColor: branding.theme.secondary,
-                  border: `2px solid ${branding.theme.primary}`
+                  border: `2px solid ${branding.theme.primary}`,
+                  color: 'white'
                 }}
               >
                 <User 
-                  className="h-4 w-4" 
-                  style={{ color: branding.theme.primary }}
+                  className="h-4 w-4 text-white" 
+                  style={{ color: 'white' }}
                 />
               </Button>
             )}

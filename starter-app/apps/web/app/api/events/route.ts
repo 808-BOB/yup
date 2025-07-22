@@ -1,19 +1,80 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { insertEventSchema } from '@/utils/validators/event';
 import { createServiceSupabaseClient } from '@/lib/supabase';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 
 export async function POST(request: NextRequest) {
   try {
+    // Get user session from cookies
+    const cookieStore = cookies();
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_PROJECT_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return NextResponse.json(
+        { error: 'Supabase not configured' },
+        { status: 500 }
+      );
+    }
+
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options: any) {
+          cookieStore.set(name, value, options);
+        },
+        remove(name: string, options: any) {
+          cookieStore.set(name, '', options);
+        },
+      },
+    });
+
+    // Get user session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError || !session?.user) {
+      console.error('Authentication error:', sessionError);
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const eventData = await request.json();
 
     // Validate event data
     const validatedData = insertEventSchema.parse(eventData);
 
-    // Use centralized service client
-    const supabase = createServiceSupabaseClient();
+    // Ensure the user is creating an event for themselves
+    if (validatedData.hostId !== session.user.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized - can only create events for yourself' },
+        { status: 403 }
+      );
+    }
+
+    // Check environment variables for service client
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_API_KEY;
+    
+    if (!supabaseServiceKey) {
+      console.error('Missing Supabase service key');
+      return NextResponse.json(
+        { 
+          error: 'Supabase not configured', 
+          details: 'Please set SUPABASE_SERVICE_ROLE_KEY environment variable' 
+        },
+        { status: 500 }
+      );
+    }
+
+    // Use service client for database operations
+    const serviceSupabase = createServiceSupabaseClient();
 
     // Check user's plan and enforce limits
-    const { data: userData, error: userError } = await supabase
+    const { data: userData, error: userError } = await serviceSupabase
       .from('users')
       .select(`
         is_premium, 
@@ -26,7 +87,7 @@ export async function POST(request: NextRequest) {
         custom_nope_text,
         custom_maybe_text
       `)
-      .eq('id', eventData.hostId)
+      .eq('id', validatedData.hostId)
       .single();
 
     if (userError) {
@@ -42,10 +103,10 @@ export async function POST(request: NextRequest) {
 
     if (isFreeUser) {
       // Count existing events for this user
-      const { count: eventCount, error: countError } = await supabase
+      const { count: eventCount, error: countError } = await serviceSupabase
         .from('events')
         .select('*', { count: 'exact', head: true })
-        .eq('host_id', eventData.hostId);
+        .eq('host_id', validatedData.hostId);
 
       if (countError) {
         console.error('Error counting user events:', countError);
@@ -94,8 +155,8 @@ export async function POST(request: NextRequest) {
     const baseInsert: Record<string, unknown> = {
       title: validatedData.title,
       date: validatedData.date,
-      start_time: validatedData.startTime,
-      end_time: validatedData.endTime,
+      start_time: validatedData.startTime || "TBD",
+      end_time: validatedData.endTime || "TBD",
       location: validatedData.location,
       description: validatedData.description,
       host_id: validatedData.hostId,
@@ -126,7 +187,7 @@ export async function POST(request: NextRequest) {
     }
 
     // First insert attempt – try with the full payload.
-    let { data: event, error: insertError } = await supabase
+    let { data: event, error: insertError } = await serviceSupabase
       .from('events')
       .insert([baseInsert])
       .select()
@@ -150,7 +211,7 @@ export async function POST(request: NextRequest) {
         delete (safeInsert as any)[col];
       }
 
-      ({ data: event, error: insertError } = await supabase
+      ({ data: event, error: insertError } = await serviceSupabase
         .from('events')
         .insert([safeInsert])
         .select()
@@ -168,8 +229,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, event });
   } catch (error) {
     console.error('Error in POST /api/events:', error);
+    
+    // Provide more specific error messages
+    let errorMessage = 'Failed to process request';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to process request' },
+      { 
+        error: errorMessage,
+        details: 'Check server logs for more information'
+      },
       { status: 500 }
     );
   }

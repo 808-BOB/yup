@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/utils/auth-context";
 import { useToast } from "@/utils/use-toast";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseClient } from "@/utils/supabase";
 
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
@@ -161,6 +161,7 @@ export default function PhoneVerificationPage() {
         });
 
         // Get the current session to include in the authorization header
+        const supabase = getSupabaseClient();
         const { data: sessionData } = await supabase.auth.getSession();
         if (!sessionData.session?.access_token) {
           throw new Error("No valid session found. Please log in again.");

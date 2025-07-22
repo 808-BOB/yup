@@ -36,8 +36,36 @@ export async function GET(request: NextRequest) {
     if (hostedError) {
       return NextResponse.json({ error: hostedError.message }, { status: 500 });
     }
+
+    // Fetch response counts for all hosted events
+    const eventIds = hostedEvents?.map(event => event.id) || [];
+    let responseCounts = {};
     
-    return NextResponse.json(hostedEvents || []);
+    if (eventIds.length > 0) {
+      const { data: responses, error: responsesError } = await serviceSupabase
+        .from("responses")
+        .select("event_id, response_type")
+        .in("event_id", eventIds);
+
+      if (!responsesError && responses) {
+        // Calculate response counts for each event
+        responseCounts = responses.reduce((acc, response) => {
+          if (!acc[response.event_id]) {
+            acc[response.event_id] = { yupCount: 0, nopeCount: 0, maybeCount: 0 };
+          }
+          acc[response.event_id][`${response.response_type}Count`]++;
+          return acc;
+        }, {});
+      }
+    }
+
+    // Add response counts to events
+    const eventsWithCounts = hostedEvents?.map(event => ({
+      ...event,
+      response_counts: responseCounts[event.id] || { yupCount: 0, nopeCount: 0, maybeCount: 0 }
+    })) || [];
+
+    return NextResponse.json(eventsWithCounts || []);
   } catch (error) {
     console.error('API error:', error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

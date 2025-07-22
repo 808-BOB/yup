@@ -4,8 +4,8 @@ import { z } from 'zod';
 export const insertEventSchema = z.object({
   title: z.string().min(1, "Event title is required"),
   date: z.string().min(1, "Event date is required"),
-  startTime: z.string().min(1, "Start time is required"),
-  endTime: z.string().min(1, "End time is required"),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
   location: z.string().min(1, "Location is required"),
   address: z.string().optional(),
   description: z.string().optional(),

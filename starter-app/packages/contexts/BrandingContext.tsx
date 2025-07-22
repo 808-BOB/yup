@@ -28,9 +28,9 @@ interface BrandingContextType {
 }
 
 const defaultTheme: BrandingTheme = {
-  primary: '#ec4899',
-  secondary: '#0a0a14',
-  tertiary: '#fafafa',
+  primary: '#FF00FF',
+  secondary: '#1a1a1a',
+  tertiary: '#f0f0f0',
 };
 
 const defaultRSVPText: CustomRSVPText = {

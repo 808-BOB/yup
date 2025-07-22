@@ -34,11 +34,11 @@ export default function OAuthCallback() {
     
     console.log('[OAuthCallback] No OAuth errors, waiting for auth state...');
     
-    // Set a timeout to prevent infinite loading
+    // Set a timeout to prevent infinite loading (increased to 30 seconds)
     const timeout = setTimeout(() => {
       console.warn('[OAuthCallback] Auth callback timeout reached');
       setTimeoutReached(true);
-    }, 10000); // 10 second timeout
+    }, 30000); // 30 second timeout
     
     // Show manual redirect button after 5 seconds
     const manualTimeout = setTimeout(() => {
@@ -100,15 +100,15 @@ export default function OAuthCallback() {
         <div className="flex items-center justify-center gap-3 mb-8">
           <div className="text-3xl font-bold">
             <span className="text-white">YUP.</span>
-            <span className="text-pink-500">RSVP</span>
+                            <span className="text-[#FF00FF]">RSVP</span>
           </div>
         </div>
         
         {/* Loading Spinner */}
         <div className="relative mb-6">
-          <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-700 border-t-pink-500 mx-auto"></div>
+                          <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-700 border-t-[#FF00FF] mx-auto"></div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-6 h-6 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full opacity-60 animate-pulse"></div>
+                            <div className="w-6 h-6 bg-gradient-to-r from-[#FF00FF] to-purple-600 rounded-full opacity-60 animate-pulse"></div>
           </div>
         </div>
         
@@ -144,7 +144,7 @@ export default function OAuthCallback() {
         {/* Progress Indicator */}
         <div className="mt-8">
           <div className="w-full bg-gray-800 rounded-full h-1">
-            <div className="bg-gradient-to-r from-pink-500 to-purple-600 h-1 rounded-full animate-pulse" 
+                            <div className="bg-gradient-to-r from-[#FF00FF] to-purple-600 h-1 rounded-full animate-pulse" 
                  style={{ width: timeoutReached ? '90%' : isLoading ? '60%' : '100%' }}>
             </div>
           </div>

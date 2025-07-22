@@ -73,9 +73,8 @@ export default function ViewSelector({
 
   return (
     <div 
-      className="border rounded-sm"
+      className="border rounded-sm bg-gray-700"
       style={{
-        backgroundColor: branding.theme.secondary + 'F2', // 95% opacity
         borderColor: branding.theme.primary + '33' // 20% opacity
       }}
     >
@@ -86,7 +85,7 @@ export default function ViewSelector({
           className="flex-1 py-2 px-4 rounded-sm font-bold text-center uppercase tracking-wider text-xs border-t-2"
           style={{
             backgroundColor: derivedActiveMainTab === "hosting" ? branding.theme.primary : 'transparent',
-            color: derivedActiveMainTab === "hosting" ? getContrastingTextColor(branding.theme.primary) : getContrastingTextColor(branding.theme.secondary) + 'CC', // 80% opacity
+            color: derivedActiveMainTab === "hosting" ? '#ffffff' : '#ffffff',
             borderTopColor: derivedActiveMainTab === "hosting" ? branding.theme.primary : 'transparent'
           }}
         >
@@ -97,7 +96,7 @@ export default function ViewSelector({
           className="flex-1 py-2 px-4 rounded-sm font-bold text-center uppercase tracking-wider text-xs border-t-2"
           style={{
             backgroundColor: derivedActiveMainTab === "invited" ? branding.theme.primary : 'transparent',
-            color: derivedActiveMainTab === "invited" ? getContrastingTextColor(branding.theme.primary) : getContrastingTextColor(branding.theme.secondary) + 'CC', // 80% opacity
+            color: derivedActiveMainTab === "invited" ? '#ffffff' : '#ffffff',
             borderTopColor: derivedActiveMainTab === "invited" ? branding.theme.primary : 'transparent'
           }}
         >
@@ -107,17 +106,16 @@ export default function ViewSelector({
 
       {/* Response Filter Subtabs */}
       <div 
-        className="flex border-t"
+        className="flex border-t bg-gray-700"
         style={{
-          borderTopColor: branding.theme.primary + '33', // 20% opacity
-          backgroundColor: branding.theme.secondary + 'CC' // 80% opacity
+          borderTopColor: branding.theme.primary + '33' // 20% opacity
         }}
       >
         <button
           onClick={() => onResponseFilterChange("all")}
-          className="flex-1 py-1 px-2 font-medium text-center uppercase tracking-wider text-xs border-b-2"
+          className="flex-1 py-2 px-2 font-medium text-center uppercase tracking-wider text-xs border-b-2"
           style={{
-            color: activeResponseFilter === "all" ? branding.theme.primary : getContrastingTextColor(branding.theme.secondary) + 'CC', // 80% opacity
+            color: activeResponseFilter === "all" ? '#ffffff' : '#9ca3af',
             borderBottomColor: activeResponseFilter === "all" ? branding.theme.primary : 'transparent'
           }}
         >
@@ -125,9 +123,9 @@ export default function ViewSelector({
         </button>
         <button
           onClick={() => onResponseFilterChange("yup")}
-          className="flex-1 py-1 px-2 font-medium text-center uppercase tracking-wider text-xs border-b-2"
+          className="flex-1 py-2 px-2 font-medium text-center uppercase tracking-wider text-xs border-b-2"
           style={{
-            color: activeResponseFilter === "yup" ? branding.theme.primary : getContrastingTextColor(branding.theme.secondary) + 'CC', // 80% opacity
+            color: activeResponseFilter === "yup" ? '#ffffff' : '#9ca3af',
             borderBottomColor: activeResponseFilter === "yup" ? branding.theme.primary : 'transparent'
           }}
         >
@@ -135,9 +133,9 @@ export default function ViewSelector({
         </button>
         <button
           onClick={() => onResponseFilterChange("nope")}
-          className="flex-1 py-1 px-2 font-medium text-center uppercase tracking-wider text-xs border-b-2"
+          className="flex-1 py-2 px-2 font-medium text-center uppercase tracking-wider text-xs border-b-2"
           style={{
-            color: activeResponseFilter === "nope" ? branding.theme.primary : getContrastingTextColor(branding.theme.secondary) + 'CC', // 80% opacity
+            color: activeResponseFilter === "nope" ? '#ffffff' : '#9ca3af',
             borderBottomColor: activeResponseFilter === "nope" ? branding.theme.primary : 'transparent'
           }}
         >
@@ -145,9 +143,9 @@ export default function ViewSelector({
         </button>
         <button
           onClick={() => onResponseFilterChange("maybe")}
-          className="flex-1 py-1 px-2 font-medium text-center uppercase tracking-wider text-xs border-b-2"
+          className="flex-1 py-2 px-2 font-medium text-center uppercase tracking-wider text-xs border-b-2"
           style={{
-            color: activeResponseFilter === "maybe" ? branding.theme.primary : getContrastingTextColor(branding.theme.secondary) + 'CC', // 80% opacity
+            color: activeResponseFilter === "maybe" ? '#ffffff' : '#9ca3af',
             borderBottomColor: activeResponseFilter === "maybe" ? branding.theme.primary : 'transparent'
           }}
         >

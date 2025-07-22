@@ -223,12 +223,12 @@ export default function TestSMSPage() {
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="text-4xl font-bold">
               <span className="text-white">YUP.</span>
-              <span className="text-pink-500">RSVP</span>
+                              <span className="text-[#FF00FF]">RSVP</span>
             </div>
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">SMS Testing Console</h1>
           <p className="text-gray-400">Test your Twilio configuration and SMS functionality</p>
-          <div className="w-24 h-1 bg-gradient-to-r from-pink-500 to-purple-600 mx-auto mt-4 rounded-full"></div>
+                          <div className="w-24 h-1 bg-gradient-to-r from-[#FF00FF] to-purple-600 mx-auto mt-4 rounded-full"></div>
         </div>
 
         {/* Environment Check */}
