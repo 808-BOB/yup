@@ -33,6 +33,11 @@ const getContrastingTextColor = (backgroundColor: string) => {
 
 interface EventWithResponse extends Event {
   user_response: "yup" | "nope" | "maybe" | null;
+  response_counts?: {
+    yupCount: number;
+    nopeCount: number;
+    maybeCount: number;
+  };
 }
 
 const fetchInvitedEvents = async () => {
@@ -223,7 +228,7 @@ export default function EventListPage() {
           </CardContent>
         </Card>
 
-        {filter !== "archives" && (
+        {filter !== "archives" ? (
           <button
             onClick={() => setFilter("archives")}
             className="w-full mt-4 py-2 text-sm text-center hover:opacity-80 transition-opacity"
@@ -235,6 +240,19 @@ export default function EventListPage() {
             }}
           >
             View Archives
+          </button>
+        ) : (
+          <button
+            onClick={() => setFilter("all")}
+            className="w-full mt-4 py-2 text-sm text-center hover:opacity-80 transition-opacity"
+            style={{
+              color: branding.theme.primary,
+              backgroundColor: branding.theme.secondary + '80', // 50% opacity
+              borderRadius: '0.375rem',
+              border: `1px solid ${branding.theme.primary}4D` // 30% opacity
+            }}
+          >
+            Back to Active Events
           </button>
         )}
       </main>

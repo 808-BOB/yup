@@ -5,14 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Share2, Edit, Check, X } from "lucide-react";
 import { formatDate, formatTime } from "../utils/date-formatter";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/utils/use-toast";
-import { useAuth } from "@/utils/auth-context";
-import { useBranding } from "@/contexts/BrandingContext";
+import { Card, CardContent } from "../ui/card";
+import { Badge } from "../ui/badge";
+import { useToast } from "../utils/use-toast";
+import { useAuth } from "../utils/auth-context";
+import { useBranding } from "../contexts/BrandingContext";
 import { supabase } from "@/lib/supabase";
 import ShareEventModal from "./share-event-modal";
-import { type Event } from "@/types";
+import { type Event } from "../types";
 
 // Helper function to ensure text contrast
 const getContrastingTextColor = (backgroundColor: string) => {
@@ -112,13 +112,32 @@ export default function EventCard({
   };
 
   const handleCardClick = () => {
+    // Don't allow navigation for archived events
+    if (isArchived) return;
     router.push(`/events/${event.slug}`);
   };
+
+  // Check if event is archived (matches the same logic used for the badge)
+  const isArchived = (() => {
+    // Check explicit archived status
+    if (event.status === 'archived') return true;
+    
+    // Check date-based archiving
+    const eventDate = new Date(event.date);
+    const now = new Date();
+    now.setDate(now.getDate() - 2); // archive threshold - same as page filter
+    const cutoff = now.toISOString().slice(0, 10);
+    return event.date < cutoff;
+  })();
 
   return (
     <>
       <Card
-        className="w-full backdrop-blur-sm hover:border-gray-700 transition-colors relative z-10 shadow-lg cursor-pointer"
+        className={`w-full backdrop-blur-sm transition-colors relative z-10 shadow-lg ${
+          isArchived 
+            ? 'opacity-60 cursor-default' 
+            : 'hover:border-gray-700 cursor-pointer'
+        }`}
         style={{
           ...getBorderColor(),
           backgroundColor: branding.theme.secondary + 'F2', // 95% opacity
@@ -148,13 +167,7 @@ export default function EventCard({
                   Your Event
                 </Badge>
               )}
-              {(() => {
-                const eventDate = new Date(event.date);
-                const now = new Date();
-                now.setDate(now.getDate() - 2); // archive threshold - same as page filter
-                const cutoff = now.toISOString().slice(0, 10);
-                return event.date < cutoff;
-              })() && (
+              {isArchived && (
                 <Badge
                   variant="outline"
                   className="text-xs"
@@ -231,9 +244,12 @@ export default function EventCard({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setIsShareModalOpen(true);
+                    if (!isArchived) setIsShareModalOpen(true);
                   }}
-                  className="text-sm flex items-center gap-1 hover:opacity-80"
+                  disabled={isArchived}
+                  className={`text-sm flex items-center gap-1 ${
+                    isArchived ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'
+                  }`}
                   style={{ color: getContrastingTextColor(branding.theme.secondary) + 'CC' }} // 80% opacity
                 >
                   <Share2 className="h-4 w-4" /> Share
@@ -242,9 +258,12 @@ export default function EventCard({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      router.push(`/events/${event.slug}/edit`);
+                      if (!isArchived) router.push(`/events/${event.slug}/edit`);
                     }}
-                    className="text-sm flex items-center gap-1 hover:opacity-80"
+                    disabled={isArchived}
+                    className={`text-sm flex items-center gap-1 ${
+                      isArchived ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'
+                    }`}
                     style={{ color: getContrastingTextColor(branding.theme.secondary) + 'CC' }} // 80% opacity
                   >
                     <Edit className="h-4 w-4" /> Edit

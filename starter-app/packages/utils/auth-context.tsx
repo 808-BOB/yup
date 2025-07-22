@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { getSupabaseClient } from './supabase';
 
@@ -30,18 +30,15 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  console.log('🚀 [AuthProvider] Component mounting...');
-
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  console.log('🔧 [AuthProvider] Creating Supabase client...');
   let supabase;
   try {
     supabase = getSupabaseClient();
-    console.log('✅ [AuthProvider] Supabase client created successfully');
   } catch (err) {
     console.error('❌ [AuthProvider] Failed to create Supabase client:', err);
     setError('Failed to initialize Supabase client');
@@ -171,25 +168,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('[AuthContext] Failed to get initial session:', error);
         setError('Failed to initialize authentication');
         setSession(null);
-        setUser(null);
-      } finally {
-        console.log('[AuthContext] Setting isLoading to false');
-        setIsLoading(false);
-      }
+        setUser(null);        } finally {
+          console.log('[AuthContext] Setting isLoading to false');
+          setIsLoading(false);
+          setIsInitialized(true);
+        }
     };
 
     console.log('[AuthContext] Starting auth initialization...');
     getInitialSession();
 
-        // Listen for auth changes (including OAuth completion)
+    // Listen for auth changes (including OAuth completion)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: string, session: Session | null) => {
         console.log('[AuthContext] Auth state changed:', event, !!session, session?.user?.email);
 
-        setSession(session);
-        const mergedUser = await attachProfileData(session?.user ?? null);
-        setUser(mergedUser);
-        setIsLoading(false);
+        // Only update if session actually changed to prevent unnecessary re-renders
+        setSession((prevSession: Session | null) => {
+          if (prevSession?.access_token === session?.access_token && 
+              prevSession?.user?.id === session?.user?.id) {
+            return prevSession; // No change, return previous session
+          }
+          return session;
+        });
+
+        // Only fetch profile data for new users or sign-in events
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          if (session?.user) {
+            const mergedUser = await attachProfileData(session.user);
+            setUser(mergedUser);
+          } else {
+            setUser(null);
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+        }
+
+        // Only set loading to false on initial load or auth events that complete the flow
+        if (!isInitialized || event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+          setIsLoading(false);
+          setIsInitialized(true);
+        }
+        
         setError(null);
 
         // Log successful OAuth completion
@@ -202,9 +222,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [supabase.auth]);
+  }, []); // Remove supabase.auth dependency to prevent re-initialization
 
-  const login = async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     console.log('[AuthContext] Login attempt:', email);
     setIsLoading(true);
     setError(null);
@@ -228,9 +248,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       throw error;
     }
-  };
+  }, [supabase.auth]);
 
-    const signup = async (email: string, displayName: string, password: string) => {
+    const signup = useCallback(async (email: string, displayName: string, password: string) => {
     console.log('[AuthContext] Signup attempt:', email);
     setIsLoading(true);
     setError(null);
@@ -275,9 +295,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [supabase.auth]);
 
-    const loginWithGoogle = async () => {
+    const loginWithGoogle = useCallback(async () => {
     console.log('[AuthContext] Google login initiated');
     setError(null);
 
@@ -314,9 +334,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(error.message || 'Google sign-in failed');
       throw error;
     }
-  };
+  }, [supabase.auth]);
 
-  const resetPassword = async (email: string) => {
+  const resetPassword = useCallback(async (email: string) => {
     console.log('[AuthContext] Password reset requested for:', email);
     setError(null);
 
@@ -345,9 +365,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(error.message || 'Password reset failed');
       throw error;
     }
-  };
+  }, [supabase.auth]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
       console.log('[AuthContext] Signing out...');
       setIsLoading(true);
@@ -357,10 +377,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [supabase.auth]);
 
   // --- NEW: refreshUser helper ---
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     console.log('[AuthContext] Refreshing user…');
     setIsLoading(true);
     try {
@@ -379,9 +399,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [supabase.auth]);
 
-  const value = {
+  const value = useMemo(() => ({
     user,
     session,
     isLoading,
@@ -393,7 +413,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout: signOut,
     signOut,
     refreshUser,
-  };
+  }), [user, session, isLoading, error, login, signup, loginWithGoogle, resetPassword, signOut, refreshUser]);
 
   return (
     <AuthContext.Provider value={value}>
