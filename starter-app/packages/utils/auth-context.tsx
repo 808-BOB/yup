@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log('[AuthContext] Fetching profile for user:', authUser.id);
 
-      // Add timeout to profile query - increased timeout to 15 seconds
+      // Add timeout to profile query - reduced timeout to 10 seconds to be faster
       const profilePromise = supabase
         .from('users')
         .select('display_name, profile_image_url, phone_number, is_premium, is_pro, is_admin')
@@ -77,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Profile query timeout')), 15000);
+        setTimeout(() => reject(new Error('Profile query timeout')), 10000);
       });
 
       const { data: profile, error } = await Promise.race([profilePromise, timeoutPromise]) as any;
@@ -134,9 +134,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         console.log('[AuthContext] Getting initial session...');
 
-        // Add a timeout to prevent infinite loading
+        // Increase timeout to 20 seconds to handle OAuth callbacks better
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Auth initialization timeout')), 10000);
+          setTimeout(() => reject(new Error('Auth initialization timeout')), 20000);
         });
 
         // For OAuth callbacks, this will handle the code exchange automatically
@@ -168,11 +168,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('[AuthContext] Failed to get initial session:', error);
         setError('Failed to initialize authentication');
         setSession(null);
-        setUser(null);        } finally {
-          console.log('[AuthContext] Setting isLoading to false');
-          setIsLoading(false);
-          setIsInitialized(true);
+        setUser(null);
+        
+        // Add retry logic for OAuth callback failures
+        const isOAuthCallback = typeof window !== 'undefined' && window.location.pathname === '/auth/callback';
+        if (isOAuthCallback) {
+          console.log('[AuthContext] OAuth callback detected, error may be temporary');
         }
+      } finally {
+        console.log('[AuthContext] Setting isLoading to false');
+        setIsLoading(false);
+        setIsInitialized(true);
+      }
     };
 
     console.log('[AuthContext] Starting auth initialization...');
@@ -192,8 +199,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return session;
         });
 
-        // Only fetch profile data for new users or sign-in events
+        // Clear any previous errors on successful auth events
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          setError(null);
           if (session?.user) {
             const mergedUser = await attachProfileData(session.user);
             setUser(mergedUser);
@@ -209,8 +217,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsLoading(false);
           setIsInitialized(true);
         }
-        
-        setError(null);
 
         // Log successful OAuth completion
         if (event === 'SIGNED_IN' && session?.user) {
@@ -223,6 +229,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
     };
   }, []); // Remove supabase.auth dependency to prevent re-initialization
+
+  // Add automatic error recovery - clear auth errors after 30 seconds
+  useEffect(() => {
+    if (error && isInitialized) {
+      const errorTimeout = setTimeout(() => {
+        console.log('[AuthContext] Auto-clearing auth error after timeout:', error);
+        setError(null);
+      }, 30000); // 30 seconds
+
+      return () => clearTimeout(errorTimeout);
+    }
+  }, [error, isInitialized]);
 
   const login = useCallback(async (email: string, password: string) => {
     console.log('[AuthContext] Login attempt:', email);

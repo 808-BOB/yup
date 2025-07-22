@@ -34,16 +34,16 @@ export default function OAuthCallback() {
     
     console.log('[OAuthCallback] No OAuth errors, waiting for auth state...');
     
-    // Set a timeout to prevent infinite loading
+    // Set a timeout to prevent infinite loading - increased to 20 seconds for OAuth
     const timeout = setTimeout(() => {
       console.warn('[OAuthCallback] Auth callback timeout reached');
       setTimeoutReached(true);
-    }, 10000); // 10 second timeout
+    }, 20000); // 20 second timeout to match auth context
     
-    // Show manual redirect button after 5 seconds
+    // Show manual redirect button after 8 seconds
     const manualTimeout = setTimeout(() => {
       setShowManualRedirect(true);
-    }, 5000);
+    }, 8000);
 
     return () => {
       clearTimeout(timeout);
@@ -53,9 +53,16 @@ export default function OAuthCallback() {
 
   // Handle redirect once auth state is determined
   useEffect(() => {
-    // If timeout reached and still no user, redirect to login
-    if (timeoutReached && !user) {
-      console.error('[OAuthCallback] Timeout reached without successful auth');
+    // If timeout reached and still no user, but no errors, try refreshing the page
+    if (timeoutReached && !user && !error) {
+      console.warn('[OAuthCallback] Timeout reached without auth completion, refreshing page...');
+      window.location.reload();
+      return;
+    }
+
+    // If timeout reached and still no user with errors, redirect to login
+    if (timeoutReached && !user && error) {
+      console.error('[OAuthCallback] Timeout reached with auth error, redirecting to login');
       router.replace('/auth/login?error=timeout');
       return;
     }
@@ -66,10 +73,17 @@ export default function OAuthCallback() {
       return;
     }
     
-    // Check for auth context errors
-    if (error) {
-      console.error('[OAuthCallback] Auth context error:', error);
-      router.replace(`/auth/login?error=auth_error`);
+    // Check for auth context errors - but allow for transient errors during OAuth
+    if (error && !timeoutReached) {
+      console.warn('[OAuthCallback] Auth context error detected:', error);
+      // Only redirect on persistent errors, not transient ones
+      if (error.includes('timeout') || error.includes('Failed to initialize')) {
+        setTimeout(() => {
+          if (!user) {
+            router.replace(`/auth/login?error=auth_error`);
+          }
+        }, 3000); // Give 3 more seconds for auth to complete
+      }
       return;
     }
     
