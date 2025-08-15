@@ -8,10 +8,10 @@ const getContrastingTextColor = (backgroundColor: string) => {
   const r = parseInt(hex.substr(0, 2), 16);
   const g = parseInt(hex.substr(2, 2), 16);
   const b = parseInt(hex.substr(4, 2), 16);
-  
+
   // Calculate luminance
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  
+
   // Return white for dark backgrounds, black for light backgrounds
   return luminance < 0.5 ? '#ffffff' : '#000000';
 };
@@ -56,7 +56,7 @@ export default function ViewSelector({
     // Support the new property name if provided
     if (onMainTabChange) {
       onMainTabChange(tab);
-    } 
+    }
     // Or fall back to legacy property
     else if (onTabChange) {
       const legacyTab: LegacyTab = tab === "hosting" ? "your-events" : "invited";
@@ -72,8 +72,8 @@ export default function ViewSelector({
   };
 
   return (
-    <div 
-      className="border rounded-sm bg-gray-700"
+    <div
+      className="border rounded-sm"
       style={{
         borderColor: branding.theme.primary + '33' // 20% opacity
       }}
@@ -104,54 +104,57 @@ export default function ViewSelector({
         </button>
       </div>
 
-      {/* Response Filter Subtabs */}
-      <div 
-        className="flex border-t bg-gray-700"
-        style={{
-          borderTopColor: branding.theme.primary + '33' // 20% opacity
-        }}
-      >
-        <button
-          onClick={() => onResponseFilterChange("all")}
-          className="flex-1 py-2 px-2 font-medium text-center uppercase tracking-wider text-xs border-b-2"
+      {/* Response Filter Subtabs - Only show when on "invited" tab */}
+      {derivedActiveMainTab === "invited" && (
+        <div
+          className="flex border-t"
           style={{
-            color: activeResponseFilter === "all" ? '#ffffff' : '#9ca3af',
-            borderBottomColor: activeResponseFilter === "all" ? branding.theme.primary : 'transparent'
+            borderTopColor: branding.theme.primary + '33', // 20% opacity
+            backgroundColor: branding.theme.secondary + 'CC' // 80% opacity
           }}
         >
-          All
-        </button>
-        <button
-          onClick={() => onResponseFilterChange("yup")}
-          className="flex-1 py-2 px-2 font-medium text-center uppercase tracking-wider text-xs border-b-2"
-          style={{
-            color: activeResponseFilter === "yup" ? '#ffffff' : '#9ca3af',
-            borderBottomColor: activeResponseFilter === "yup" ? branding.theme.primary : 'transparent'
-          }}
-        >
-          Yup
-        </button>
-        <button
-          onClick={() => onResponseFilterChange("nope")}
-          className="flex-1 py-2 px-2 font-medium text-center uppercase tracking-wider text-xs border-b-2"
-          style={{
-            color: activeResponseFilter === "nope" ? '#ffffff' : '#9ca3af',
-            borderBottomColor: activeResponseFilter === "nope" ? branding.theme.primary : 'transparent'
-          }}
-        >
-          Nope
-        </button>
-        <button
-          onClick={() => onResponseFilterChange("maybe")}
-          className="flex-1 py-2 px-2 font-medium text-center uppercase tracking-wider text-xs border-b-2"
-          style={{
-            color: activeResponseFilter === "maybe" ? '#ffffff' : '#9ca3af',
-            borderBottomColor: activeResponseFilter === "maybe" ? branding.theme.primary : 'transparent'
-          }}
-        >
-          Maybe
-        </button>
-      </div>
+          <button
+            onClick={() => onResponseFilterChange("all")}
+            className="flex-1 py-1 px-2 font-medium text-center uppercase tracking-wider text-xs border-b-2"
+            style={{
+              color: activeResponseFilter === "all" ? branding.theme.primary : getContrastingTextColor(branding.theme.secondary) + 'CC', // 80% opacity
+              borderBottomColor: activeResponseFilter === "all" ? branding.theme.primary : 'transparent'
+            }}
+          >
+            All
+          </button>
+          <button
+            onClick={() => onResponseFilterChange("yup")}
+            className="flex-1 py-1 px-2 font-medium text-center uppercase tracking-wider text-xs border-b-2"
+            style={{
+              color: activeResponseFilter === "yup" ? branding.theme.primary : getContrastingTextColor(branding.theme.secondary) + 'CC', // 80% opacity
+              borderBottomColor: activeResponseFilter === "yup" ? branding.theme.primary : 'transparent'
+            }}
+          >
+            Yup
+          </button>
+          <button
+            onClick={() => onResponseFilterChange("nope")}
+            className="flex-1 py-1 px-2 font-medium text-center uppercase tracking-wider text-xs border-b-2"
+            style={{
+              color: activeResponseFilter === "nope" ? branding.theme.primary : getContrastingTextColor(branding.theme.secondary) + 'CC', // 80% opacity
+              borderBottomColor: activeResponseFilter === "nope" ? branding.theme.primary : 'transparent'
+            }}
+          >
+            Nope
+          </button>
+          <button
+            onClick={() => onResponseFilterChange("maybe")}
+            className="flex-1 py-1 px-2 font-medium text-center uppercase tracking-wider text-xs border-b-2"
+            style={{
+              color: activeResponseFilter === "maybe" ? branding.theme.primary : getContrastingTextColor(branding.theme.secondary) + 'CC', // 80% opacity
+              borderBottomColor: activeResponseFilter === "maybe" ? branding.theme.primary : 'transparent'
+            }}
+          >
+            Maybe
+          </button>
+        </div>
+      )}
     </div>
   );
 }

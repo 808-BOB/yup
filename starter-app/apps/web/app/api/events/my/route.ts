@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     // Fetch ONLY events the user is hosting
     const { data: hostedEvents, error: hostedError } = await serviceSupabase
       .from("events")
-      .select("id,title,slug,date,location,start_time,end_time,description,image_url,host_id,created_at")
+      .select("id,title,slug,date,location,start_time,end_time,description,image_url,host_id,created_at,status")
       .eq("host_id", userId)
       .order("created_at", { ascending: false });
 

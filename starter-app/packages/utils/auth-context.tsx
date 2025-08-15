@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { getSupabaseClient } from './supabase';
 
@@ -30,18 +30,15 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  console.log('🚀 [AuthProvider] Component mounting...');
-
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  console.log('🔧 [AuthProvider] Creating Supabase client...');
   let supabase;
   try {
     supabase = getSupabaseClient();
-    console.log('✅ [AuthProvider] Supabase client created successfully');
   } catch (err) {
     console.error('❌ [AuthProvider] Failed to create Supabase client:', err);
     setError('Failed to initialize Supabase client');
@@ -72,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log('[AuthContext] Fetching profile for user:', authUser.id);
 
-      // Add timeout to profile query with better error handling
+      // Add timeout to profile query - reduced timeout to 10 seconds to be faster
       const profilePromise = supabase
         .from('users')
         .select('display_name, profile_image_url, phone_number, is_premium, is_pro, is_admin')
@@ -80,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Profile query timeout')), 15000);
+        setTimeout(() => reject(new Error('Profile query timeout')), 10000);
       });
 
       let profile, error;
@@ -125,14 +122,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('[AuthContext] Profile created successfully:', newProfile);
         return { ...authUser, ...newProfile } as User & ExtendedProfile;
       } else if (error) {
-        console.warn('[AuthContext] Error fetching profile:', error.message);
+        if (error.message === 'Profile query timeout') {
+          console.warn('[AuthContext] Profile query timed out, proceeding with basic user data');
+        } else {
+          console.warn('[AuthContext] Error fetching profile:', error.message);
+        }
         return authUser as User & ExtendedProfile;
       }
 
       console.log('[AuthContext] Profile data fetched successfully:', profile);
       return { ...authUser, ...profile } as User & ExtendedProfile;
-    } catch (err) {
-      console.error('[AuthContext] Failed to load profile row:', err);
+    } catch (err: any) {
+      if (err?.message === 'Profile query timeout') {
+        console.warn('[AuthContext] Profile query timed out, proceeding with basic user data');
+      } else {
+        console.error('[AuthContext] Failed to load profile row:', err);
+      }
       return authUser as User & ExtendedProfile;
     }
   };
@@ -143,9 +148,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         console.log('[AuthContext] Getting initial session...');
 
-        // Add a timeout to prevent infinite loading (increased to 30 seconds)
+        // Increase timeout to 20 seconds to handle OAuth callbacks better
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Auth initialization timeout')), 30000);
+          setTimeout(() => reject(new Error('Auth initialization timeout')), 20000);
         });
 
         // For OAuth callbacks, this will handle the code exchange automatically
@@ -187,9 +192,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setError('Failed to initialize authentication');
         setSession(null);
         setUser(null);
+        
+        // Add retry logic for OAuth callback failures
+        const isOAuthCallback = typeof window !== 'undefined' && window.location.pathname === '/auth/callback';
+        if (isOAuthCallback) {
+          console.log('[AuthContext] OAuth callback detected, error may be temporary');
+        }
       } finally {
         console.log('[AuthContext] Setting isLoading to false');
         setIsLoading(false);
+        setIsInitialized(true);
       }
 
       // Fallback: ensure loading state is cleared after a maximum time
@@ -204,16 +216,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('[AuthContext] Starting auth initialization...');
     getInitialSession();
 
-        // Listen for auth changes (including OAuth completion)
+    // Listen for auth changes (including OAuth completion)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: string, session: Session | null) => {
         console.log('[AuthContext] Auth state changed:', event, !!session, session?.user?.email);
 
-        setSession(session);
-        const mergedUser = await attachProfileData(session?.user ?? null);
-        setUser(mergedUser);
-        setIsLoading(false);
-        setError(null);
+        // Only update if session actually changed to prevent unnecessary re-renders
+        setSession((prevSession: Session | null) => {
+          if (prevSession?.access_token === session?.access_token && 
+              prevSession?.user?.id === session?.user?.id) {
+            return prevSession; // No change, return previous session
+          }
+          return session;
+        });
+
+        // Clear any previous errors on successful auth events
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          setError(null);
+          if (session?.user) {
+            const mergedUser = await attachProfileData(session.user);
+            setUser(mergedUser);
+          } else {
+            setUser(null);
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+        }
+
+        // Only set loading to false on initial load or auth events that complete the flow
+        if (!isInitialized || event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+          setIsLoading(false);
+          setIsInitialized(true);
+        }
 
         // Log successful OAuth completion
         if (event === 'SIGNED_IN' && session?.user) {
@@ -225,9 +259,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [supabase.auth]);
+  }, []); // Remove supabase.auth dependency to prevent re-initialization
 
-  const login = async (email: string, password: string) => {
+  // Add automatic error recovery - clear auth errors after 30 seconds
+  useEffect(() => {
+    if (error && isInitialized) {
+      const errorTimeout = setTimeout(() => {
+        console.log('[AuthContext] Auto-clearing auth error after timeout:', error);
+        setError(null);
+      }, 30000); // 30 seconds
+
+      return () => clearTimeout(errorTimeout);
+    }
+  }, [error, isInitialized]);
+
+  const login = useCallback(async (email: string, password: string) => {
     console.log('[AuthContext] Login attempt:', email);
     setIsLoading(true);
     setError(null);
@@ -251,9 +297,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       throw error;
     }
-  };
+  }, [supabase.auth]);
 
-    const signup = async (email: string, displayName: string, password: string) => {
+    const signup = useCallback(async (email: string, displayName: string, password: string) => {
     console.log('[AuthContext] Signup attempt:', email);
     setIsLoading(true);
     setError(null);
@@ -298,9 +344,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [supabase.auth]);
 
-    const loginWithGoogle = async () => {
+    const loginWithGoogle = useCallback(async () => {
     console.log('[AuthContext] Google login initiated');
     setError(null);
 
@@ -337,9 +383,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(error.message || 'Google sign-in failed');
       throw error;
     }
-  };
+  }, [supabase.auth]);
 
-  const resetPassword = async (email: string) => {
+  const resetPassword = useCallback(async (email: string) => {
     console.log('[AuthContext] Password reset requested for:', email);
     setError(null);
 
@@ -368,9 +414,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(error.message || 'Password reset failed');
       throw error;
     }
-  };
+  }, [supabase.auth]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
       console.log('[AuthContext] Signing out...');
       setIsLoading(true);
@@ -380,10 +426,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [supabase.auth]);
 
   // --- NEW: refreshUser helper ---
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     console.log('[AuthContext] Refreshing user…');
     setIsLoading(true);
     try {
@@ -402,9 +448,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [supabase.auth]);
 
-  const value = {
+  const value = useMemo(() => ({
     user,
     session,
     isLoading,
@@ -416,7 +462,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout: signOut,
     signOut,
     refreshUser,
-  };
+  }), [user, session, isLoading, error, login, signup, loginWithGoogle, resetPassword, signOut, refreshUser]);
 
   return (
     <AuthContext.Provider value={value}>

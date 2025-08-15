@@ -24,6 +24,7 @@ interface EventRow {
   description?: string;
   image_url?: string;
   host_id: string;
+  status?: string;
   created_at?: string;
   rsvp_visibility?: string;
   response_counts?: {
@@ -126,6 +127,63 @@ export default function MyEventsPage() {
     loadData();
   }, [user]);
 
+  // Note: Auth is guaranteed by middleware, no need to check for user existence
+  if (!user) {
+    return (
+      <div className="w-full max-w-lg mx-auto px-6 pb-8 min-h-screen flex flex-col bg-gray-950">
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-center text-gray-400">Loading your events...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const isLoading = !events && !error;
+  const isFreeUser = !userPlan?.is_premium && !userPlan?.is_pro;
+  const hasUnlimitedEvents = userPlan?.is_premium || userPlan?.is_pro;
+  
+  // Archive threshold logic: an event is considered archived only if
+  // (a) its event date is in the past *and* (b) it was created more than 2
+  //     days ago. This ensures that users still see newly-created events even
+  //     if they accidentally pick a past date.
+  const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
+  const now = new Date();
+  
+  // Filter events based on status and date
+  const activeEvents = (events || []).filter(ev => {
+    // Check if explicitly archived via status field
+    if (ev.status === 'archived') return false;
+    
+    // Legacy date-based archiving: an event is considered archived only if
+    // (a) its event date is in the past *and* (b) it was created more than 2
+    //     days ago. This ensures that users still see newly-created events even
+    //     if they accidentally pick a past date.
+    const eventDate = new Date(ev.date);
+    const createdAt = new Date(ev.created_at || ev.date);
+    const isPast = eventDate < now;
+    const isOld = now.getTime() - createdAt.getTime() > twoDaysMs;
+    const dateArchived = isPast && isOld;
+    
+    return !dateArchived;
+  });
+
+  const archivedEvents = (events || []).filter(ev => {
+    // Check if explicitly archived via status field
+    if (ev.status === 'archived') return true;
+    
+    // Legacy date-based archiving
+    const eventDate = new Date(ev.date);
+    const createdAt = new Date(ev.created_at || ev.date);
+    const isPast = eventDate < now;
+    const isOld = now.getTime() - createdAt.getTime() > twoDaysMs;
+    
+    return isPast && isOld;
+  });
+
+  const eventCount = activeEvents.length; // Count only active events
+  const freeEventLimit = 3;
+  const isNearLimit = isFreeUser && eventCount >= freeEventLimit - 1;
+  const hasReachedLimit = isFreeUser && eventCount >= freeEventLimit;
   const getPlanDisplayName = () => {
     if (!userPlan) return "Free";
     if (userPlan.is_premium) return "Premium";
@@ -263,84 +321,84 @@ export default function MyEventsPage() {
                   {tab === "hosting" ? "I'M HOSTING" : "I'm Invited To"}
                 </h2>
               </div>
-                                            <TabsContent value="hosting">
-                                {error ? (
-                                  <div className="text-center text-red-400">Failed to load events</div>
-                                ) : !events ? (
-                                  <div className="text-center text-gray-400">Loading your events...</div>
-                                ) : filteredHostingEvents.length === 0 ? (
-                                  <div className="text-center text-gray-400">No events yet</div>
-                                ) : (
-                                  <div className="space-y-4">
-                                    {filteredHostingEvents.map(event => (
-                                      <Card 
-                                        key={event.id} 
-                                        className="bg-event-block border-none shadow-none hover:bg-gray-700 transition-colors duration-200 cursor-pointer"
-                                        onClick={() => router.push(`/events/${event.slug}`)}
-                                      >
-                                        <CardContent className="py-4 px-6">
-                                          <div className="flex justify-between items-start mb-3">
-                                            <div className="flex-1">
-                                              <h3 className="text-xl font-bold text-white mb-2">{event.title}</h3>
-                                              <div className="flex items-center gap-4 text-sm text-gray-300 mb-2">
-                                                <div className="flex items-center gap-1">
-                                                  <Calendar className="h-4 w-4" />
-                                                  <span>{formatDate(event.date)}</span>
-                                                </div>
-                                                {event.start_time && (
-                                                  <div className="flex items-center gap-1">
-                                                    <span>{formatEventTime(event)}</span>
-                                                  </div>
-                                                )}
-                                              </div>
-                                              <div className="flex items-center gap-1 text-sm text-gray-400 mb-3">
-                                                <MapPin className="h-4 w-4" />
-                                                <span>{event.location}</span>
-                                              </div>
-                                            </div>
-                                          </div>
-                                          
-                                          {/* RSVP Counts and View RSVPs Button */}
-                                          <div className="flex justify-between items-center">
-                                            {event.response_counts && (
-                                              <div className="flex items-center gap-4 text-sm">
-                                                <div className="flex items-center gap-1 text-green-400">
-                                                  <User className="h-4 w-4" />
-                                                  <span>{event.response_counts.yupCount} Yup</span>
-                                                </div>
-                                                <div className="w-px h-4 bg-gray-600"></div>
-                                                <div className="flex items-center gap-1 text-red-400">
-                                                  <span>{event.response_counts.nopeCount} Nope</span>
-                                                </div>
-                                                {event.response_counts.maybeCount > 0 && (
-                                                  <>
-                                                    <div className="w-px h-4 bg-gray-600"></div>
-                                                    <div className="flex items-center gap-1 text-yellow-400">
-                                                      <span>{event.response_counts.maybeCount} Maybe</span>
-                                                    </div>
-                                                  </>
-                                                )}
-                                              </div>
-                                            )}
-                                            {canViewRSVPs(event) && (
-                                              <Button
-                                                size="sm"
-                                                className="bg-[#FF00FF] text-white hover:bg-[#FF00FF]/90 hover:scale-105 transition-all duration-200 z-10 relative"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  router.push(`/events/${event.slug}`);
-                                                }}
-                                              >
-                                                <Eye className="h-4 w-4 mr-1" /> View RSVPs
-                                              </Button>
-                                            )}
-                                          </div>
-                                        </CardContent>
-                                      </Card>
-                                    ))}
+              <TabsContent value="hosting">
+                {error ? (
+                  <div className="text-center text-red-400">Failed to load events</div>
+                ) : !events ? (
+                  <div className="text-center text-gray-400">Loading your events...</div>
+                ) : filteredHostingEvents.length === 0 ? (
+                  <div className="text-center text-gray-400">No events yet</div>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredHostingEvents.map(event => (
+                      <Card 
+                        key={event.id} 
+                        className="bg-event-block border-none shadow-none hover:bg-gray-700 transition-colors duration-200 cursor-pointer"
+                        onClick={() => router.push(`/events/${event.slug}`)}
+                      >
+                        <CardContent className="py-4 px-6">
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="flex-1">
+                              <h3 className="text-xl font-bold text-white mb-2">{event.title}</h3>
+                              <div className="flex items-center gap-4 text-sm text-gray-300 mb-2">
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="h-4 w-4" />
+                                  <span>{formatDate(event.date)}</span>
+                                </div>
+                                {event.start_time && (
+                                  <div className="flex items-center gap-1">
+                                    <span>{formatEventTime(event)}</span>
                                   </div>
                                 )}
-                              </TabsContent>
+                              </div>
+                              <div className="flex items-center gap-1 text-sm text-gray-400 mb-3">
+                                <MapPin className="h-4 w-4" />
+                                <span>{event.location}</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* RSVP Counts and View RSVPs Button */}
+                          <div className="flex justify-between items-center">
+                            {event.response_counts && (
+                              <div className="flex items-center gap-4 text-sm">
+                                <div className="flex items-center gap-1 text-green-400">
+                                  <User className="h-4 w-4" />
+                                  <span>{event.response_counts.yupCount} Yup</span>
+                                </div>
+                                <div className="w-px h-4 bg-gray-600"></div>
+                                <div className="flex items-center gap-1 text-red-400">
+                                  <span>{event.response_counts.nopeCount} Nope</span>
+                                </div>
+                                {event.response_counts.maybeCount > 0 && (
+                                  <>
+                                    <div className="w-px h-4 bg-gray-600"></div>
+                                    <div className="flex items-center gap-1 text-yellow-400">
+                                      <span>{event.response_counts.maybeCount} Maybe</span>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                            {canViewRSVPs(event) && (
+                              <Button
+                                size="sm"
+                                className="bg-[#FF00FF] text-white hover:bg-[#FF00FF]/90 hover:scale-105 transition-all duration-200 z-10 relative"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  router.push(`/events/${event.slug}`);
+                                }}
+                              >
+                                <Eye className="h-4 w-4 mr-1" /> View RSVPs
+                              </Button>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
               <TabsContent value="invited">
                 {error ? (
                   <div className="text-center text-red-400">Failed to load events</div>

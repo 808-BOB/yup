@@ -33,12 +33,17 @@ export async function middleware(req: NextRequest) {
 
   // Public routes that don't require authentication
   const publicRoutes = [
+    '/', // Home page
     '/auth',
     '/auth/login',
     '/auth/callback',
     '/auth/signup',
     '/debug-auth', // Debug page for troubleshooting auth issues
     '/events', // Allow public access to event pages (they handle auth internally)
+    '/terms', // Terms of service
+    '/privacy', // Privacy policy
+    '/phone-verification-demo', // SMS opt-in demo
+    '/sms/opt-out', // SMS opt-out page
   ]
 
   // API routes that don't require authentication
@@ -47,6 +52,9 @@ export async function middleware(req: NextRequest) {
     '/api/health',
     '/api/env-check',
     '/api/test', // Allow test endpoints
+    '/api/sms/opt-in', // SMS opt-in API
+    '/api/sms/opt-out', // SMS opt-out API
+    '/api/sms/webhook', // Twilio webhook
   ]
 
   const { pathname } = req.nextUrl
@@ -95,4 +103,4 @@ export const config = {
     // Exclude Next.js internals & static assets from middleware processing
     '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
-} 
+}

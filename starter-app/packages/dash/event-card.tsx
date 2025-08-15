@@ -5,15 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Share2, Edit, Check, X, MapPin } from "lucide-react";
 import { formatDate, formatTime } from "../utils/date-formatter";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/utils/use-toast";
-import { useAuth } from "@/utils/auth-context";
-import { useBranding } from "@/contexts/BrandingContext";
-import { getSupabaseClient } from "@/utils/supabase";
+import { Card, CardContent } from "../ui/card";
+import { Badge } from "../ui/badge";
+import { useToast } from "../utils/use-toast";
+import { useAuth } from "../utils/auth-context";
+import { useBranding } from "../contexts/BrandingContext";
+import { supabase } from "@/lib/supabase";
 import ShareEventModal from "./share-event-modal";
-import { type Event } from "@/types";
+import { type Event } from "../types";
 
 // Helper function to ensure text contrast
 const getContrastingTextColor = (backgroundColor: string) => {
@@ -22,10 +21,10 @@ const getContrastingTextColor = (backgroundColor: string) => {
   const r = parseInt(hex.substr(0, 2), 16);
   const g = parseInt(hex.substr(2, 2), 16);
   const b = parseInt(hex.substr(4, 2), 16);
-  
+
   // Calculate luminance
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  
+
   // Return white for dark backgrounds, black for light backgrounds
   return luminance < 0.5 ? '#ffffff' : '#000000';
 };
@@ -70,7 +69,6 @@ export default function EventCard({
       if (!showStats || !event.id || event.response_counts) return;
 
       try {
-        const supabase = getSupabaseClient();
         const { data, error } = await supabase
           .from('responses')
           .select('response_type, user_id, created_at')
@@ -114,13 +112,32 @@ export default function EventCard({
   };
 
   const handleCardClick = () => {
+    // Don't allow navigation for archived events
+    if (isArchived) return;
     router.push(`/events/${event.slug}`);
   };
+
+  // Check if event is archived (matches the same logic used for the badge)
+  const isArchived = (() => {
+    // Check explicit archived status
+    if (event.status === 'archived') return true;
+    
+    // Check date-based archiving
+    const eventDate = new Date(event.date);
+    const now = new Date();
+    now.setDate(now.getDate() - 2); // archive threshold - same as page filter
+    const cutoff = now.toISOString().slice(0, 10);
+    return event.date < cutoff;
+  })();
 
   return (
     <>
       <Card
-        className="w-full backdrop-blur-sm hover:border-gray-700 transition-colors relative z-10 shadow-lg cursor-pointer"
+        className={`w-full backdrop-blur-sm transition-colors relative z-10 shadow-lg ${
+          isArchived 
+            ? 'opacity-60 cursor-default' 
+            : 'hover:border-gray-700 cursor-pointer'
+        }`}
         style={{
           ...getBorderColor(),
           backgroundColor: branding.theme.secondary + 'F2', // 95% opacity
@@ -131,14 +148,15 @@ export default function EventCard({
           <div className="flex flex-col">
             {/* Title and badges row */}
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <h3 
-                className="font-bold tracking-tight text-base text-white font-inter"
+              <h3
+                className="font-bold tracking-tight text-base"
+                style={{ color: getContrastingTextColor(branding.theme.secondary) }}
               >
                 {event.title}
               </h3>
               {isOwner && (
-                <Badge 
-                  variant="outline" 
+                <Badge
+                  variant="outline"
                   className="text-xs"
                   style={{
                     backgroundColor: branding.theme.primary + '1A', // 10% opacity
@@ -149,13 +167,7 @@ export default function EventCard({
                   Your Event
                 </Badge>
               )}
-              {(() => {
-                const eventDate = new Date(event.date);
-                const now = new Date();
-                const twoDaysAgo = new Date(now);
-                twoDaysAgo.setDate(now.getDate() - 2);
-                return eventDate < twoDaysAgo;
-              })() && (
+              {isArchived && (
                 <Badge
                   variant="outline"
                   className="text-xs"
@@ -203,21 +215,24 @@ export default function EventCard({
 
             {/* Date and time */}
             <div className="flex flex-col gap-1 mb-2">
-              <p 
-                className="text-sm font-medium text-date"
+              <p
+                className="text-sm font-medium"
+                style={{ color: getContrastingTextColor(branding.theme.secondary) + 'CC' }} // 80% opacity
               >
                 {formatDate(event.date)}
               </p>
-              <p 
-                className="text-sm font-medium text-date"
+              <p
+                className="text-sm font-medium"
+                style={{ color: getContrastingTextColor(branding.theme.secondary) }}
               >
                 {timeRange}
               </p>
             </div>
 
             {/* Location */}
-            <div 
-              className="text-sm mb-4 text-date flex items-center gap-1"
+            <div
+              className="text-sm mb-4 flex items-center gap-1"
+              style={{ color: getContrastingTextColor(branding.theme.secondary) + 'CC' }} // 80% opacity
             >
               <MapPin className="h-4 w-4" />
               <span>{event.location}</span>
@@ -230,9 +245,13 @@ export default function EventCard({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setIsShareModalOpen(true);
+                    if (!isArchived) setIsShareModalOpen(true);
                   }}
-                  className="text-sm flex items-center gap-1 hover:opacity-80 text-date"
+                  disabled={isArchived}
+                  className={`text-sm flex items-center gap-1 ${
+                    isArchived ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'
+                  }`}
+                  style={{ color: getContrastingTextColor(branding.theme.secondary) + 'CC' }} // 80% opacity
                 >
                   <Share2 className="h-4 w-4" /> Share
                 </button>
@@ -240,9 +259,13 @@ export default function EventCard({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      router.push(`/events/${event.slug}/edit`);
+                      if (!isArchived) router.push(`/events/${event.slug}/edit`);
                     }}
-                    className="text-sm flex items-center gap-1 hover:opacity-80 text-date"
+                    disabled={isArchived}
+                    className={`text-sm flex items-center gap-1 ${
+                      isArchived ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'
+                    }`}
+                    style={{ color: getContrastingTextColor(branding.theme.secondary) + 'CC' }} // 80% opacity
                   >
                     <Edit className="h-4 w-4" /> Edit
                   </button>
@@ -252,20 +275,23 @@ export default function EventCard({
               {/* Response counts */}
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
-                  <span 
-                    className="text-sm font-medium text-white"
+                  <span
+                    className="text-sm font-medium"
+                    style={{ color: branding.theme.primary }}
                   >
-                    {responseCounts.yupCount || 0} yup
+                    {responseCounts.yupCount || 0} {branding.customRSVPText.yup.toLowerCase()}
                   </span>
-                  <span 
-                    className="text-sm text-date"
+                  <span
+                    className="text-sm"
+                    style={{ color: getContrastingTextColor(branding.theme.secondary) + '80' }} // 50% opacity
                   >
                     •
                   </span>
-                  <span 
-                    className="text-sm font-medium text-date"
+                  <span
+                    className="text-sm font-medium"
+                    style={{ color: getContrastingTextColor(branding.theme.secondary) + 'CC' }} // 80% opacity
                   >
-                    {responseCounts.nopeCount || 0} nope
+                    {responseCounts.nopeCount || 0} {branding.customRSVPText.nope.toLowerCase()}
                   </span>
                 </div>
               </div>
