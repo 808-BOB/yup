@@ -1,8 +1,0 @@
-{
-	"dependencies": {
-		"@sendgrid/mail": "^8.1.5"
-	},
-	"devDependencies": {
-		"@types/sendgrid": "^4.3.0"
-	}
-}
