@@ -17,7 +17,7 @@ import { Separator } from "@/ui/separator";
 import EventBrandingProvider from "@/dash/event-branding-provider";
 import { useBranding } from "@/contexts/BrandingContext";
 // Note: useRequireAuth is no longer needed since middleware handles authentication
-import { type Event, type Response } from "@/types";
+// import { type Event, type Response } from "@/types";
 import Check from "lucide-react/dist/esm/icons/check";
 import X from "lucide-react/dist/esm/icons/x";
 import Clock from "lucide-react/dist/esm/icons/clock";
@@ -47,7 +47,17 @@ interface UserPlan {
   is_pro: boolean;
 }
 
-interface ExtendedEvent extends Event {
+interface ExtendedEvent {
+  id: number;
+  title: string;
+  slug: string;
+  date: string;
+  start_time?: string;
+  end_time?: string;
+  location?: string;
+  description?: string;
+  image_url?: string;
+  host_id: string;
   host?: {
     display_name: string;
     email: string;
@@ -362,50 +372,41 @@ export default function EventResponsesPage() {
       hostBranding={hostBranding} 
       enabled={!!(event.host?.is_premium && hostBranding)}
     >
-      <div 
-        className="min-h-screen"
-        style={{ backgroundColor: event.host?.brand_secondary_color || '#0a0a14' }}
-      >
-        <Header />
-
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-          <main className="space-y-6">
-        <div className="flex items-center gap-4 mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-                className="text-gray-300 hover:bg-gray-800"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
+      <div className="w-full max-w-lg mx-auto px-6 pb-8 min-h-screen flex flex-col bg-gray-950">
+        <div className="sticky top-0 z-50 bg-gray-950 pt-8">
+          <Header />
+          <div className="flex items-center gap-4 mb-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.back()}
+              className="text-gray-300 hover:bg-gray-800"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+          </div>
         </div>
 
-            <div className="space-y-2">
-              <h1 
-                className="text-3xl font-bold"
-                style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
-              >
-                {event.title}
-              </h1>
-              <p 
-                className="text-gray-400"
-                style={{ color: event.host?.brand_tertiary_color + '80' || '#9ca3af' }}
-              >
-                Event Responses
-              </p>
-            </div>
+        <main className="flex-1 w-full pb-32">
+          <div className="space-y-2 mb-6">
+            <h1 className="text-3xl font-bold text-white">
+              {event.title}
+            </h1>
+            <p className="text-gray-400">
+              Event Responses
+            </p>
+          </div>
 
-        {/* Response Summary */}
-            <div className="grid grid-cols-3 gap-4">
-              <Card 
-                className="border shadow-lg hover:shadow-xl transition-shadow duration-200"
-                style={{ 
-                  backgroundColor: event.host?.brand_primary_color + '15' || '#10b98120',
-                  borderColor: event.host?.brand_primary_color + '40' || '#10b98140'
-                }}
-              >
+                  {/* Response Summary */}
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <Card 
+              className="border shadow-lg hover:shadow-xl transition-shadow duration-200"
+              style={{
+                backgroundColor: '#10b98120',
+                borderColor: '#10b98140'
+              }}
+            >
                 <CardContent className="p-6 text-center">
                   <p 
                     className="text-3xl font-bold mb-1"
@@ -422,13 +423,13 @@ export default function EventResponsesPage() {
             </CardContent>
           </Card>
               
-              <Card 
-                className="border shadow-lg hover:shadow-xl transition-shadow duration-200"
-                style={{ 
-                  backgroundColor: event.host?.brand_tertiary_color + '10' || '#ef444420',
-                  borderColor: event.host?.brand_tertiary_color + '30' || '#ef444430'
-                }}
-              >
+                          <Card 
+              className="border shadow-lg hover:shadow-xl transition-shadow duration-200"
+              style={{
+                backgroundColor: '#ef444420',
+                borderColor: '#ef444430'
+              }}
+            >
                 <CardContent className="p-6 text-center">
                   <p 
                     className="text-3xl font-bold mb-1"
@@ -445,13 +446,13 @@ export default function EventResponsesPage() {
             </CardContent>
           </Card>
               
-              <Card 
-                className="border shadow-lg hover:shadow-xl transition-shadow duration-200"
-                style={{ 
-                  backgroundColor: event.host?.brand_primary_color + '10' || '#f59e0b20',
-                  borderColor: event.host?.brand_primary_color + '25' || '#f59e0b25'
-                }}
-              >
+            <Card 
+              className="border shadow-lg hover:shadow-xl transition-shadow duration-200"
+              style={{ 
+                backgroundColor: '#f59e0b20',
+                borderColor: '#f59e0b25'
+              }}
+            >
                 <CardContent className="p-6 text-center">
                   <p 
                     className="text-3xl font-bold mb-1"
@@ -653,8 +654,7 @@ export default function EventResponsesPage() {
             </div>
           </CardContent>
         </Card>
-      </main>
-    </div>
+        </main>
       </div>
     </EventBrandingProvider>
   );

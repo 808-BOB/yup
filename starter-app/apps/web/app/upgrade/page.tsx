@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/utils/auth-context";
 import { useBranding } from "@/contexts/BrandingContext";
+import { useSubscriptionSync } from "@/hooks/use-subscription-sync";
 import Check from "lucide-react/dist/esm/icons/check";
 import X from "lucide-react/dist/esm/icons/x";
 import ArrowRight from "lucide-react/dist/esm/icons/arrow-right";
@@ -10,6 +11,17 @@ import Crown from "lucide-react/dist/esm/icons/crown";
 import Zap from "lucide-react/dist/esm/icons/zap";
 import Header from "@/dash/header";
 import { supabase } from "@/lib/supabase";
+
+// Helper function to ensure text contrast
+const getContrastingTextColor = (backgroundColor: string) => {
+  const hex = backgroundColor.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance < 0.5 ? '#ffffff' : '#000000';
+};
 
 // Define the features for each tier
 const tierFeatures = {
@@ -86,16 +98,44 @@ const tierFeatures = {
 
 export default function UpgradePage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const branding = useBranding();
   const [upgrading, setUpgrading] = useState(false);
+  
+  // Auto-sync subscription when visiting upgrade page
+  const { manualSync } = useSubscriptionSync();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [lastSyncTime, setLastSyncTime] = useState(Date.now());
 
-  // Determine plan using flags already merged into the auth user object.
-  const isPremium = branding.isPremium; // branding checks row fields itself
-  const isPro = Boolean((user as any)?.is_pro);
+  // Listen for subscription updates
+  React.useEffect(() => {
+    const handleSubscriptionUpdate = async (event: any) => {
+      console.log('Subscription updated event received:', event.detail);
+      await refreshUser();
+      setLastSyncTime(Date.now());
+    };
+
+    window.addEventListener('subscription-updated', handleSubscriptionUpdate);
+    return () => window.removeEventListener('subscription-updated', handleSubscriptionUpdate);
+  }, [refreshUser]);
+
+  // Determine plan using flags from branding context (which reads fresh from database)
+  // Force re-evaluation with lastSyncTime to ensure UI updates after changes
+  const isPremium = React.useMemo(() => branding.isPremium, [branding.isPremium, lastSyncTime]);
+  const isPro = React.useMemo(() => branding.isPro, [branding.isPro, lastSyncTime]);
 
   const currentPlan = isPremium ? "premium" : isPro ? "pro" : "free";
+  
+  console.log('Current plan state:', { 
+    isPremium, 
+    isPro, 
+    currentPlan, 
+    lastSyncTime,
+    brandingIsPremium: branding.isPremium,
+    userIsPro: (user as any)?.is_pro,
+    userIsPremium: (user as any)?.is_premium,
+    user: user ? { id: user.id, is_pro: (user as any)?.is_pro, is_premium: (user as any)?.is_premium } : null
+  });
 
   const handleUpgrade = async (plan: string) => {
     if (!user) {
@@ -137,6 +177,21 @@ export default function UpgradePage() {
 
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // Handle specific case where user already has an active subscription
+        if (response.status === 409 && errorData.hasActiveSubscription) {
+          // If it's an upgrade (Pro -> Premium), use the subscription change API instead
+          if (errorData.isUpgrade) {
+            console.log('Detected upgrade attempt, using subscription change API...');
+            await handleSubscriptionChange('change_plan', plan);
+            return;
+          }
+          
+          alert("You already have an active subscription. Please manage your existing subscription from your profile page instead of creating a new one.");
+          router.push('/profile');
+          return;
+        }
+        
         throw new Error(errorData.error || 'Failed to create checkout session');
       }
 
@@ -152,6 +207,79 @@ export default function UpgradePage() {
       alert("Failed to start checkout process. Please try again.");
     } finally {
       setUpgrading(false);
+    }
+  };
+
+  const handleSubscriptionChange = async (action: 'cancel' | 'change_plan', targetPlan?: string) => {
+    const actionText = action === 'cancel' 
+      ? 'cancel your subscription' 
+      : `${targetPlan === 'free' ? 'cancel' : 'change to'} ${targetPlan}`;
+      
+    if (!confirm(`Are you sure you want to ${actionText}? ${action === 'cancel' || targetPlan === 'free' ? 'You will lose access to premium features at the end of your billing period.' : 'Your billing will be adjusted accordingly.'}`)) {
+      return;
+    }
+
+    setUpgrading(true);
+    try {
+      const response = await fetch('/api/stripe/change-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, targetPlan })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to modify subscription');
+      }
+
+      const result = await response.json();
+      
+      // Show success message with details
+      const accessUntil = result.details?.accessUntil 
+        ? new Date(result.details.accessUntil).toLocaleDateString()
+        : 'end of billing period';
+        
+      const message = action === 'cancel' 
+        ? `Subscription cancelled successfully. You'll retain access until ${accessUntil}.`
+        : `Subscription changed to ${targetPlan?.toUpperCase()} successfully. Changes take effect immediately.`;
+        
+      alert(message);
+      
+      // Immediately refresh auth context and sync subscription data
+      console.log('Refreshing user data after subscription change...');
+      
+      // First, trigger sync to update database
+      const syncResult = await fetch('/api/stripe/sync-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (syncResult.ok) {
+        const syncData = await syncResult.json();
+        console.log('Post-change sync completed:', syncData);
+      }
+      
+      // Then refresh auth context and branding context with updated data
+      await refreshUser();
+      await branding.refreshBranding();
+      
+      // Refresh the page to ensure UI is completely updated
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Error modifying subscription:', error);
+      alert('Failed to modify subscription. Please try again or contact support.');
+    } finally {
+      setUpgrading(false);
+    }
+  };
+
+  const handleCancelSubscription = () => handleSubscriptionChange('cancel');
+  
+  const handleDowngrade = (targetPlan: string) => {
+    if (targetPlan === 'free') {
+      handleSubscriptionChange('cancel');
+    } else {
+      handleSubscriptionChange('change_plan', targetPlan);
     }
   };
 
@@ -172,31 +300,56 @@ export default function UpgradePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
           {Object.entries(tierFeatures).map(([key, tier]) => {
             const isCurrent = currentPlan === key;
+            const isUpgrade = (key === 'pro' && !isPro && !isPremium) || (key === 'premium' && !isPremium);
+            const isDowngrade = (key === 'pro' && isPremium) || (key === 'free' && (isPro || isPremium));
             const isDisabled = isCurrent || upgrading;
 
             return (
               <div
                 key={key}
-                className={`flex flex-col h-full bg-gray-900 border rounded-lg p-6 ${
-                  tier.highlight
-                    ? "border-primary shadow-lg shadow-primary/20"
-                    : "border-gray-800"
-                }`}
+                className="flex flex-col h-full rounded-lg p-6"
+                style={{
+                  backgroundColor: branding.theme.secondary + 'E6', // 90% opacity
+                  borderWidth: '1px',
+                  borderStyle: 'solid',
+                  borderColor: tier.highlight 
+                    ? branding.theme.primary 
+                    : branding.theme.primary + '33', // 20% opacity
+                  boxShadow: tier.highlight 
+                    ? `0 10px 15px -3px ${branding.theme.primary}20, 0 4px 6px -2px ${branding.theme.primary}10`
+                    : 'none'
+                }}
               >
                 {/* Header */}
-                <div className="mb-6">
-                  <div className="flex justify-between items-center mb-2">
-                    <h2 className="text-2xl font-bold text-white">{tier.title}</h2>
-                    {tier.highlight && (
-                      <span className="bg-primary text-white text-xs px-2 py-1 rounded">
+                <div className="mb-6 relative">
+                  {/* Badges in top right corner - Current Plan takes priority over Most Popular */}
+                  <div className="absolute -top-2 -right-2 flex flex-row gap-1 z-10">
+                    {isCurrent ? (
+                      <span 
+                        className="text-xs px-2 py-1 rounded text-center font-medium shadow-sm whitespace-nowrap border"
+                        style={{ 
+                          borderColor: branding.theme.primary,
+                          color: branding.theme.primary,
+                          backgroundColor: branding.theme.secondary + 'E6' // 90% opacity
+                        }}
+                      >
+                        Current Plan
+                      </span>
+                    ) : tier.highlight && (
+                      <span 
+                        className="text-white text-xs px-2 py-1 rounded text-center font-medium shadow-sm whitespace-nowrap"
+                        style={{ 
+                          backgroundColor: branding.theme.primary,
+                          color: getContrastingTextColor(branding.theme.primary)
+                        }}
+                      >
                         Most Popular
                       </span>
                     )}
-                    {isCurrent && (
-                      <span className="border border-primary text-primary text-xs px-2 py-1 rounded">
-                        Current Plan
-                      </span>
-                    )}
+                  </div>
+                  
+                  <div className="pr-24"> {/* Increased padding to avoid badge overlap */}
+                    <h2 className="text-2xl font-bold text-white">{tier.title}</h2>
                   </div>
                   <p className="text-gray-400 mb-4">{tier.description}</p>
                   <div className="flex items-baseline">
@@ -209,12 +362,18 @@ export default function UpgradePage() {
 
                 {/* Features */}
                 <div className="flex-grow mb-6">
-                  <div className="h-px bg-gray-700 mb-4"></div>
+                  <div 
+                    className="h-px mb-4"
+                    style={{ backgroundColor: branding.theme.primary + '33' }} // 20% opacity
+                  ></div>
                   <ul className="space-y-3">
                     {tier.features.map((feature, index) => (
                       <li key={index} className="flex items-start gap-2">
                         {feature.included ? (
-                          <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                          <Check 
+                            className="h-5 w-5 flex-shrink-0 mt-0.5" 
+                            style={{ color: branding.theme.primary }}
+                          />
                         ) : (
                           <X className="h-5 w-5 text-gray-500 flex-shrink-0 mt-0.5" />
                         )}
@@ -229,51 +388,112 @@ export default function UpgradePage() {
                 </div>
 
                 {/* CTA Button */}
-                <button
-                  onClick={() => handleUpgrade(key)}
-                  disabled={isDisabled}
-                  className={`w-full py-3 px-4 rounded font-medium transition-colors ${
-                    tier.highlight && !isDisabled
-                      ? "bg-primary hover:bg-primary/90 text-white"
-                      : isDisabled
-                      ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                      : "bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
-                  }`}
-                >
-                  {upgrading && selectedPlan === key ? (
-                    <span className="flex items-center gap-2">
-                      <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
-                      Processing...
-                    </span>
-                  ) : isCurrent ? (
-                    <span className="flex items-center gap-2">
-                      <Check className="h-4 w-4" />
-                      Current Plan
-                    </span>
-                  ) : !user ? (
-                    <span className="flex items-center gap-2">
-                      {key === "premium" ? (
-                        <Crown className="h-4 w-4" />
-                      ) : key === "pro" ? (
-                        <Zap className="h-4 w-4" />
+                <div className="space-y-2">
+                  {!isCurrent && (
+                    <button
+                      onClick={() => isDowngrade ? handleDowngrade(key) : handleUpgrade(key)}
+                      disabled={upgrading}
+                      className="w-full py-3 px-4 rounded font-medium transition-colors"
+                      style={{
+                        backgroundColor: upgrading 
+                          ? '#374151' 
+                          : tier.highlight && !upgrading
+                          ? branding.theme.primary
+                          : isDowngrade
+                          ? '#ea580c'
+                          : branding.theme.secondary,
+                        color: upgrading
+                          ? '#9ca3af'
+                          : tier.highlight && !upgrading
+                          ? getContrastingTextColor(branding.theme.primary)
+                          : isDowngrade
+                          ? '#ffffff'
+                          : getContrastingTextColor(branding.theme.secondary),
+                        border: !tier.highlight && !isDowngrade && !upgrading ? `1px solid ${branding.theme.primary}40` : 'none'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!upgrading) {
+                          e.currentTarget.style.opacity = '0.9';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!upgrading) {
+                          e.currentTarget.style.opacity = '1';
+                        }
+                      }}
+                    >
+                      {upgrading && selectedPlan === key ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
+                          Processing...
+                        </span>
+                      ) : !user ? (
+                        <span className="flex items-center justify-center gap-2">
+                          {key === "premium" ? (
+                            <Crown className="h-4 w-4" />
+                          ) : key === "pro" ? (
+                            <Zap className="h-4 w-4" />
+                          ) : (
+                            <ArrowRight className="h-4 w-4" />
+                          )}
+                          Sign Up Now
+                        </span>
                       ) : (
-                        <ArrowRight className="h-4 w-4" />
+                        <span className="flex items-center justify-center gap-2">
+                          {key === "premium" ? (
+                            <Crown className="h-4 w-4" />
+                          ) : key === "pro" ? (
+                            <Zap className="h-4 w-4" />
+                          ) : (
+                            <ArrowRight className="h-4 w-4" />
+                          )}
+                          {isDowngrade ? `Downgrade to ${tier.title}` : tier.ctaText}
+                        </span>
                       )}
-                      Sign Up Now
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-2">
-                      {key === "premium" ? (
-                        <Crown className="h-4 w-4" />
-                      ) : key === "pro" ? (
-                        <Zap className="h-4 w-4" />
-                      ) : (
-                        <ArrowRight className="h-4 w-4" />
-                      )}
-                      {tier.ctaText}
-                    </span>
+                    </button>
                   )}
-                </button>
+                  
+                  {isCurrent && (
+                    <div className="space-y-2">
+                      <div 
+                        className="w-full py-3 px-4 rounded font-medium text-center"
+                        style={{
+                          backgroundColor: branding.theme.primary + '20', // 12% opacity
+                          color: branding.theme.primary,
+                          border: `1px solid ${branding.theme.primary}40` // 25% opacity
+                        }}
+                      >
+                        <span className="flex items-center justify-center gap-2">
+                          <Check className="h-4 w-4" />
+                          Current Plan
+                        </span>
+                      </div>
+                      {(isPremium || isPro) && (
+                        <button
+                          onClick={handleCancelSubscription}
+                          disabled={upgrading}
+                          className="w-full py-3 px-4 rounded font-medium transition-colors"
+                          style={{
+                            backgroundColor: upgrading ? '#374151' : '#dc2626',
+                            color: upgrading ? '#9ca3af' : '#ffffff'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!upgrading) {
+                              e.currentTarget.style.opacity = '0.9';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!upgrading) {
+                              e.currentTarget.style.opacity = '1';
+                            }
+                          }}
+                        >
+                          {upgrading ? "Processing..." : "Cancel Subscription"}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}

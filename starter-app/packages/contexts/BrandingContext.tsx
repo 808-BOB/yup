@@ -20,11 +20,14 @@ interface BrandingContextType {
   logoUrl: string | null;
   customRSVPText: CustomRSVPText;
   isPremium: boolean;
+  isPro: boolean;
+  hasCustomBranding: boolean; // True if user has Pro or Premium (can use custom branding)
   isLoading: boolean;
   updateTheme: (newTheme: Partial<BrandingTheme>) => Promise<void>;
   updateLogo: (logoUrl: string) => Promise<void>;
   updateCustomRSVPText: (newText: Partial<CustomRSVPText>) => Promise<void>;
   resetToDefault: () => Promise<void>;
+  refreshBranding: () => Promise<void>;
 }
 
 const defaultTheme: BrandingTheme = {
@@ -46,6 +49,8 @@ export function BrandingProvider({ children, userId }: { children: React.ReactNo
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [customRSVPText, setCustomRSVPText] = useState<CustomRSVPText>(defaultRSVPText);
   const [isPremium, setIsPremium] = useState(false);
+  const [isPro, setIsPro] = useState(false);
+  const [hasCustomBranding, setHasCustomBranding] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const supabase = getSupabaseClient();
@@ -59,6 +64,8 @@ export function BrandingProvider({ children, userId }: { children: React.ReactNo
       setLogoUrl(null);
       setCustomRSVPText(defaultRSVPText);
       setIsPremium(false);
+      setIsPro(false);
+      setHasCustomBranding(false);
       setIsLoading(false);
     }
   }, [userId]);
@@ -164,34 +171,42 @@ export function BrandingProvider({ children, userId }: { children: React.ReactNo
           maybe: userProfile.custom_maybe_text || defaultRSVPText.maybe,
         };
 
-        // Check premium status from multiple fields
-        const premiumStatus = userProfile.is_premium || userProfile.is_pro || false;
+        // Check actual plan status
+        const isPremiumPlan = Boolean(userProfile.is_premium);
+        const isProPlan = Boolean(userProfile.is_pro);
+        
+        // Custom branding is ONLY available to Premium users, not Pro
+        const canUseCustomBranding = isPremiumPlan; // Only Premium gets custom branding
 
-        // Only apply custom branding if user is premium, otherwise use defaults
-        if (premiumStatus) {
-          console.log('[Branding] User is premium - applying custom branding');
+        // Only apply custom branding if user is Premium, otherwise use defaults
+        if (canUseCustomBranding) {
+          console.log('[Branding] User is Premium - applying custom branding');
           setTheme(loadedTheme);
           setLogoUrl(userProfile.logo_url || null);
           setCustomRSVPText(loadedRSVPText);
         } else {
-          console.log('[Branding] User is not premium - using default branding (custom branding saved in DB but not applied)');
+          console.log('[Branding] User is Pro or Free - using default branding (custom branding is Premium-only)');
           setTheme(defaultTheme);
           setLogoUrl(null);
           setCustomRSVPText(defaultRSVPText);
         }
         
-        setIsPremium(premiumStatus);
+        setIsPremium(isPremiumPlan);
+        setIsPro(isProPlan);
+        setHasCustomBranding(canUseCustomBranding); // Only Premium can customize branding
 
         console.log('[Branding] Branding data loaded:', {
-          theme: premiumStatus ? loadedTheme : defaultTheme,
-          logoUrl: premiumStatus ? (userProfile.logo_url || null) : null,
-          customRSVPText: premiumStatus ? loadedRSVPText : defaultRSVPText,
-          isPremium: premiumStatus,
-          savedInDb: { // This shows what's saved in DB regardless of premium status
-            theme: loadedTheme,
-            logoUrl: userProfile.logo_url,
-            customRSVPText: loadedRSVPText,
-          }
+          theme: canUseCustomBranding ? loadedTheme : defaultTheme,
+          logoUrl: canUseCustomBranding ? (userProfile.logo_url || null) : null,
+          customRSVPText: canUseCustomBranding ? loadedRSVPText : defaultRSVPText,
+          isPremium: isPremiumPlan,
+          isPro: isProPlan,
+          hasCustomBranding: canUseCustomBranding,
+          planFromDb: {
+            is_premium: userProfile.is_premium,
+            is_pro: userProfile.is_pro,
+          },
+          brandingRestriction: canUseCustomBranding ? 'Custom branding enabled' : 'Default branding only (Premium required for custom)'
         });
       }
     } catch (error) {
@@ -201,6 +216,8 @@ export function BrandingProvider({ children, userId }: { children: React.ReactNo
       setLogoUrl(null);
       setCustomRSVPText(defaultRSVPText);
       setIsPremium(false);
+      setIsPro(false);
+      setHasCustomBranding(false);
     } finally {
       setIsLoading(false);
     }
@@ -211,8 +228,8 @@ export function BrandingProvider({ children, userId }: { children: React.ReactNo
       throw new Error('User not authenticated');
     }
 
-    if (!isPremium) {
-      throw new Error('Premium subscription required to customize branding');
+    if (!hasCustomBranding) {
+      throw new Error('Pro or Premium subscription required to customize branding');
     }
 
     try {
@@ -247,8 +264,8 @@ export function BrandingProvider({ children, userId }: { children: React.ReactNo
       throw new Error('User not authenticated');
     }
 
-    if (!isPremium) {
-      throw new Error('Premium subscription required to customize branding');
+    if (!hasCustomBranding) {
+      throw new Error('Pro or Premium subscription required to customize branding');
     }
 
     try {
@@ -278,8 +295,8 @@ export function BrandingProvider({ children, userId }: { children: React.ReactNo
       throw new Error('User not authenticated');
     }
 
-    if (!isPremium) {
-      throw new Error('Premium subscription required to customize branding');
+    if (!hasCustomBranding) {
+      throw new Error('Pro or Premium subscription required to customize branding');
     }
 
     try {
@@ -314,8 +331,8 @@ export function BrandingProvider({ children, userId }: { children: React.ReactNo
       throw new Error('User not authenticated');
     }
 
-    if (!isPremium) {
-      throw new Error('Premium subscription required to customize branding');
+    if (!hasCustomBranding) {
+      throw new Error('Pro or Premium subscription required to customize branding');
     }
 
     try {
@@ -350,16 +367,26 @@ export function BrandingProvider({ children, userId }: { children: React.ReactNo
     }
   };
 
+  const refreshBranding = async () => {
+    if (userId) {
+      console.log('[Branding] Manually refreshing branding data...');
+      await loadBrandingData(userId);
+    }
+  };
+
   const value: BrandingContextType = {
     theme,
     logoUrl,
     customRSVPText,
     isPremium,
+    isPro,
+    hasCustomBranding,
     isLoading,
     updateTheme,
     updateLogo,
     updateCustomRSVPText,
     resetToDefault,
+    refreshBranding,
   };
 
   return <BrandingContext.Provider value={value}>{children}</BrandingContext.Provider>;

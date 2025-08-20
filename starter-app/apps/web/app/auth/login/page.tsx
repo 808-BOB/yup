@@ -14,30 +14,24 @@ import { Button } from "@/ui/button";
 import { Toaster } from "@/ui/toaster";
 
 function AuthPageContent() {
-  console.log('📱 [LoginPage] Component rendering...');
-
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, signup, loginWithGoogle, resetPassword, user, isLoading, error: authError } = useAuth();
   const { toast } = useToast();
 
-  console.log('📱 [LoginPage] Auth state:', {
-    user: !!user,
-    isLoading,
-    error: authError,
-    userEmail: user?.email
-  });
-
   const [activeTab, setActiveTab] = React.useState<"login" | "signup">("login");
   const [isSubmitting, setSubmitting] = React.useState(false);
   const [isRedirecting, setIsRedirecting] = React.useState(false);
   const [showForgotPassword, setShowForgotPassword] = React.useState(false);
+
   const [form, setForm] = React.useState({ email: "", password: "" });
   const [signupForm, setSignupForm] = React.useState({ email: "", displayName: "", password: "", confirm: "" });
 
   React.useEffect(() => {
     const mode = searchParams.get("mode");
     if (mode === "signup") setActiveTab("signup");
+    
+
 
     // Handle OAuth errors from URL
     const error = searchParams.get("error");
@@ -64,24 +58,23 @@ function AuthPageContent() {
     }
   }, [searchParams, toast]);
 
-  // Show auth context errors
+  // Show auth context errors - only show once per error and not during form submission
   React.useEffect(() => {
-    if (authError) {
+    if (authError && !isLoading && !isSubmitting) {
       toast({
         title: "Authentication Error",
         description: authError,
         variant: "destructive"
       });
     }
-  }, [authError, toast]);
+  }, [authError, isLoading, isSubmitting, toast]);
 
   // Handle authenticated user redirect using Next.js router
   React.useEffect(() => {
     if (user && !isLoading && !isRedirecting) {
       setIsRedirecting(true);
       const redirectTo = searchParams.get("redirect") || "/my-events";
-      console.log('[Login] User authenticated, redirecting using Next.js router to:', redirectTo);
-
+      
       // Use Next.js router for proper navigation
       router.replace(redirectTo);
     }
@@ -89,7 +82,6 @@ function AuthPageContent() {
 
   // Show loading state while auth is loading
   if (isLoading) {
-    console.log('📱 [LoginPage] Showing loading state - isLoading:', isLoading);
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <div className="text-center text-white">
@@ -102,7 +94,6 @@ function AuthPageContent() {
 
   // Show redirecting state when user is authenticated and redirecting
   if (user && isRedirecting) {
-    console.log('📱 [LoginPage] Showing redirecting state - user:', !!user, 'isRedirecting:', isRedirecting);
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <div className="text-center text-white">
@@ -115,7 +106,6 @@ function AuthPageContent() {
 
   // If user is already authenticated but not redirecting yet, don't show the form
   if (user) {
-    console.log('📱 [LoginPage] Showing preparing redirect state - user:', !!user);
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <div className="text-center text-white">
@@ -126,44 +116,57 @@ function AuthPageContent() {
     );
   }
 
-  console.log('📱 [LoginPage] Showing login form - user:', !!user, 'isLoading:', isLoading);
-  console.log('📱 [LoginPage] About to render login form JSX');
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     try {
       await login(form.email, form.password);
       // Don't manually redirect - let the useEffect handle it after auth state updates
-      console.log('[Login] Login successful, waiting for auth state update...');
-    } catch {
-      toast({ title: "Login failed", description: "Invalid credentials", variant: "destructive" });
+    } catch (err: any) {
+      // Don't show toast here as auth context will handle the error
+      console.error('Login failed:', err);
     } finally {
       setSubmitting(false);
     }
   };
 
-    const handleSignup = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!signupForm.email || !signupForm.displayName || !signupForm.password || !signupForm.confirm) {
+      toast({ title: "Missing fields", description: "Please fill in all required fields", variant: "destructive" });
+      return;
+    }
+    
     if (signupForm.password !== signupForm.confirm) {
       toast({ title: "Passwords do not match", variant: "destructive" });
       return;
     }
+    
+    if (signupForm.password.length < 6) {
+      toast({ title: "Password too short", description: "Password must be at least 6 characters", variant: "destructive" });
+      return;
+    }
+    
     setSubmitting(true);
     try {
       await signup(signupForm.email, signupForm.displayName, signupForm.password);
+      // No need to redirect - user will be automatically logged in
       toast({
-        title: "Check your email",
-        description: "We've sent you a verification link to complete your registration.",
+        title: "Account created successfully!",
+        description: "Welcome to Yup.RSVP! You're now signed in.",
         variant: "default"
       });
-      console.log('[Login] Signup initiated, check email for verification...');
     } catch (err: any) {
-      toast({ title: "Signup failed", description: err.message, variant: "destructive" });
+      // Don't show toast here as auth context will handle the error
+      console.error('Signup failed:', err);
     } finally {
       setSubmitting(false);
     }
   };
+
+
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,7 +190,7 @@ function AuthPageContent() {
     }
   };
 
-  console.log('📱 [LoginPage] RENDERING LOGIN FORM JSX NOW');
+
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-950 text-white">
@@ -206,6 +209,9 @@ function AuthPageContent() {
 
           <TabsContent value="login">
             <h2 className="text-xl font-semibold text-gray-200 mb-6 text-center">Sign in to your account</h2>
+            
+
+            
             <form onSubmit={handleLogin} className="space-y-6">
               <div>
                 <label className="text-gray-400 uppercase text-xs tracking-wider mb-2 block">Email</label>
@@ -283,19 +289,19 @@ function AuthPageContent() {
             <form className="space-y-6" onSubmit={handleSignup}>
               <div>
                 <label className="text-gray-400 uppercase text-xs tracking-wider mb-2 block">Email</label>
-                <Input type="email" value={signupForm.email} onChange={(e)=>setSignupForm({...signupForm, email:e.target.value})} placeholder="Enter your email" className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12" />
+                <Input type="email" required value={signupForm.email} onChange={(e)=>setSignupForm({...signupForm, email:e.target.value})} placeholder="Enter your email" className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12" />
               </div>
               <div>
                 <label className="text-gray-400 uppercase text-xs tracking-wider mb-2 block">Display Name</label>
-                <Input value={signupForm.displayName} onChange={(e)=>setSignupForm({...signupForm, displayName:e.target.value})} placeholder="Your name as shown to others" className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12" />
+                <Input required value={signupForm.displayName} onChange={(e)=>setSignupForm({...signupForm, displayName:e.target.value})} placeholder="Your name as shown to others" className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12" />
               </div>
               <div>
                 <label className="text-gray-400 uppercase text-xs tracking-wider mb-2 block">Password</label>
-                <Input type="password" value={signupForm.password} onChange={(e)=>setSignupForm({...signupForm, password:e.target.value})} placeholder="Create a password" className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12" />
+                <Input type="password" required minLength={6} value={signupForm.password} onChange={(e)=>setSignupForm({...signupForm, password:e.target.value})} placeholder="Create a password (min 6 characters)" className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12" />
               </div>
               <div>
                 <label className="text-gray-400 uppercase text-xs tracking-wider mb-2 block">Confirm Password</label>
-                <Input type="password" value={signupForm.confirm} onChange={(e)=>setSignupForm({...signupForm, confirm:e.target.value})} placeholder="Confirm your password" className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12" />
+                <Input type="password" required value={signupForm.confirm} onChange={(e)=>setSignupForm({...signupForm, confirm:e.target.value})} placeholder="Confirm your password" className="bg-transparent border border-gray-700 focus:border-primary rounded-none h-12" />
               </div>
               <Button disabled={isSubmitting} className="btn-yup w-full h-12 rounded-none uppercase">
                 {isSubmitting ? "Creating Account..." : "Create Account"}
@@ -338,8 +344,6 @@ function AuthPageContent() {
 }
 
 export default function AuthPage() {
-  console.log('📱 [AuthPage] Main component rendering');
-
   return (
     <React.Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-gray-950">

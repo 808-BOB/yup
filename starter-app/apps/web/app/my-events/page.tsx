@@ -7,6 +7,7 @@ import ViewSelector from "@/dash/view-selector";
 import { useAuth } from "@/utils/auth-context";
 import { useBranding } from "@/contexts/BrandingContext";
 import { useRouter } from "next/navigation";
+import { useSubscriptionSync } from "@/hooks/use-subscription-sync";
 import PlusCircle from "lucide-react/dist/esm/icons/plus-circle";
 import Loader2 from "lucide-react/dist/esm/icons/loader-2";
 import Crown from "lucide-react/dist/esm/icons/crown";
@@ -55,7 +56,7 @@ const fetchEvents = async () => {
   return events as EventRow[];
 };
 
-type ResponseFilter = "all" | "archives";
+type HostingFilter = "upcoming" | "archived";
 
 // Helper function to ensure text contrast
 const getContrastingTextColor = (backgroundColor: string) => {
@@ -78,8 +79,11 @@ export default function MyEventsPage() {
   const { user } = useAuth();
   const branding = useBranding();
   const router = useRouter();
-  const [filter, setFilter] = useState<ResponseFilter>("all");
+  const [filter, setFilter] = useState<HostingFilter>("upcoming");
   const [userPlan, setUserPlan] = useState<UserPlan>({ is_premium: false, is_pro: false });
+  
+  // Auto-sync subscription when visiting dashboard
+  useSubscriptionSync();
 
   const { data: events, error } = useSWR<EventRow[]>(user ? "my-events" : null, fetchEvents);
 
@@ -164,7 +168,7 @@ export default function MyEventsPage() {
   const isNearLimit = isFreeUser && eventCount >= freeEventLimit - 1;
   const hasReachedLimit = isFreeUser && eventCount >= freeEventLimit;
 
-  const visible = filter === "archives" ? archivedEvents : activeEvents;
+  const visible = filter === "archived" ? archivedEvents : activeEvents;
 
   const getPlanDisplayName = () => {
     if (userPlan.is_premium) return "Premium";
@@ -184,11 +188,11 @@ export default function MyEventsPage() {
         <Header />
         <ViewSelector
           activeMainTab="hosting"
-          activeResponseFilter={filter}
+          activeHostingFilter={filter}
           onMainTabChange={tab => {
             if (tab === "invited") router.push("/event-list");
           }}
-          onResponseFilterChange={setFilter as any}
+          onHostingFilterChange={setFilter}
         />
       </div>
 
@@ -358,9 +362,9 @@ export default function MyEventsPage() {
                   className="mb-2"
                   style={{ color: getContrastingTextColor(branding.theme.secondary) }}
                 >
-                  {filter === "archives" ? "No archived events" : "No events yet"}
+                  {filter === "archived" ? "No archived events" : "No events yet"}
                 </p>
-                {filter !== "archives" && !hasReachedLimit && (
+                {filter !== "archived" && !hasReachedLimit && (
                   <p 
                     className="text-sm mb-4"
                     style={{ color: getContrastingTextColor(branding.theme.secondary) + 'CC' }} // 80% opacity
@@ -368,12 +372,12 @@ export default function MyEventsPage() {
                     Create your first event to get started
                   </p>
                 )}
-                {filter !== "archives" && hasReachedLimit && (
+                {filter !== "archived" && hasReachedLimit && (
                   <p className="text-sm text-red-400 mb-4">
                     Upgrade your plan to create more events
                   </p>
                 )}
-                {filter !== "archives" && (
+                {filter !== "archived" && (
                   <Link href={hasReachedLimit ? "/upgrade" : "/events/create"}>
                     <Button 
                       variant="outline" 
@@ -403,33 +407,7 @@ export default function MyEventsPage() {
           </CardContent>
         </Card>
 
-        {filter !== "archives" ? (
-          <button
-            onClick={() => setFilter("archives")}
-            className="w-full mt-4 py-2 text-sm text-center hover:opacity-80 transition-opacity"
-            style={{
-              color: branding.theme.primary,
-              backgroundColor: branding.theme.secondary + '80', // 50% opacity
-              borderRadius: '0.375rem',
-              border: `1px solid ${branding.theme.primary}4D` // 30% opacity
-            }}
-          >
-            View Archives
-          </button>
-        ) : (
-          <button
-            onClick={() => setFilter("all")}
-            className="w-full mt-4 py-2 text-sm text-center hover:opacity-80 transition-opacity"
-            style={{
-              color: branding.theme.primary,
-              backgroundColor: branding.theme.secondary + '80', // 50% opacity
-              borderRadius: '0.375rem',
-              border: `1px solid ${branding.theme.primary}4D` // 30% opacity
-            }}
-          >
-            Back to Active Events
-          </button>
-        )}
+
       </main>
     </div>
   );

@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { getSupabaseClient } from './supabase';
+import { debouncedSyncSubscription } from './subscription-sync';
 
 interface ExtendedProfile {
   display_name?: string | null;
@@ -25,6 +26,7 @@ interface AuthContextType {
   logout: () => Promise<void>; // alias for signOut (legacy)
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  refreshSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -185,6 +187,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('[AuthContext] Starting auth initialization...');
     getInitialSession();
 
+    // Add visibility change handler to refresh auth state when returning to tab
+    const handleVisibilityChange = () => {
+      if (!document.hidden && isInitialized && !user) {
+        console.log('[AuthContext] Tab became visible, checking for lost session...');
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session?.user) {
+            console.log('[AuthContext] Restoring lost session on tab focus');
+            attachProfileData(session.user).then(setUser);
+            setSession(session);
+          }
+        });
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     // Listen for auth changes (including OAuth completion)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: string, session: Session | null) => {
@@ -218,15 +236,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsInitialized(true);
         }
 
-        // Log successful OAuth completion
+        // Log successful OAuth completion and sync subscription
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('[AuthContext] User signed in successfully:', session.user.email);
+          
+          // Sync subscription status after successful sign in
+          setTimeout(() => {
+            console.log('[AuthContext] Syncing subscription after sign in...');
+            debouncedSyncSubscription(1000); // 1 second delay to let auth settle
+          }, 500);
         }
       }
     );
 
     return () => {
       subscription.unsubscribe();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []); // Remove supabase.auth dependency to prevent re-initialization
 
@@ -269,7 +294,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [supabase.auth]);
 
     const signup = useCallback(async (email: string, displayName: string, password: string) => {
-    console.log('[AuthContext] Signup attempt:', email);
     setIsLoading(true);
     setError(null);
 
@@ -277,10 +301,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Get redirect URL for email confirmation
       const origin = typeof window !== "undefined"
         ? window.location.origin
-        : process.env.NEXT_PUBLIC_SITE_URL || "https://yup.rsvp";
+        : process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
       const redirectTo = `${origin}/auth/callback`;
-
-      console.log('[AuthContext] Email confirmation redirect URL:', redirectTo);
 
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
@@ -288,8 +310,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         options: {
           data: {
             display_name: displayName
-          },
-          emailRedirectTo: redirectTo
+          }
         },
       });
 
@@ -299,11 +320,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw signUpError;
       }
 
-      if (data.user && !data.user.email_confirmed_at) {
-        console.log('[AuthContext] Signup successful - email verification required');
-        setError('Please check your email and click the verification link to complete your registration.');
-      } else {
-        console.log('[AuthContext] Signup successful');
+      if (data.user) {
+        console.log('[AuthContext] Signup successful - user created');
+        // Update user state immediately since no email confirmation is needed
+        const userWithProfile = await attachProfileData(data.user);
+        setUser(userWithProfile);
+        setSession(data.session);
+        
+        // Force a profile creation to ensure it exists for event creation
+        if (userWithProfile && !userWithProfile.display_name) {
+          console.log('[AuthContext] Ensuring profile exists for new user');
+          await attachProfileData(data.user);
+        }
+        
+        // Sync subscription status after successful signup (in case user had previous subscriptions)
+        setTimeout(() => {
+          console.log('[AuthContext] Syncing subscription after signup...');
+          debouncedSyncSubscription(2000); // 2 second delay for new users
+        }, 1000);
       }
     } catch (error: any) {
       console.error('[AuthContext] Signup exception:', error);
@@ -399,7 +433,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // --- NEW: refreshUser helper ---
   const refreshUser = useCallback(async () => {
-    console.log('[AuthContext] Refreshing user…');
+    console.log('[AuthContext] Refreshing user with fresh profile data...');
     setIsLoading(true);
     try {
       const { data: { user: freshUser }, error: refreshError } = await supabase.auth.getUser();
@@ -407,7 +441,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('[AuthContext] refreshUser error:', refreshError);
         setError(refreshError.message);
       } else {
+        // Force fresh profile data fetch (don't use cached data)
         const mergedUser = await attachProfileData(freshUser);
+        console.log('[AuthContext] Refreshed user data:', {
+          id: mergedUser?.id,
+          is_premium: (mergedUser as any)?.is_premium,
+          is_pro: (mergedUser as any)?.is_pro,
+        });
         setUser(mergedUser);
         setError(null);
       }
@@ -418,6 +458,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     }
   }, [supabase.auth]);
+
+  const refreshSession = useCallback(async () => {
+    try {
+      console.log('[AuthContext] Manually refreshing session...');
+      
+      // Don't show loading state for manual refresh to avoid flicker
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('[AuthContext] Error refreshing session:', error);
+        return;
+      }
+      
+      if (session?.user) {
+        // Quick check - if user ID matches, just restore without profile fetch to avoid delay
+        if (user?.id === session.user.id) {
+          setSession(session);
+          console.log('[AuthContext] Session restored for existing user');
+        } else {
+          const mergedUser = await attachProfileData(session.user);
+          setUser(mergedUser);
+          setSession(session);
+          console.log('[AuthContext] Session refreshed with new user data');
+        }
+      } else {
+        setUser(null);
+        setSession(null);
+        console.log('[AuthContext] No session found during refresh');
+      }
+    } catch (error) {
+      console.error('[AuthContext] Failed to refresh session:', error);
+    }
+  }, [user?.id]);
 
   const value = useMemo(() => ({
     user,
@@ -431,7 +504,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout: signOut,
     signOut,
     refreshUser,
-  }), [user, session, isLoading, error, login, signup, loginWithGoogle, resetPassword, signOut, refreshUser]);
+    refreshSession,
+  }), [user, session, isLoading, error, login, signup, loginWithGoogle, resetPassword, signOut, refreshUser, refreshSession]);
 
   return (
     <AuthContext.Provider value={value}>

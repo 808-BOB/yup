@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import nodemailer from 'nodemailer';
+import { sendInvitationEmail } from '@/utils/sendgrid';
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';
@@ -17,14 +17,7 @@ const supabase = createClient(
   }
 );
 
-// Initialize email client (using nodemailer with your email service)
-const emailClient = nodemailer.createTransport({
-  service: process.env.EMAIL_SERVICE || 'gmail', // or your email service
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
+// SendGrid is now handled in the sendgrid utility
 
 interface InvitationData {
   eventId: number;
@@ -71,83 +64,7 @@ function formatEventDate(dateString: string): string {
 }
 
 // Send Email invitation
-async function sendEmailInvitation(
-  invitation: any,
-  eventData: any,
-  hostData: any,
-  template: any,
-  rsvpLink: string
-): Promise<{ success: boolean; messageId?: string; error?: string }> {
-  try {
-    if (!invitation.recipient_email) {
-      throw new Error('Email address is required for email invitation');
-    }
-
-    const subject = replacePlaceholders(
-      template.subject || 'You\'re invited to {{event_name}}',
-      eventData,
-      hostData,
-      rsvpLink,
-      invitation.recipient_name
-    );
-
-    const htmlMessage = replacePlaceholders(
-      template.message_template,
-      eventData,
-      hostData,
-      rsvpLink,
-      invitation.recipient_name
-    ).replace(/\n/g, '<br>');
-
-    // Create branded HTML email if custom branding is enabled
-    let emailHtml = htmlMessage;
-    if (template.use_custom_branding && hostData.is_premium) {
-      emailHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          ${template.logo_url ? `<img src="${template.logo_url}" alt="Logo" style="max-height: 80px; margin-bottom: 20px;">` : ''}
-          <div style="background-color: ${template.secondary_color || '#f8f9fa'}; padding: 20px; border-radius: 8px; border-left: 4px solid ${template.primary_color || '#007bff'};">
-            ${emailHtml}
-          </div>
-          <p style="font-size: 12px; color: #666; margin-top: 20px;">
-            Powered by YUP.RSVP
-          </p>
-        </div>
-      `;
-    }
-
-    console.log('Sending email to:', invitation.recipient_email);
-    console.log('Subject:', subject);
-
-    const result = await emailClient.sendMail({
-      from: `"${hostData.display_name || 'Event Host'}" <${process.env.EMAIL_USER}>`,
-      to: invitation.recipient_email,
-      subject: subject,
-      html: emailHtml,
-      text: htmlMessage.replace(/<br>/g, '\n').replace(/<[^>]*>/g, ''), // Fallback plain text
-    });
-
-    // Update invitation with email message ID
-    await supabase
-      .from('invitations')
-      .update({ 
-        email_message_id: result.messageId,
-        status: 'sent'
-      })
-      .eq('id', invitation.id);
-
-    return { success: true, messageId: result.messageId };
-  } catch (error: any) {
-    console.error('Email sending error:', error);
-    
-    // Update invitation status to failed
-    await supabase
-      .from('invitations')
-      .update({ status: 'failed' })
-      .eq('id', invitation.id);
-
-    return { success: false, error: error.message };
-  }
-}
+// Email sending is now handled by SendGrid utility
 
 export async function POST(request: NextRequest) {
   try {
@@ -193,11 +110,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch host data with branding
+    // Fetch host data with branding and profile image
     const { data: hostData, error: hostError } = await supabase
       .from('users')
       .select(`
-        display_name, email, logo_url, brand_primary_color,
+        display_name, email, profile_image_url, logo_url, brand_primary_color,
         brand_secondary_color, brand_tertiary_color, is_premium,
         custom_yup_text, custom_nope_text, custom_maybe_text
       `)
@@ -289,24 +206,39 @@ export async function POST(request: NextRequest) {
         // Create RSVP link with invitation token for tracking
         const rsvpLink = `${baseUrl}/events/${eventData.slug}?inv=${invitationData.invitation_token}`;
 
-        // Send invitation based on method
-        type EmailResult = { success: boolean; messageId?: string; error?: string };
-        
-        let sendResult: EmailResult;
-        sendResult = await sendEmailInvitation(
-          invitationData,
+        // Send invitation based on method using SendGrid
+        const sendResult = await sendInvitationEmail({
+          to: recipient.email,
+          toName: recipient.name,
           eventData,
           hostData,
-          template,
-          rsvpLink
-        );
+          rsvpLink,
+          template
+        });
+
+        // Update invitation with email message ID if successful
+        if (sendResult.success && sendResult.messageId) {
+          await supabase
+            .from('invitations')
+            .update({ 
+              email_message_id: sendResult.messageId,
+              sent_at: new Date().toISOString()
+            })
+            .eq('id', invitationData.id);
+        } else if (!sendResult.success) {
+          // Update invitation status to failed
+          await supabase
+            .from('invitations')
+            .update({ status: 'failed' })
+            .eq('id', invitationData.id);
+        }
 
         results.push({
           recipient: recipient,
           invitation_id: invitationData.id,
           invitation_token: invitationData.invitation_token,
           success: sendResult.success,
-          message_id: 'messageId' in sendResult ? sendResult.messageId : undefined,
+          message_id: sendResult.messageId,
           error: sendResult.error
         });
 

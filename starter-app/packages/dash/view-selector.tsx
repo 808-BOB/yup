@@ -18,6 +18,7 @@ const getContrastingTextColor = (backgroundColor: string) => {
 
 type MainTab = "hosting" | "invited";
 type ResponseFilter = "all" | "yup" | "nope" | "maybe" | "archives";
+type HostingFilter = "upcoming" | "archived";
 
 // Legacy property names for backward compatibility
 type LegacyTab = "your-events" | "invited";
@@ -26,8 +27,10 @@ interface ViewSelectorProps {
   // New property names
   activeMainTab?: MainTab;
   activeResponseFilter?: ResponseFilter;
+  activeHostingFilter?: HostingFilter;
   onMainTabChange?: (tab: MainTab) => void;
   onResponseFilterChange?: (filter: ResponseFilter) => void;
+  onHostingFilterChange?: (filter: HostingFilter) => void;
 
   // Legacy property names for backward compatibility
   activeTab?: LegacyTab;
@@ -38,8 +41,10 @@ export default function ViewSelector({
   // New property names with defaults
   activeMainTab,
   activeResponseFilter = "all",
+  activeHostingFilter = "upcoming",
   onMainTabChange,
   onResponseFilterChange = () => {},
+  onHostingFilterChange = () => {},
 
   // Legacy property names
   activeTab,
@@ -104,6 +109,38 @@ export default function ViewSelector({
           Invited To
         </button>
       </div>
+
+      {/* Hosting Filter Subtabs - Only show when on "hosting" tab */}
+      {derivedActiveMainTab === "hosting" && (
+        <div
+          className="flex border-t"
+          style={{
+            borderTopColor: branding.theme.primary + '33', // 20% opacity
+            backgroundColor: branding.theme.secondary + 'CC' // 80% opacity
+          }}
+        >
+          <button
+            onClick={() => onHostingFilterChange("upcoming")}
+            className="flex-1 py-1 px-2 font-medium text-center uppercase tracking-wider text-xs border-b-2"
+            style={{
+              color: activeHostingFilter === "upcoming" ? branding.theme.primary : getContrastingTextColor(branding.theme.secondary) + 'CC', // 80% opacity
+              borderBottomColor: activeHostingFilter === "upcoming" ? branding.theme.primary : 'transparent'
+            }}
+          >
+            Upcoming
+          </button>
+          <button
+            onClick={() => onHostingFilterChange("archived")}
+            className="flex-1 py-1 px-2 font-medium text-center uppercase tracking-wider text-xs border-b-2"
+            style={{
+              color: activeHostingFilter === "archived" ? branding.theme.primary : getContrastingTextColor(branding.theme.secondary) + 'CC', // 80% opacity
+              borderBottomColor: activeHostingFilter === "archived" ? branding.theme.primary : 'transparent'
+            }}
+          >
+            Complete
+          </button>
+        </div>
+      )}
 
       {/* Response Filter Subtabs - Only show when on "invited" tab */}
       {derivedActiveMainTab === "invited" && (

@@ -7,6 +7,7 @@ import ViewSelector from "@/dash/view-selector";
 import EventCard from "@/dash/event-card";
 import { useAuth } from "@/utils/auth-context";
 import { useBranding } from "@/contexts/BrandingContext";
+import { useSubscriptionSync } from "@/hooks/use-subscription-sync";
 import { useRouter } from "next/navigation";
 import PlusCircle from "lucide-react/dist/esm/icons/plus-circle";
 import Loader2 from "lucide-react/dist/esm/icons/loader-2";
@@ -71,6 +72,9 @@ export default function EventListPage() {
   const branding = useBranding();
   const router = useRouter();
   const [filter, setFilter] = React.useState<ResponseFilter>("all");
+  
+  // Auto-sync subscription when visiting dashboard
+  useSubscriptionSync();
 
   const { data: events, error: eventsError } = useSWR<EventWithResponse[]>(
     user ? "invited-events" : null,

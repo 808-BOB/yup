@@ -4,6 +4,7 @@ import React from "react";
 import { usePathname } from "next/navigation";
 import { AuthProvider, useAuth } from "@/utils/auth-context";
 import { BrandingProvider } from "@/contexts/BrandingContext";
+import { AuthRecovery } from "@/utils/auth-recovery";
 
 function InnerProviders({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -16,7 +17,12 @@ function InnerProviders({ children }: { children: React.ReactNode }) {
   }
 
   // All other pages: wrap with branding provider
-  return <BrandingProvider userId={user?.id}>{children as any}</BrandingProvider>;
+  return (
+    <BrandingProvider userId={user?.id}>
+      <AuthRecovery />
+      {children as any}
+    </BrandingProvider>
+  );
 }
 
 export default function Providers({ children }: { children: React.ReactNode }) {

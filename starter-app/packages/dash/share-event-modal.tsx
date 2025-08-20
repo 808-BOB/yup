@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/ui/dialog";
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
+import { Textarea } from "@/ui/textarea";
 import { Label } from "@/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/ui/tabs";
 import { Copy, Mail, Share2, MessageSquare, ChevronRight } from "lucide-react";
@@ -78,24 +79,111 @@ const ShareEventModal = ({
     }
   };
 
-  // Handle email share
-  const handleEmailShare = () => {
-    const subject = encodeURIComponent(`Invitation: ${event.title}`);
-    const body = encodeURIComponent(
-      `Check out this event: ${event.title}\n\n` +
-      `Date: ${event.date}${event.start_time ? ` at ${event.start_time}` : ''}\n` +
-      `${event.location ? `Location: ${event.location}\n` : ''}` +
-      `\nView and respond here: ${shareUrl}`
-    );
-    
-    if (typeof window !== 'undefined') {
-      window.open(`mailto:?subject=${subject}&body=${body}`);
+  // State for email invitation
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [emailRecipients, setEmailRecipients] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState('');
+
+  // Handle email invitation
+  const handleSendInvitations = async () => {
+    if (!emailRecipients.trim()) {
+      toast({
+        title: "Email required",
+        description: "Please enter at least one email address",
+        variant: "destructive"
+      });
+      return;
     }
-    
-    toast({
-      title: "Email Opened",
-      description: "Send the pre-filled email to invite others",
-    });
+
+    setSendingEmail(true);
+    try {
+      // Parse email addresses (comma or line separated)
+      const emails = emailRecipients
+        .split(/[,\n]/)
+        .map(email => email.trim())
+        .filter(email => email && email.includes('@'));
+
+      if (emails.length === 0) {
+        throw new Error('No valid email addresses found');
+      }
+
+      // Prepare recipients
+      const recipients = emails.map(email => ({
+        email,
+        name: email.split('@')[0] // Use email prefix as name
+      }));
+
+      // Send invitations
+      const response = await fetch('/api/invitations/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId: event.id,
+          hostId: event.host_id,
+          method: 'email',
+          recipients
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send invitations');
+      }
+
+      const result = await response.json();
+      const successCount = result.results?.filter((r: any) => r.success).length || 0;
+      const totalCount = emails.length;
+
+      toast({
+        title: "Invitations sent!",
+        description: `Successfully sent ${successCount} of ${totalCount} invitations`,
+        variant: successCount === totalCount ? "default" : "destructive"
+      });
+
+      // Clear form and close
+      setEmailRecipients('');
+      setShowEmailForm(false);
+
+    } catch (error: any) {
+      console.error('Error sending invitations:', error);
+      toast({
+        title: "Failed to send invitations",
+        description: error.message || "Please try again",
+        variant: "destructive"
+      });
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  // Handle email preview
+  const handlePreviewEmail = async () => {
+    try {
+      const response = await fetch('/api/invitations/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId: event.id,
+          hostId: event.host_id
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate preview');
+      }
+
+      const result = await response.json();
+      setPreviewHtml(result.html);
+      setShowPreview(true);
+    } catch (error: any) {
+      toast({
+        title: "Preview failed",
+        description: error.message || "Could not generate email preview",
+        variant: "destructive"
+      });
+    }
   };
 
   // Handle SMS share via native app (fallback)
@@ -238,7 +326,7 @@ const ShareEventModal = ({
                 backgroundColor: 'transparent'
               }}
             >
-              Other
+              Email
             </TabsTrigger>
           </TabsList>
           
@@ -367,15 +455,15 @@ const ShareEventModal = ({
               <Button
                 variant="outline"
                 className="flex-1"
-                onClick={handleEmailShare}
+                onClick={() => setShowEmailForm(!showEmailForm)}
                 style={{
                   borderColor: branding.theme.primary + '60',
-                  backgroundColor: 'transparent',
-                  color: getContrastingTextColor(branding.theme.secondary)
+                  backgroundColor: showEmailForm ? branding.theme.primary + '20' : 'transparent',
+                  color: showEmailForm ? branding.theme.primary : getContrastingTextColor(branding.theme.secondary)
                 }}
               >
                 <Mail className="mr-2 h-4 w-4" />
-                Email
+                {showEmailForm ? 'Hide Email Form' : 'Send Invitations'}
               </Button>
               <Button
                 variant="outline"
@@ -401,9 +489,102 @@ const ShareEventModal = ({
                 Share
               </Button>
             </div>
+
+            {/* Email Invitation Form */}
+            {showEmailForm && (
+              <div className="mt-6 p-4 border rounded-lg space-y-4" style={{ 
+                borderColor: branding.theme.primary + '40',
+                backgroundColor: branding.theme.secondary + '80'
+              }}>
+                <div>
+                  <Label className="text-sm font-medium" style={{ color: getContrastingTextColor(branding.theme.secondary) }}>
+                    Email Addresses
+                  </Label>
+                  <Textarea
+                    placeholder="Enter email addresses (one per line or comma separated)&#10;example@email.com&#10;friend@email.com"
+                    value={emailRecipients}
+                    onChange={(e) => setEmailRecipients(e.target.value)}
+                    className="mt-1 bg-transparent border-gray-600 focus:border-primary"
+                    rows={4}
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    Invitations will include your event branding and a link to RSVP
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={handlePreviewEmail}
+                    className="flex-1"
+                    style={{
+                      borderColor: branding.theme.primary + '60',
+                      color: getContrastingTextColor(branding.theme.secondary)
+                    }}
+                  >
+                    Preview Email
+                  </Button>
+                  <Button
+                    onClick={handleSendInvitations}
+                    disabled={sendingEmail || !emailRecipients.trim()}
+                    className="flex-1"
+                    style={{
+                      backgroundColor: branding.theme.primary,
+                      color: getContrastingTextColor(branding.theme.primary)
+                    }}
+                  >
+                    {sendingEmail ? 'Sending...' : 'Send Invitations'}
+                  </Button>
+                </div>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </DialogContent>
+
+      {/* Email Preview Modal */}
+      {showPreview && (
+        <Dialog open={showPreview} onOpenChange={setShowPreview}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
+            <DialogHeader>
+              <DialogTitle>Email Preview</DialogTitle>
+            </DialogHeader>
+            <div className="mt-4">
+              <div 
+                dangerouslySetInnerHTML={{ __html: previewHtml }}
+                style={{ 
+                  maxHeight: '60vh', 
+                  overflow: 'auto',
+                  border: '1px solid #ccc',
+                  borderRadius: '8px'
+                }}
+              />
+              <div className="flex gap-2 mt-4">
+                <Button
+                  onClick={() => setShowPreview(false)}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Close Preview
+                </Button>
+                <Button
+                  onClick={() => {
+                    setShowPreview(false);
+                    setShowEmailForm(true);
+                  }}
+                  className="flex-1"
+                  style={{
+                    backgroundColor: branding.theme.primary,
+                    color: getContrastingTextColor(branding.theme.primary)
+                  }}
+                >
+                  Back to Send Form
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </Dialog>
   );
 };
