@@ -151,6 +151,54 @@ export default function EventPage() {
   // Memoize the slug to avoid the Next.js params warning
   const eventSlug = useMemo(() => params?.slug || '', [params?.slug]);
 
+  // Effect to link invitation to user when they sign in with an invitation token
+  useEffect(() => {
+    const linkInvitationToUser = async () => {
+      if (!user || !invitationToken || !eventSlug) return;
+
+      try {
+        // Get the access token for API call
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) return;
+
+        const response = await fetch('/api/invitations/link-user', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({
+            invitationToken,
+            eventSlug
+          })
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+          console.log('Invitation linked to user:', data.message);
+          
+          // Show success toast
+          toast({
+            title: "Invitation Linked",
+            description: "This invitation has been added to your account. You can now see it in your Invited To list.",
+          });
+        } else if (response.status === 403) {
+          // User email/phone doesn't match invitation
+          toast({
+            title: "Invitation Mismatch",
+            description: data.details || "This invitation was sent to a different account.",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error('Error linking invitation to user:', error);
+      }
+    };
+
+    linkInvitationToUser();
+  }, [user, invitationToken, eventSlug, toast]);
+
   useEffect(() => {
     const loadEventData = async () => {
       if (!eventSlug) return;
@@ -431,42 +479,66 @@ export default function EventPage() {
         return newResponses;
       });
 
-      // Debounced SMS notification to prevent spam
+      // Debounced notification to prevent spam (both SMS and Email)
       const sendDebouncedNotification = async (finalResponse: typeof response) => {
       try {
         if (event.host_id && user.id !== event.host_id) {
             // Rate limiting: don't send if we just sent one recently (within 30 seconds)
             const now = Date.now();
             if (now - lastNotificationSent < 30000) {
-              console.log('SMS notification rate limited - too recent');
+              console.log('Notification rate limited - too recent');
               return;
             }
 
-          // Get host's phone number
+          // Get host's contact information
           const { data: hostData } = await supabase
             .from("users")
-            .select("phone_number, display_name")
+            .select("phone_number, display_name, email")
             .eq("id", event.host_id)
             .single();
 
-          if (hostData?.phone_number) {
+          if (hostData) {
             const guestName = user.user_metadata?.display_name || user.email || 'Someone';
               
+            // Send SMS notification if host has phone number
+            if (hostData.phone_number) {
               console.log(`Sending SMS notification: ${guestName} → ${finalResponse}`);
             
-            await fetch('/api/sms/rsvp-notification', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                hostPhoneNumber: hostData.phone_number,
-                guestName,
-                eventName: event.title,
+              await fetch('/api/sms/rsvp-notification', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  hostPhoneNumber: hostData.phone_number,
+                  guestName,
+                  eventName: event.title,
+                    responseType: finalResponse,
+                  guestCount: 1
+                }),
+              });
+            }
+
+            // Send email notification if host has email
+            if (hostData.email) {
+              console.log(`Sending email notification: ${guestName} → ${finalResponse}`);
+              
+              await fetch('/api/notifications/rsvp-email', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  hostEmail: hostData.email,
+                  hostName: hostData.display_name,
+                  guestName,
+                  guestEmail: user.email,
+                  eventName: event.title,
                   responseType: finalResponse,
-                guestCount: 1
-              }),
-            });
+                  guestCount: 1
+                }),
+              });
+            }
               
               setLastNotificationSent(now);
           }
@@ -773,11 +845,17 @@ export default function EventPage() {
                   Please log in to RSVP to this event
                 </p>
                 <Button
-                  onClick={() => router.push('/auth/login')}
+                  onClick={() => {
+                    // Build the redirect URL with invitation token if present
+                    const redirectUrl = invitationToken 
+                      ? `/events/${event.slug}?inv=${invitationToken}`
+                      : `/events/${event.slug}`;
+                    router.push(`/auth/login?redirect=${encodeURIComponent(redirectUrl)}`);
+                  }}
                   style={{ backgroundColor: event.host?.brand_primary_color || '#3b82f6' }}
                   className="text-white"
                 >
-                  Log In to RSVP
+                  Sign In & Respond
                 </Button>
               </div>
             )}

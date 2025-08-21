@@ -606,6 +606,16 @@ export default function EventResponsesPage() {
                               style={{ color: event.host?.brand_tertiary_color || '#ffffff' }}
                             >
                               {response.users?.display_name || response.guest_name || 'Anonymous'}
+                              {response.users?.email && (
+                                <span className="text-xs text-gray-400 block">
+                                  {response.users.email}
+                                </span>
+                              )}
+                              {response.guest_email && (
+                                <span className="text-xs text-gray-400 block">
+                                  {response.guest_email}
+                                </span>
+                              )}
                               {response.is_guest && (
                                 <Badge 
                                   variant="outline" 

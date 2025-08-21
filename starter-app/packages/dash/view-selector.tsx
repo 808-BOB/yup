@@ -1,5 +1,6 @@
 import { useRouter } from "next/navigation";
 import { useBranding } from "@/contexts/BrandingContext";
+import { useUnrespondedCount } from "@/utils/use-unresponded-count";
 
 // Helper function to ensure text contrast
 const getContrastingTextColor = (backgroundColor: string) => {
@@ -31,6 +32,8 @@ interface ViewSelectorProps {
   onMainTabChange?: (tab: MainTab) => void;
   onResponseFilterChange?: (filter: ResponseFilter) => void;
   onHostingFilterChange?: (filter: HostingFilter) => void;
+  // Optional count of invited events with no response ("Maybe")
+  invitedUnrespondedCount?: number;
 
   // Legacy property names for backward compatibility
   activeTab?: LegacyTab;
@@ -45,6 +48,7 @@ export default function ViewSelector({
   onMainTabChange,
   onResponseFilterChange = () => {},
   onHostingFilterChange = () => {},
+  invitedUnrespondedCount,
 
   // Legacy property names
   activeTab,
@@ -52,6 +56,10 @@ export default function ViewSelector({
 }: ViewSelectorProps) {
   const router = useRouter();
   const branding = useBranding();
+  // Prefer caller-provided count; fallback to hook-based count when not provided
+  const { count: hookCount } = useUnrespondedCount();
+  const unrespondedCount =
+    typeof invitedUnrespondedCount === 'number' ? invitedUnrespondedCount : hookCount;
 
   // Convert legacy tab names to new tab names
   const derivedActiveMainTab = activeMainTab || (activeTab === "your-events" ? "hosting" : "invited");
@@ -106,7 +114,7 @@ export default function ViewSelector({
             borderTopColor: derivedActiveMainTab === "invited" ? branding.theme.primary : 'transparent'
           }}
         >
-          Invited To
+          {`Invited To (${unrespondedCount > 99 ? '99+' : unrespondedCount})`}
         </button>
       </div>
 

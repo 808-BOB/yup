@@ -116,6 +116,34 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: eventsError.message }, { status: 500 });
     }
 
+    // Calculate count of unresponded invitations for upcoming events only ("Maybe" category)
+    // Match the same archive threshold used on the client: events with date >= (today - 2 days)
+    let unrespondedCount = 0;
+    const now = new Date();
+    now.setDate(now.getDate() - 2);
+    const cutoff = now.toISOString().slice(0, 10);
+
+    // Build a quick lookup for user responses per event for faster checks
+    const userRespondedEventIds = new Set(
+      allResponses
+        .filter(r => r.user_id === user.id)
+        .map(r => r.event_id)
+    );
+
+    // Only consider events the user was explicitly invited to (not those shown due to prior responses)
+    const invitedEventIdSet = new Set((invitationData || []).map(i => i.event_id));
+
+    for (const event of invitedEvents || []) {
+      if (!invitedEventIdSet.has(event.id)) continue;
+      // Only upcoming (not archived) events per client logic
+      if ((event.date || '') >= cutoff) {
+        const hasResponse = userRespondedEventIds.has(event.id);
+        if (!hasResponse) {
+          unrespondedCount++;
+        }
+      }
+    }
+
     // Format the response to include the user's response type and counts
     const formattedEvents = invitedEvents?.map(event => {
       // Get responses for this specific event
@@ -152,7 +180,10 @@ export async function GET(request: NextRequest) {
       };
     }) || [];
 
-    return NextResponse.json(formattedEvents);
+    return NextResponse.json({
+      events: formattedEvents,
+      unresponded_count: unrespondedCount
+    });
   } catch (error) {
     console.error('API error:', error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

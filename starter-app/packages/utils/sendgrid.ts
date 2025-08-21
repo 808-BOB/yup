@@ -323,3 +323,68 @@ function formatEventTime(timeString: string): string {
     return timeString;
   }
 }
+
+// Send RSVP notification email to event host
+export async function sendRSVPNotificationEmail({
+  hostEmail,
+  hostName,
+  guestName,
+  guestEmail,
+  eventName,
+  responseType,
+  guestCount = 1
+}: {
+  hostEmail: string;
+  hostName: string;
+  guestName: string;
+  guestEmail?: string;
+  eventName: string;
+  responseType: "yup" | "nope" | "maybe";
+  guestCount: number;
+}): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  
+  const responseText = responseType === "yup" ? "YES" : responseType === "nope" ? "NO" : "MAYBE";
+  const guestText = guestCount > 1 ? ` (bringing ${guestCount - 1} guest${guestCount > 2 ? 's' : ''})` : '';
+  const guestEmailText = guestEmail ? ` (${guestEmail})` : '';
+  
+  const subject = `🎉 New RSVP: ${guestName} responded ${responseText} to "${eventName}"`;
+  
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 30px;">
+        <h1 style="color: white; margin: 0; font-size: 24px;">🎉 New RSVP Response</h1>
+      </div>
+      
+      <div style="background: #f8f9fa; padding: 25px; border-radius: 8px; margin-bottom: 20px;">
+        <h2 style="color: #333; margin-top: 0;">Response Details</h2>
+        <p style="margin: 10px 0;"><strong>Guest:</strong> ${guestName}${guestEmailText}</p>
+        <p style="margin: 10px 0;"><strong>Event:</strong> ${eventName}</p>
+        <p style="margin: 10px 0;"><strong>Response:</strong> <span style="color: ${responseType === 'yup' ? '#16a34a' : responseType === 'nope' ? '#dc2626' : '#ca8a04'}; font-weight: bold;">${responseText}</span></p>
+        ${guestCount > 1 ? `<p style="margin: 10px 0;"><strong>Total Guests:</strong> ${guestCount}</p>` : ''}
+      </div>
+      
+      <div style="text-align: center; margin-top: 30px;">
+        <p style="color: #666; font-size: 14px;">
+          This is an automated notification from Yup.RSVP
+        </p>
+      </div>
+    </div>
+  `;
+
+  const text = `
+New RSVP Response
+
+Guest: ${guestName}${guestEmailText}
+Event: ${eventName}
+Response: ${responseText}${guestText}
+
+This is an automated notification from Yup.RSVP
+  `;
+
+  return sendEmail({
+    to: hostEmail,
+    subject,
+    html,
+    text
+  });
+}
