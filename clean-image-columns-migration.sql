@@ -1,0 +1,5 @@
+ALTER TABLE events 
+ADD COLUMN IF NOT EXISTS image_scale INTEGER DEFAULT 100,
+ADD COLUMN IF NOT EXISTS image_position_x INTEGER DEFAULT 50,
+ADD COLUMN IF NOT EXISTS image_position_y INTEGER DEFAULT 50,
+ADD COLUMN IF NOT EXISTS image_fit TEXT DEFAULT 'contain' CHECK (image_fit IN ('contain', 'cover'));
