@@ -295,23 +295,44 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       responseData = newResponse;
     }
 
-    // Send notification to host if they have a phone number
+    // Send notifications to host (both SMS and Email)
     try {
       const { data: hostData, error: hostError } = await supabase
         .from('users')
-        .select('phone_number, display_name')
+        .select('phone_number, display_name, email')
         .eq('id', eventData.host_id)
         .single();
 
-      if (hostData?.phone_number && !hostError) {
-        console.log('Sending SMS notification to host');
-        await notifyHostOfGuestResponse(
-          hostData.phone_number,
-          guestName,
-          eventData.title,
-          responseType,
-          guestCount
-        );
+      if (hostData && !hostError) {
+        // Send SMS notification if host has phone number
+        if (hostData.phone_number) {
+          console.log('Sending SMS notification to host');
+          await notifyHostOfGuestResponse(
+            hostData.phone_number,
+            guestName,
+            eventData.title,
+            responseType,
+            guestCount
+          );
+        }
+
+        // Send email notification if host has email
+        if (hostData.email) {
+          console.log('Sending email notification to host');
+          
+          // Import the email function dynamically to avoid import issues
+          const { sendRSVPNotificationEmail } = await import('@/utils/sendgrid');
+          
+          await sendRSVPNotificationEmail({
+            hostEmail: hostData.email,
+            hostName: hostData.display_name || 'Host',
+            guestName,
+            guestEmail: guestEmail,
+            eventName: eventData.title,
+            responseType,
+            guestCount
+          });
+        }
       }
     } catch (notificationError) {
       console.error('Error sending host notification:', notificationError);

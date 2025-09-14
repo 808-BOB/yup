@@ -28,10 +28,12 @@ export async function createCheckoutSession({
   userId,
   planType,
   successUrl,
-  cancelUrl
-}: CreateCheckoutSessionParams) {
+  cancelUrl,
+  customerId,
+  customerEmail
+}: CreateCheckoutSessionParams & { customerId?: string; customerEmail?: string }) {
   try {
-    const session = await stripe.checkout.sessions.create({
+    const sessionParams: any = {
       payment_method_types: ['card'],
       line_items: [
         {
@@ -40,14 +42,31 @@ export async function createCheckoutSession({
         },
       ],
       mode: 'subscription',
-      success_url: successUrl || `${process.env.NEXT_PUBLIC_APP_URL}/upgrade/success?session_id={CHECKOUT_SESSION_ID}&plan=${planType}`,
-      cancel_url: cancelUrl || `${process.env.NEXT_PUBLIC_APP_URL}/upgrade`,
+      success_url: successUrl || `https://${process.env.NEXT_PUBLIC_SITE_URL || 'localhost:3000'}/upgrade/success?session_id={CHECKOUT_SESSION_ID}&plan=${planType}`,
+      cancel_url: cancelUrl || `https://${process.env.NEXT_PUBLIC_SITE_URL || 'localhost:3000'}/upgrade`,
       client_reference_id: userId,
       metadata: {
         userId,
         planType,
       },
-    });
+      subscription_data: {
+        metadata: {
+          userId,
+          planType,
+        },
+      },
+      // Prevent multiple subscriptions
+      allow_promotion_codes: false,
+    };
+
+    // Use existing customer if provided, otherwise create new one
+    if (customerId) {
+      sessionParams.customer = customerId;
+    } else if (customerEmail) {
+      sessionParams.customer_email = customerEmail;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     return session;
   } catch (error) {
@@ -96,8 +115,62 @@ export function verifyWebhookSignature(body: string, signature: string) {
 
   try {
     return stripe.webhooks.constructEvent(body, signature, webhookSecret);
+  } catch (error: any) {
+    throw new Error(`Webhook signature verification failed: ${error.message}`);
+  }
+}
+
+// Check for and cancel duplicate subscriptions for a customer
+export async function ensureSingleSubscription(customerId: string, keepSubscriptionId?: string) {
+  try {
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      status: 'active',
+    });
+
+    if (subscriptions.data.length <= 1) {
+      return { success: true, cancelledCount: 0 };
+    }
+
+    // If we have multiple active subscriptions, cancel all except the one we want to keep
+    let cancelledCount = 0;
+    
+    for (const subscription of subscriptions.data) {
+      if (keepSubscriptionId && subscription.id === keepSubscriptionId) {
+        continue; // Keep this one
+      }
+      
+      // Cancel older subscriptions or all if no specific one to keep
+      if (!keepSubscriptionId || subscription.id !== keepSubscriptionId) {
+        try {
+          await stripe.subscriptions.cancel(subscription.id);
+          cancelledCount++;
+          console.log(`Cancelled duplicate subscription: ${subscription.id}`);
+        } catch (error) {
+          console.error(`Failed to cancel subscription ${subscription.id}:`, error);
+        }
+      }
+    }
+
+    return { success: true, cancelledCount };
+  } catch (error: any) {
+    console.error('Error ensuring single subscription:', error);
+    return { success: false, error: error.message, cancelledCount: 0 };
+  }
+}
+
+// Get active subscription for a customer
+export async function getActiveSubscription(customerId: string) {
+  try {
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      status: 'active',
+      limit: 1,
+    });
+
+    return subscriptions.data[0] || null;
   } catch (error) {
-    console.error('Webhook signature verification failed:', error);
-    throw error;
+    console.error('Error getting active subscription:', error);
+    return null;
   }
 } 

@@ -173,6 +173,7 @@ export default function Header() {
           <DropdownMenuTrigger asChild>
             {user ? (
               <Avatar 
+                key={`${user?.id}-${(user as ExtendedUser)?.profile_image_url || 'no-image'}`}
                 className="cursor-pointer w-8 h-8"
                 style={{
                   border: `2px solid ${branding.theme.primary}`,
@@ -180,9 +181,13 @@ export default function Header() {
                 }}
               >
                 <AvatarImage
-                  src={(user as ExtendedUser)?.profile_image_url}
+                  src={(user as ExtendedUser)?.profile_image_url || undefined}
                   alt={displayName}
                   className="object-cover"
+                  onError={(e) => {
+                    // Hide broken image and show fallback
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
                 />
                 <AvatarFallback 
                   className="text-sm"

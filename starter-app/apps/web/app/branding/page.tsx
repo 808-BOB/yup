@@ -248,85 +248,7 @@ export default function BrandingPage() {
     }
   };
 
-  // Debug function to test storage access
-  const testStorageAccess = async () => {
-    try {
-      console.log('Testing storage access...');
-      const supabase = getSupabaseClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('Current session:', !!session);
 
-      // Test direct Supabase client access
-      const { data: buckets, error } = await supabase.storage.listBuckets();
-      console.log('Buckets:', buckets, 'Error:', error);
-
-      // Try to list files in brand-logos bucket
-      const { data: files, error: listError } = await supabase.storage
-        .from('brand-logos')
-        .list('', { limit: 5 });
-      console.log('Files in brand-logos:', files, 'Error:', listError);
-
-      // Test direct upload to brand-logos bucket
-      if (session?.access_token && user) {
-        console.log('Testing direct upload...');
-
-        // Create a tiny 1x1 pixel PNG for testing
-        const canvas = document.createElement('canvas');
-        canvas.width = 1;
-        canvas.height = 1;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.fillStyle = '#ff0000';
-          ctx.fillRect(0, 0, 1, 1);
-        }
-
-        // Convert canvas to blob
-        const blob = await new Promise<Blob>((resolve) => {
-          canvas.toBlob((blob) => {
-            resolve(blob || new Blob());
-          }, 'image/png');
-        });
-
-        const testFile = new File([blob], 'test.png', { type: 'image/png' });
-        const testFileName = `${user.id}/test-${Date.now()}.png`;
-
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('brand-logos')
-          .upload(testFileName, testFile, { upsert: true });
-
-        console.log('Direct upload result:', { uploadData, uploadError });
-
-        if (uploadData && !uploadError) {
-          console.log('Upload successful! Cleaning up...');
-          await supabase.storage.from('brand-logos').remove([testFileName]);
-        }
-      }
-
-      // Test via API endpoint
-      if (session?.access_token) {
-        console.log('Testing via API endpoint...');
-        const response = await fetch('/api/storage/test-brand-logos', {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-        });
-        const apiResult = await response.json();
-        console.log('API test result:', apiResult);
-      }
-
-      toast({
-        title: "Storage test complete",
-        description: `Found ${buckets?.length || 0} buckets. Check console for details.`,
-      });
-    } catch (error) {
-      console.error('Storage test error:', error);
-      toast({
-        title: "Storage test failed",
-        description: "Check console for details",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleResetBranding = async () => {
     try {
@@ -371,37 +293,30 @@ export default function BrandingPage() {
   };
 
     return (
-    <div className="min-h-screen bg-gray-950">
-      <Header />
-      <div className="container mx-auto px-4 py-8 md:py-12">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-            <div className="space-y-1">
-              <h1 className="text-2xl font-bold md:text-3xl lg:text-4xl tracking-tight text-white">
-                Branding Settings
-              </h1>
-              <p className="text-gray-400">
-                Customize your brand colors, logo, and RSVP text
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={testStorageAccess}
-                className="flex items-center gap-2 shrink-0 border-gray-700 text-gray-300 hover:bg-gray-800"
-              >
-                Test Storage
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleResetBranding}
-                className="flex items-center gap-2 shrink-0 border-gray-700 text-gray-300 hover:bg-gray-800"
-              >
-                <RotateCcw className="w-4 h-4" />
-                Reset to Default
-              </Button>
-            </div>
+    <div className="w-full max-w-lg mx-auto px-6 pb-8 min-h-screen flex flex-col bg-gray-950">
+      <div className="sticky top-0 z-50 bg-gray-950 pt-8">
+        <Header />
+        <div className="flex items-center justify-between mb-6">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold text-white">
+              Branding Settings
+            </h1>
+            <p className="text-gray-400">
+              Customize your brand colors, logo, and RSVP text
+            </p>
           </div>
+          <Button
+            variant="outline"
+            onClick={handleResetBranding}
+            className="flex items-center gap-2 border-gray-700 text-gray-300 hover:bg-gray-800"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Reset
+          </Button>
+        </div>
+      </div>
+
+      <main className="flex-1 w-full pb-32">
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-4 border border-gray-800 bg-gray-900">
@@ -950,8 +865,7 @@ export default function BrandingPage() {
             </Card>
           </TabsContent>
         </Tabs>
-        </div>
-      </div>
+      </main>
     </div>
   );
 }

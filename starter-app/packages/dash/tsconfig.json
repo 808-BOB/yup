@@ -20,7 +20,9 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    "../types/**/*.d.ts"
+    "../types/**/*.d.ts",
+    "../utils/**/*.ts",
+    "../utils/**/*.tsx"
   ],
   "exclude": [
     "node_modules"

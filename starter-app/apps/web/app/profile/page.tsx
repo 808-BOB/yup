@@ -8,6 +8,7 @@ import { Input } from "@/ui/input";
 import Header from "@/dash/header";
 import { useAuth } from "@/utils/auth-context";
 import { supabase } from "@/lib/supabase";
+import { useSubscriptionSync } from "@/hooks/use-subscription-sync";
 import Camera from "lucide-react/dist/esm/icons/camera";
 import Edit2 from "lucide-react/dist/esm/icons/edit-2";
 import Check from "lucide-react/dist/esm/icons/check";
@@ -33,6 +34,9 @@ export default function ProfilePage() {
   const { user } = useAuth();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Auto-sync subscription when visiting profile
+  useSubscriptionSync();
   
   const [accountStats, setAccountStats] = useState<AccountStats>({
     createdEvents: 0,
@@ -154,7 +158,16 @@ export default function ProfilePage() {
       }
     } catch (error: any) {
       console.error("Error creating portal session:", error);
-      alert("Failed to open subscription management. Please try again.");
+      
+      // Provide more helpful error message and fallback
+      const errorMessage = error.message.includes('No Stripe customer') 
+        ? "No subscription found. Please upgrade to a paid plan first."
+        : "Failed to open subscription management. Please try the upgrade page instead.";
+        
+      alert(errorMessage);
+      
+      // Redirect to upgrade page as fallback
+      router.push('/upgrade');
     } finally {
       setIsManagingSubscription(false);
     }

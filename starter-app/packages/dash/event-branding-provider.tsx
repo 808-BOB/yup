@@ -78,7 +78,23 @@ export default function EventBrandingProvider({
 }: EventBrandingProviderProps) {
   // Apply host's branding theme when available and enabled
   useEffect(() => {
-    const originalPrimary = document.documentElement.style.getPropertyValue('--primary');
+    // Store all original CSS variable values
+    const originalValues = {
+      primary: document.documentElement.style.getPropertyValue('--primary'),
+      primaryColor: document.documentElement.style.getPropertyValue('--primary-color'),
+      primaryHue: document.documentElement.style.getPropertyValue('--primary-hue'),
+      primarySaturation: document.documentElement.style.getPropertyValue('--primary-saturation'),
+      primaryLightness: document.documentElement.style.getPropertyValue('--primary-lightness'),
+      ring: document.documentElement.style.getPropertyValue('--ring'),
+      border: document.documentElement.style.getPropertyValue('--border'),
+      colorPrimary: document.documentElement.style.getPropertyValue('--color-primary'),
+      background: document.documentElement.style.getPropertyValue('--background'),
+      card: document.documentElement.style.getPropertyValue('--card'),
+      secondaryColor: document.documentElement.style.getPropertyValue('--secondary-color'),
+      foreground: document.documentElement.style.getPropertyValue('--foreground'),
+      cardForeground: document.documentElement.style.getPropertyValue('--card-foreground'),
+      tertiaryColor: document.documentElement.style.getPropertyValue('--tertiary-color'),
+    };
     
     if (enabled && hostBranding && hostBranding.brandTheme) {
       try {
@@ -124,11 +140,16 @@ export default function EventBrandingProvider({
       }
     }
     
-    // Cleanup function to restore original values when component unmounts
+    // Cleanup function to restore ALL original values when component unmounts
     return () => {
-      if (originalPrimary) {
-        document.documentElement.style.setProperty('--primary', originalPrimary);
-      }
+      Object.entries(originalValues).forEach(([key, value]) => {
+        const cssVar = `--${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
+        if (value) {
+          document.documentElement.style.setProperty(cssVar, value);
+        } else {
+          document.documentElement.style.removeProperty(cssVar);
+        }
+      });
     };
   }, [hostBranding, enabled]);
   

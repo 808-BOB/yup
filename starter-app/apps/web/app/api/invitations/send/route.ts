@@ -1,10 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import nodemailer from 'nodemailer';
+import { sendInvitationEmail } from '@/utils/sendgrid';
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic';
 
+// Create Supabase client with service role
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
+
+// SendGrid is now handled in the sendgrid utility
 interface InvitationData {
   eventId: number;
   hostId: string;
@@ -50,6 +63,7 @@ function formatEventDate(dateString: string): string {
 }
 
 // Send Email invitation
+<<<<<<< HEAD
 async function sendEmailInvitation(
   invitation: any,
   eventData: any,
@@ -143,6 +157,9 @@ async function sendEmailInvitation(
     return { success: false, error: error.message };
   }
 }
+=======
+// Email sending is now handled by SendGrid utility
+>>>>>>> ae419b7ffbe9e13741dffbc77e2a548bcdb2e83f
 
 export async function POST(request: NextRequest) {
   try {
@@ -211,11 +228,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch host data with branding
+    // Fetch host data with branding and profile image
     const { data: hostData, error: hostError } = await supabase
       .from('users')
       .select(`
-        display_name, email, logo_url, brand_primary_color,
+        display_name, email, profile_image_url, logo_url, brand_primary_color,
         brand_secondary_color, brand_tertiary_color, is_premium,
         custom_yup_text, custom_nope_text, custom_maybe_text
       `)
@@ -307,25 +324,46 @@ export async function POST(request: NextRequest) {
         // Create RSVP link with invitation token for tracking
         const rsvpLink = `${baseUrl}/events/${eventData.slug}?inv=${invitationData.invitation_token}`;
 
-        // Send invitation based on method
-        type EmailResult = { success: boolean; messageId?: string; error?: string };
-        
-        let sendResult: EmailResult;
-        sendResult = await sendEmailInvitation(
-          invitationData,
+        // Send invitation based on method using SendGrid
+        const sendResult = await sendInvitationEmail({
+          to: recipient.email,
+          toName: recipient.name,
           eventData,
           hostData,
+<<<<<<< HEAD
           template,
           rsvpLink,
           supabase
         );
+=======
+          rsvpLink,
+          template
+        });
+
+        // Update invitation with email message ID if successful
+        if (sendResult.success && sendResult.messageId) {
+          await supabase
+            .from('invitations')
+            .update({ 
+              email_message_id: sendResult.messageId,
+              sent_at: new Date().toISOString()
+            })
+            .eq('id', invitationData.id);
+        } else if (!sendResult.success) {
+          // Update invitation status to failed
+          await supabase
+            .from('invitations')
+            .update({ status: 'failed' })
+            .eq('id', invitationData.id);
+        }
+>>>>>>> ae419b7ffbe9e13741dffbc77e2a548bcdb2e83f
 
         results.push({
           recipient: recipient,
           invitation_id: invitationData.id,
           invitation_token: invitationData.invitation_token,
           success: sendResult.success,
-          message_id: 'messageId' in sendResult ? sendResult.messageId : undefined,
+          message_id: sendResult.messageId,
           error: sendResult.error
         });
 

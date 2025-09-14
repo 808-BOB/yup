@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     const supabase = createServiceSupabaseClient();
 
     // Check user's plan and enforce limits
-    const { data: userData, error: userError } = await supabase
+    let { data: userData, error: userError } = await supabase
       .from('users')
       .select(`
         is_premium, 
@@ -31,10 +31,63 @@ export async function POST(request: NextRequest) {
 
     if (userError) {
       console.error('Error fetching user data:', userError);
-      return NextResponse.json(
-        { error: 'Failed to verify user plan' },
-        { status: 500 }
-      );
+      
+      // If user profile doesn't exist (PGRST116 error), create it
+      if (userError.code === 'PGRST116') {
+        console.log('User profile not found, creating default profile for user:', eventData.hostId);
+        
+        // First, verify the user exists in auth.users
+        const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(eventData.hostId);
+        
+        if (authError || !authUser.user) {
+          console.error('Auth user not found:', authError);
+          return NextResponse.json(
+            { error: 'User not found in authentication system' },
+            { status: 404 }
+          );
+        }
+        
+        // Create a basic user profile using auth user data
+        const defaultUsername = authUser.user.email?.split('@')[0] || `user_${eventData.hostId.slice(0, 8)}`;
+        const displayName = authUser.user.user_metadata?.display_name || authUser.user.user_metadata?.full_name || defaultUsername;
+        
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({
+            id: eventData.hostId,
+            username: defaultUsername,
+            display_name: displayName,
+            email: authUser.user.email,
+            is_premium: false,
+            is_pro: false
+          });
+          
+        if (insertError) {
+          console.error('Failed to create user profile:', insertError);
+          return NextResponse.json(
+            { error: 'Failed to create user profile' },
+            { status: 500 }
+          );
+        }
+        
+        // Set default userData for free user
+        userData = {
+          is_premium: false,
+          is_pro: false,
+          logo_url: null,
+          brand_primary_color: null,
+          brand_secondary_color: null,
+          brand_tertiary_color: null,
+          custom_yup_text: null,
+          custom_nope_text: null,
+          custom_maybe_text: null
+        };
+      } else {
+        return NextResponse.json(
+          { error: 'Failed to verify user plan' },
+          { status: 500 }
+        );
+      }
     }
 
     // Check if user is on free plan (not pro or premium)

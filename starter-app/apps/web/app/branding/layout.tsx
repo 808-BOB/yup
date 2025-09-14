@@ -4,8 +4,8 @@ import { getServerUser, createServerSupabaseClient } from '../../lib/supabase-se
 async function checkPremiumStatus(user: any) {
   if (!user) return false
 
-  // 1. Fast path – legacy metadata values
-  if (user.is_premium || user.is_pro || user.user_metadata?.is_premium || user.user_metadata?.is_pro) {
+  // 1. Fast path – only check for Premium (not Pro) since custom branding is Premium-only
+  if (user.is_premium || user.user_metadata?.is_premium) {
     return true
   }
 
@@ -23,7 +23,8 @@ async function checkPremiumStatus(user: any) {
       return false
     }
 
-    return row?.is_premium || row?.is_pro || row?.username === 'subourbon'
+    // Custom branding is ONLY available to Premium users, not Pro
+    return row?.is_premium || row?.username === 'subourbon' // Keep admin override
   } catch (err) {
     console.error('[BrandingLayout] premium check exception', err)
     return false
@@ -43,11 +44,11 @@ export default async function BrandingLayout({
     redirect('/auth/login?redirect=branding')
   }
 
-  // Check premium status
+  // Check premium status (custom branding requires Premium plan, not Pro)
   const isPremium = await checkPremiumStatus(user)
   
   if (!isPremium) {
-    redirect('/upgrade')
+    redirect('/upgrade?message=premium-required-for-branding')
   }
 
   // User is authenticated and premium - render the page
