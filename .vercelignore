@@ -1,0 +1,16 @@
+node_modules
+**/node_modules
+.vercel
+.git
+*.log
+*.sql
+*.csv
+attached_assets
+starter-app
+docs
+scripts
+*.backup
+*.tsbuildinfo
+.next
+dist
+build
