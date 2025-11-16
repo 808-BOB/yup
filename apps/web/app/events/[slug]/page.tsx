@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import ChevronLeft from "lucide-react/dist/esm/icons/chevron-left";
 import Share2 from "lucide-react/dist/esm/icons/share-2";
@@ -20,7 +20,6 @@ import { getSupabaseClient } from "@/utils/supabase";
 import { formatDate, formatTime } from "@/utils/date-formatter";
 import Header from "@/dash/header";
 import GuestResponseForm from "@/components/ui/guest-response-form";
-import PageLayout from "@/ui/page-layout";
 import EventBrandingProvider from "@/dash/event-branding-provider";
 
 interface EventData {
@@ -187,18 +186,19 @@ export default function EventPage() {
     return user?.id === event?.host_id;
   };
 
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: event?.title,
-        text: `Check out this event: ${event?.title}`,
-        url: window.location.href,
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
       toast({
         title: "Link copied",
         description: "Event link copied to clipboard",
+      });
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+      toast({
+        title: "Copy failed",
+        description: "Failed to copy link to clipboard",
+        variant: "destructive",
       });
     }
   };
@@ -320,865 +320,165 @@ export default function EventPage() {
     );
   }
 
-  // Create host branding object for guest view
-  const hostBranding = event?.host ? {
-    logoUrl: event.host.logo_url || null,
-    brandTheme: event.host.brand_primary_color ? JSON.stringify({
-      primary: event.host.brand_primary_color,
-      secondary: event.host.brand_secondary_color || event.host.brand_primary_color,
-      tertiary: event.host.brand_tertiary_color || event.host.brand_primary_color,
-      background: "hsl(222, 84%, 5%)" // Keep consistent background
-    }) : null
-  } : null;
-
-  const content = (
-    <PageLayout maxWidth="xl" className="flex flex-col">
-      <div data-name="event-details-bg-container" className="flex-1 flex flex-col items-center justify-start">
-        <div className="max-w-xl w-full flex-1 flex flex-col items-center justify-start">
-          {/* Back button and heading - only show for authenticated users, not in guest view */}
+  // Simple event layout
+  const mainContent = (
+    <div className="w-full min-h-screen bg-page-background">
+      <Header />
+      <div className="max-w-xl mx-auto px-6 pt-8 pb-16">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
           {!isGuestView && (
-            <div className="flex items-center justify-between w-full mb-6">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.back()}
-                className="text-white px-0 pl-2 pr-2 hover:bg-black hover:text-white focus:bg-black focus:text-white"
-                data-name="event-details-back-btn"
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Back
-              </Button>
-              <h1 className="text-lg font-bold text-white" data-name="event-details-heading">Event Details</h1>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.back()}
+              className="text-white px-0 pl-2 pr-2 hover:bg-black hover:text-white focus:bg-black focus:text-white"
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Back
+            </Button>
           )}
-          {/* Subtle line separator - visible for all users */}
-          <div className="w-full h-px bg-gray-600 mb-6"></div>
-          {/* Block 1: Title - No Background */}
-          <div className={`w-full ${isGuestView ? 'mt-6' : ''}`}>
-            <div data-name="event-details-header" className="flex justify-between items-start mb-6">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h2 className="text-2xl font-bold text-white" data-name="event-details-title">
-                    {event.title}
-                  </h2>
-                  <span 
-                    className="inline-flex items-center rounded-lg px-2 py-1 text-xs font-bold tracking-wider"
-                    style={{
-                      backgroundColor: event.host.is_premium && event.host.brand_primary_color 
-                        ? event.host.brand_primary_color + '33' // 20% opacity
-                        : '#FF00FF33',
-                      color: event.host.is_premium && event.host.brand_primary_color 
-                        ? event.host.brand_primary_color 
-                        : '#FF00FF'
-                    }}
-                  >
-                    {event.status.toUpperCase()}
-                  </span>
-                </div>
+          <h1 className="text-lg font-bold text-white">Event Details</h1>
+        </div>
+
+        <Card className="border-none shadow-none bg-[#262626] text-white">
+          <CardContent className="p-6 space-y-4">
+            {/* Title & Status */}
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold mb-2">{event.title}</h2>
+                <p className="text-gray-400 text-sm">
+                  {formatDate(event.date)} · {formatEventTime()}
+                </p>
               </div>
-                {/* Edit icon-only button, no solid wrapper */}
-                {isEventOwner() && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleEdit}
-                    className="text-gray-300 hover:text-white p-2"
-                    style={{
-                      color: '#6b7280'
-                    }}
-                    onMouseEnter={(e) => {
-                      const primaryColor = event.host.brand_primary_color || '#3b82f6';
-                      e.currentTarget.style.color = primaryColor;
-                      e.currentTarget.style.backgroundColor = primaryColor + '20'; // Add subtle background
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = '#6b7280';
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                    }}
-                    data-name="event-details-edit-btn"
-                  >
-                    <Edit className="h-5 w-5" />
-                  </Button>
-                )}
-            </div>
-          </div>
-
-          {/* Block 2: Image - No Background */}
-          {event.image_url && (
-            <div className="w-full mb-6" data-name="event-details-image">
-              <div className="w-full aspect-video overflow-hidden rounded-lg">
-                <img
-                  src={event.image_url}
-                  alt={event.title}
-                  className={`w-full h-full transition-transform ${
-                    event.image_fit === 'cover' ? 'object-cover' : 'object-contain'
-                  }`}
-                  style={{
-                    transform: `scale(${(event.image_scale || 100) / 100}) translate(${((event.image_position_x || 50) - 50) * 2}%, ${((event.image_position_y || 50) - 50) * 2}%)`,
-                    transformOrigin: 'center center'
-                  }}
-                  onLoad={() => {
-                    // Image loaded successfully
-                  }}
-                  onError={(e) => {
-                    // Hide image if it fails to load
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Block 3: Details - With Background */}
-          <Card data-name="event-details-card" className="w-full bg-[#262626] border-none shadow-none p-0">
-            <CardContent className="w-full p-6 flex flex-col gap-4 relative" data-name="event-details-card-content">
-
-              {/* Event Creator */}
-              <div className="flex items-center gap-3" data-name="event-details-creator">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={event.host.profile_image_url} />
-                  <AvatarFallback className="bg-gray-600 text-white">
-                    {event.host.display_name?.charAt(0) || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-white font-medium">{event.host.display_name}</p>
-                    {isEventOwner() && (
-                      <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-blue-500/25 text-blue-300 border-blue-500/50">
-                        YOUR EVENT
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-gray-400 text-sm">
-                    {isEventOwner() ? `Created ${formatDate(event.created_at)}` : 'Host'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Event Details */}
-              <div className="space-y-4" data-name="event-details-info-blocks">
-                {/* When */}
-                <div className="flex items-start gap-3">
-                  <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-white font-medium">
-                      {formatDate(event.date)}
-                    </p>
-                    <p className="text-gray-400 text-sm">
-                      {formatEventTime()}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Where */}
-                <div className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 text-gray-400 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-white font-medium">{event.location}</p>
-                    {event.address && (
-                      <p className="text-gray-400 text-sm">{event.address}</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Description */}
-                {event.description && (
-                  <div className="pt-2">
-                    <p className="text-gray-300 text-sm leading-relaxed">
-                      {event.description}
-                    </p>
-                  </div>
-                )}
-
-                {/* Authenticated User RSVP - show for invited users who aren't the event owner */}
-                {!isGuestView && event && event.is_user_invited && !isEventOwner() && (
-                  <div className="pt-6 border-t border-gray-700">
-                    <div className="flex items-center gap-3 mb-4">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user?.profile_image_url} />
-                        <AvatarFallback className="bg-gray-600 text-white">
-                          {user?.display_name?.charAt(0) || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <h3 className="text-white font-semibold">Your RSVP</h3>
-                    </div>
-                    {event.user_response && (
-                      <p className="text-gray-300 text-sm mb-4">
-                        Current response: <span className="font-medium text-white">{getCustomRSVPText(event.user_response)}</span>
-                      </p>
-                    )}
-                    <div className="flex gap-3">
-                      <Button
-                        onClick={() => handleAuthenticatedRSVP('yup')}
-                        disabled={submittingRSVP}
-                        className={`flex-1 transition-all duration-200 ${
-                          event.user_response === 'yup' 
-                            ? 'opacity-100 scale-105' 
-                            : 'opacity-80 hover:opacity-100'
-                        }`}
-                        style={{
-                          backgroundColor: event.user_response === 'yup' 
-                            ? (event.host.brand_primary_color || '#3b82f6')
-                            : 'transparent',
-                          borderColor: event.host.brand_primary_color || '#3b82f6',
-                          color: event.user_response === 'yup' ? 'white' : (event.host.brand_primary_color || '#3b82f6')
-                        }}
-                        variant={event.user_response === 'yup' ? 'default' : 'outline'}
-                      >
-                        {getCustomRSVPText('yup')}
-                      </Button>
-                      <Button
-                        onClick={() => handleAuthenticatedRSVP('maybe')}
-                        disabled={submittingRSVP}
-                        className={`flex-1 transition-all duration-200 ${
-                          event.user_response === 'maybe' 
-                            ? 'opacity-100 scale-105' 
-                            : 'opacity-80 hover:opacity-100'
-                        }`}
-                        style={{
-                          backgroundColor: event.user_response === 'maybe' 
-                            ? '#fbbf24'
-                            : 'transparent',
-                          borderColor: '#fbbf24',
-                          color: event.user_response === 'maybe' ? 'white' : '#fbbf24'
-                        }}
-                        variant={event.user_response === 'maybe' ? 'default' : 'outline'}
-                      >
-                        {getCustomRSVPText('maybe')}
-                      </Button>
-                      <Button
-                        onClick={() => handleAuthenticatedRSVP('nope')}
-                        disabled={submittingRSVP}
-                        className={`flex-1 transition-all duration-200 ${
-                          event.user_response === 'nope' 
-                            ? 'opacity-100 scale-105' 
-                            : 'opacity-80 hover:opacity-100'
-                        }`}
-                        style={{
-                          backgroundColor: event.user_response === 'nope' 
-                            ? '#ef4444'
-                            : 'transparent',
-                          borderColor: '#ef4444',
-                          color: event.user_response === 'nope' ? 'white' : '#ef4444'
-                        }}
-                        variant={event.user_response === 'nope' ? 'default' : 'outline'}
-                      >
-                        {getCustomRSVPText('nope')}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Guest RSVP Response Selection - only show in guest view mode */}
-                {isGuestView && event && (
-                  <div className="pt-4 border-t border-gray-700">
-                    <GuestResponseForm
-                      eventSlug={event.slug}
-                      eventTitle={event.title}
-                      eventDate={event.date}
-                      eventLocation={event.location}
-                      maxGuestsPerRsvp={event.max_guests_per_rsvp}
-                      customRSVPText={{
-                        yup: event.use_custom_rsvp_text && event.host.custom_yup_text ? event.host.custom_yup_text : 'Yes',
-                        nope: event.use_custom_rsvp_text && event.host.custom_nope_text ? event.host.custom_nope_text : 'No',
-                        maybe: event.use_custom_rsvp_text && event.host.custom_maybe_text ? event.host.custom_maybe_text : 'Maybe'
-                      }}
-                      brandColors={{
-                        primary: event.host.brand_primary_color || '#3b82f6',
-                        secondary: event.host.brand_secondary_color || '#f1f5f9',
-                        tertiary: event.host.brand_tertiary_color || '#1e293b'
-                      }}
-                      showOnlyResponseSelection={true}
-                      onResponseTypeSelected={(type) => {
-                        setSelectedResponseType(type);
-                        setShowRSVPModal(true);
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* RSVP Settings - only show to event owner */}
               {isEventOwner() && (
-                <div className="pt-4 border-t border-gray-700" data-name="event-details-rsvp-settings">
-                  <h3 className="text-white font-semibold mb-3">RSVP Settings</h3>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-gray-400 text-sm mb-1">Guest RSVP</p>
-                      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
-                        event.allow_guest_rsvp 
-                          ? "bg-green-500/25 text-green-300 border-green-500/50"
-                          : "bg-red-500/25 text-red-300 border-red-500/50"
-                      }`}>
-                        {event.allow_guest_rsvp ? "Allowed" : "Not Allowed"}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 text-sm mb-1">Plus One</p>
-                      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
-                        event.allow_plus_one 
-                          ? "bg-green-500/25 text-green-300 border-green-500/50"
-                          : "bg-red-500/25 text-red-300 border-red-500/50"
-                      }`}>
-                        {event.allow_plus_one ? "Allowed" : "Not Allowed"}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 text-sm mb-1">Max Guests</p>
-                      <span className="text-blue-300 text-base font-semibold">
-                        {event.max_guests_per_rsvp}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Bottom row actions */}
-              <div className="flex gap-2 mt-8 justify-between" data-name="event-details-actions">
-                {/* Event owner buttons */}
-                {isEventOwner() && (
-                  <>
-                    {/* Left side - Grouped buttons */}
-                    <div className="flex gap-4">
-                      <Button
-                        size="sm"
-                        className="text-white hover:scale-105 transition-all duration-200 z-10 relative h-10 px-4 flex items-center"
-                        style={{
-                          backgroundColor: event.host.is_premium && event.host.brand_primary_color 
-                            ? event.host.brand_primary_color 
-                            : '#FF00FF',
-                          borderColor: event.host.is_premium && event.host.brand_primary_color 
-                            ? event.host.brand_primary_color 
-                            : '#FF00FF'
-                        }}
-                        onMouseEnter={(e) => {
-                          const primaryColor = event.host.is_premium && event.host.brand_primary_color 
-                            ? event.host.brand_primary_color 
-                            : '#FF00FF';
-                          e.currentTarget.style.backgroundColor = primaryColor + '90';
-                        }}
-                        onMouseLeave={(e) => {
-                          const primaryColor = event.host.is_premium && event.host.brand_primary_color 
-                            ? event.host.brand_primary_color 
-                            : '#FF00FF';
-                          e.currentTarget.style.backgroundColor = primaryColor;
-                        }}
-                        onClick={handleViewResponses}
-                        data-name="event-details-view-responses-btn"
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        View Responses
-                      </Button>
-
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={handleViewAsGuest}
-                        className="text-gray-300 border-gray-600 hover:border-gray-400 hover:text-white h-10 px-4 flex items-center"
-                        data-name="event-details-view-as-guest-btn"
-                      >
-                        <UserCheck className="h-4 w-4 mr-1" />
-                        View as Guest
-                      </Button>
-                    </div>
-                  </>
-                )}
-                {/* Share icon-only button */}
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={handleShare}
-                  className="text-gray-300 hover:text-white p-2 h-10 w-10 flex items-center justify-center"
-                  style={{
-                    '--hover-bg': event?.host?.brand_primary_color || '#3b82f6'
-                  } as React.CSSProperties}
-                  onMouseEnter={(e) => {
-                    const primaryColor = event?.host?.brand_primary_color || '#3b82f6';
-                    e.currentTarget.style.backgroundColor = primaryColor + '20';
-                    e.currentTarget.style.color = primaryColor;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = '#d1d5db'; // text-gray-300
-                  }}
-                  data-name="event-details-share-btn"
+                  onClick={handleEdit}
+                  className="text-gray-300 hover:text-white"
                 >
-                  <Share2 className="h-5 w-5" />
+                  <Edit className="h-5 w-5" />
                 </Button>
-              </div>
-            </CardContent>
-          </Card>
+              )}
+            </div>
 
-          {/* RSVP Modal */}
-          <Dialog open={showRSVPModal} onOpenChange={setShowRSVPModal}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-2 p-0" style={{ borderColor: event?.host?.brand_primary_color || '#3b82f6' }}>
-              <DialogHeader className="sr-only">
-                <DialogTitle>RSVP Form</DialogTitle>
-              </DialogHeader>
-              {isGuestView && event && selectedResponseType && (
+            {/* Host */}
+            <div className="flex items-center gap-3">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={event.host.profile_image_url} />
+                <AvatarFallback className="bg-gray-600 text-white">
+                  {event.host.display_name?.charAt(0) || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-medium">{event.host.display_name}</p>
+                <p className="text-gray-400 text-sm">
+                  {isEventOwner() ? `Created ${formatDate(event.created_at)}` : "Host"}
+                </p>
+              </div>
+            </div>
+
+            {/* Location */}
+            <div className="flex items-start gap-3">
+              <MapPin className="h-5 w-5 text-gray-400 mt-0.5" />
+              <div>
+                <p className="font-medium">{event.location}</p>
+                {event.address && (
+                  <p className="text-gray-400 text-sm">{event.address}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Description */}
+            {event.description && (
+              <p className="text-gray-300 text-sm leading-relaxed">
+                {event.description}
+              </p>
+            )}
+
+            {/* Share */}
+            <div className="flex justify-end">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleShare}
+                className="text-gray-300 hover:text-white"
+              >
+                <Share2 className="h-5 w-5" />
+              </Button>
+            </div>
+
+            {/* Guest RSVP (guest view) */}
+            {isGuestView && (
+              <div className="pt-4 border-t border-gray-700">
                 <GuestResponseForm
                   eventSlug={event.slug}
                   eventTitle={event.title}
                   eventDate={event.date}
-                  eventStartTime={event.start_time}
                   eventLocation={event.location}
                   maxGuestsPerRsvp={event.max_guests_per_rsvp}
                   customRSVPText={{
-                    yup: event.use_custom_rsvp_text && event.host.custom_yup_text ? event.host.custom_yup_text : 'Yes',
-                    nope: event.use_custom_rsvp_text && event.host.custom_nope_text ? event.host.custom_nope_text : 'No',
-                    maybe: event.use_custom_rsvp_text && event.host.custom_maybe_text ? event.host.custom_maybe_text : 'Maybe'
+                    yup: event.use_custom_rsvp_text && event.host.custom_yup_text ? event.host.custom_yup_text : "Yes",
+                    nope: event.use_custom_rsvp_text && event.host.custom_nope_text ? event.host.custom_nope_text : "No",
+                    maybe: event.use_custom_rsvp_text && event.host.custom_maybe_text ? event.host.custom_maybe_text : "Maybe",
                   }}
                   brandColors={{
-                    primary: event.host.brand_primary_color || '#3b82f6',
-                    secondary: event.host.brand_secondary_color || '#f1f5f9',
-                    tertiary: event.host.brand_tertiary_color || '#1e293b'
+                    primary: event.host.brand_primary_color || "#3b82f6",
+                    secondary: event.host.brand_secondary_color || "#f1f5f9",
+                    tertiary: event.host.brand_tertiary_color || "#1e293b",
                   }}
-                  initialData={{
-                    responseType: selectedResponseType
+                  showOnlyResponseSelection={true}
+                  onResponseTypeSelected={(type) => {
+                    setSelectedResponseType(type);
+                    setShowRSVPModal(true);
                   }}
-                  showOnlyResponseSelection={false}
-                  onResponseSubmitted={() => {
-                    setShowRSVPModal(false);
-                  }}
-                  className="border-0 shadow-none"
                 />
-              )}
-            </DialogContent>
-          </Dialog>
-            </div>
-          </div>
-          {/* Footer */}
-          <div data-name="event-details-footer" className="w-full bg-[#171717] h-16 mt-0 flex-shrink-0" />
-        </EventBrandingProvider>
-      ) : (
-        <div data-name="event-details-bg-container" className="flex-1 flex flex-col items-center justify-start">
-          <div className="max-w-xl w-full flex-1 flex flex-col items-center justify-start">
-            {/* Back button and heading - only show for authenticated users, not in guest view */}
-            {!isGuestView && (
-              <div className="flex items-center justify-between w-full mb-6">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => router.back()}
-                  className="text-white px-0 pl-2 pr-2 hover:bg-black hover:text-white focus:bg-black focus:text-white"
-                  data-name="event-details-back-btn"
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Back
-                </Button>
-                <h1 className="text-lg font-bold text-white" data-name="event-details-heading">Event Details</h1>
               </div>
             )}
-            {/* Subtle line separator - visible for all users */}
-            <div className="w-full h-px bg-gray-600 mb-6"></div>
-            {/* Block 1: Title - No Background */}
-            <div className={`w-full ${isGuestView ? 'mt-6' : ''}`}>
-              <div data-name="event-details-header" className="flex justify-between items-start mb-6">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h2 className="text-2xl font-bold text-white" data-name="event-details-title">
-                      {event.title}
-                    </h2>
-                    <span 
-                      className="inline-flex items-center rounded-lg px-2 py-1 text-xs font-bold tracking-wider"
-                      style={{
-                        backgroundColor: event.host.is_premium && event.host.brand_primary_color 
-                          ? event.host.brand_primary_color + '33' // 20% opacity
-                          : '#FF00FF33',
-                        color: event.host.is_premium && event.host.brand_primary_color 
-                          ? event.host.brand_primary_color 
-                          : '#FF00FF'
-                      }}
-                    >
-                      {event.status.toUpperCase()}
-                    </span>
-                  </div>
-                </div>
-                  {/* Edit icon-only button, no solid wrapper */}
-                  {isEventOwner() && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleEdit}
-                      className="text-gray-300 hover:text-white p-2 h-10 w-10 flex items-center justify-center"
-                      data-name="event-details-edit-btn"
-                    >
-                      <Edit className="h-5 w-5" />
-                    </Button>
-                  )}
-              </div>
-            </div>
+          </CardContent>
+        </Card>
 
-            {/* Block 2: Image - No Background */}
-            {event.image_url && (
-              <div className="w-full mb-6">
-                <div className="relative w-full h-64 bg-gray-800 rounded-lg overflow-hidden">
-                  <img
-                    src={event.image_url}
-                    alt={event.title}
-                    className={`w-full h-full transition-transform ${
-                      event.image_fit === 'cover' ? 'object-cover' : 'object-contain'
-                    }`}
-                    style={{
-                      transform: `scale(${(event.image_scale || 100) / 100}) translate(${((event.image_position_x || 50) - 50) * 2}%, ${((event.image_position_y || 50) - 50) * 2}%)`,
-                      transformOrigin: 'center center'
-                    }}
-                    onLoad={() => {
-                      // Image loaded successfully
-                    }}
-                    onError={(e) => {
-                      // Hide image if it fails to load
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                </div>
-              </div>
+        {/* RSVP Modal (guest view) */}
+        <Dialog open={showRSVPModal} onOpenChange={setShowRSVPModal}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-2 p-0">
+            <DialogHeader className="sr-only">
+              <DialogTitle>RSVP Form</DialogTitle>
+            </DialogHeader>
+            {isGuestView && event && selectedResponseType && (
+              <GuestResponseForm
+                eventSlug={event.slug}
+                eventTitle={event.title}
+                eventDate={event.date}
+                eventStartTime={event.start_time}
+                eventLocation={event.location}
+                maxGuestsPerRsvp={event.max_guests_per_rsvp}
+                customRSVPText={{
+                  yup: event.use_custom_rsvp_text && event.host.custom_yup_text ? event.host.custom_yup_text : "Yes",
+                  nope: event.use_custom_rsvp_text && event.host.custom_nope_text ? event.host.custom_nope_text : "No",
+                  maybe: event.use_custom_rsvp_text && event.host.custom_maybe_text ? event.host.custom_maybe_text : "Maybe",
+                }}
+                brandColors={{
+                  primary: event.host.brand_primary_color || "#3b82f6",
+                  secondary: event.host.brand_secondary_color || "#f1f5f9",
+                  tertiary: event.host.brand_tertiary_color || "#1e293b",
+                }}
+                initialData={{
+                  responseType: selectedResponseType,
+                }}
+                showOnlyResponseSelection={false}
+                onResponseSubmitted={() => {
+                  setShowRSVPModal(false);
+                }}
+                className="border-0 shadow-none"
+              />
             )}
-
-            {/* Block 3: Details - With Background */}
-            <Card data-name="event-details-card" className="w-full bg-[#262626] border-none shadow-none p-0">
-              <CardContent className="w-full p-6 flex flex-col gap-4 relative" data-name="event-details-card-content">
-
-                {/* Event Creator */}
-                <div className="flex items-center gap-3" data-name="event-details-creator">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={event.host.profile_image_url} />
-                    <AvatarFallback className="bg-gray-600 text-white">
-                      {event.host.display_name?.charAt(0) || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-white font-medium">{event.host.display_name}</p>
-                      {isEventOwner() && (
-                        <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-blue-500/25 text-blue-300 border-blue-500/50">
-                          YOUR EVENT
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-gray-400 text-sm">
-                      {isEventOwner() ? `Created ${formatDate(event.created_at)}` : 'Host'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Event Details */}
-                <div className="space-y-4" data-name="event-details-info-blocks">
-                  {/* Date and Time */}
-                  <div className="flex items-center gap-3">
-                    <Calendar className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="text-white font-medium">{formatDate(event.date)}</p>
-                      <p className="text-gray-400 text-sm">{formatEventTime()}</p>
-                    </div>
-                  </div>
-
-                  {/* Location */}
-                  <div className="flex items-center gap-3">
-                    <MapPin className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="text-white font-medium">{event.location}</p>
-                      {event.address && (
-                        <p className="text-gray-400 text-sm">{event.address}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  {event.description && (
-                    <div className="pt-2">
-                      <p className="text-gray-300 leading-relaxed">{event.description}</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* RSVP Section - Only show for authenticated users */}
-                {!isGuestView && (
-                  <div className="pt-4 border-t border-gray-700">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-white">RSVP</h3>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-400">Your response:</span>
-                        <Badge 
-                          variant="outline" 
-                          className="text-xs"
-                          style={{
-                            borderColor: event.host.is_premium && event.host.brand_primary_color 
-                              ? event.host.brand_primary_color 
-                              : '#FF00FF',
-                            color: event.host.is_premium && event.host.brand_primary_color 
-                              ? event.host.brand_primary_color 
-                              : '#FF00FF'
-                          }}
-                        >
-                          {getUserResponseText(event.user_response)}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <Button
-                        onClick={() => handleAuthenticatedRSVP('yup')}
-                        disabled={submittingRSVP}
-                        className="flex-1 h-12 text-white font-medium"
-                        style={{
-                          backgroundColor: event.host.is_premium && event.host.brand_primary_color 
-                            ? event.host.brand_primary_color 
-                            : '#FF00FF',
-                          borderColor: event.host.is_premium && event.host.brand_primary_color 
-                            ? event.host.brand_primary_color 
-                            : '#FF00FF'
-                        }}
-                        onMouseEnter={(e) => {
-                          const primaryColor = event.host.is_premium && event.host.brand_primary_color 
-                            ? event.host.brand_primary_color 
-                            : '#FF00FF';
-                          e.currentTarget.style.backgroundColor = primaryColor + '90';
-                        }}
-                        onMouseLeave={(e) => {
-                          const primaryColor = event.host.is_premium && event.host.brand_primary_color 
-                            ? event.host.brand_primary_color 
-                            : '#FF00FF';
-                          e.currentTarget.style.backgroundColor = primaryColor;
-                        }}
-                      >
-                        <Check className="h-4 w-4 mr-2" />
-                        {event.use_custom_rsvp_text && event.host.custom_yup_text ? event.host.custom_yup_text : 'Yes'}
-                      </Button>
-
-                      <Button
-                        onClick={() => handleAuthenticatedRSVP('maybe')}
-                        disabled={submittingRSVP}
-                        variant="outline"
-                        className="flex-1 h-12 text-white font-medium border-gray-600 hover:border-gray-400"
-                      >
-                        <Clock className="h-4 w-4 mr-2" />
-                        {event.use_custom_rsvp_text && event.host.custom_maybe_text ? event.host.custom_maybe_text : 'Maybe'}
-                      </Button>
-
-                      <Button
-                        onClick={() => handleAuthenticatedRSVP('nope')}
-                        disabled={submittingRSVP}
-                        variant="outline"
-                        className="flex-1 h-12 text-white font-medium border-gray-600 hover:border-gray-400"
-                      >
-                        <X className="h-4 w-4 mr-2" />
-                        {event.use_custom_rsvp_text && event.host.custom_nope_text ? event.host.custom_nope_text : 'No'}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Guest RSVP Response Selection - only show in guest view mode */}
-                {isGuestView && event && (
-                  <div className="pt-4 border-t border-gray-700">
-                    <GuestResponseForm
-                      eventSlug={event.slug}
-                      eventTitle={event.title}
-                      eventDate={event.date}
-                      eventLocation={event.location}
-                      maxGuestsPerRsvp={event.max_guests_per_rsvp}
-                      customRSVPText={{
-                        yup: event.use_custom_rsvp_text && event.host.custom_yup_text ? event.host.custom_yup_text : 'Yes',
-                        nope: event.use_custom_rsvp_text && event.host.custom_nope_text ? event.host.custom_nope_text : 'No',
-                        maybe: event.use_custom_rsvp_text && event.host.custom_maybe_text ? event.host.custom_maybe_text : 'Maybe'
-                      }}
-                      brandColors={{
-                        primary: event.host.brand_primary_color || '#3b82f6',
-                        secondary: event.host.brand_secondary_color || '#f1f5f9',
-                        tertiary: event.host.brand_tertiary_color || '#1e293b'
-                      }}
-                      showOnlyResponseSelection={true}
-                      onResponseTypeSelected={(type) => {
-                        setSelectedResponseType(type);
-                        setShowRSVPModal(true);
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* RSVP Settings - only show to event owner */}
-              {isEventOwner() && (
-                <div
-                  className="border-t border-gray-700 p-6"
-                  data-name="event-details-rsvp-settings"
-                >
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-white mb-1">RSVP Settings</h3>
-                        <p className="text-sm text-gray-400">Manage who can RSVP and how</p>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-white">Max Guests per RSVP</label>
-                        <div className="flex items-center gap-2">
-                          <span className="text-2xl font-bold text-white">{event.max_guests_per_rsvp}</span>
-                          <span className="text-sm text-gray-400">people</span>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-white">Allow Plus Ones</label>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-sm font-medium ${event.allow_plus_one ? 'text-green-400' : 'text-red-400'}`}>
-                            {event.allow_plus_one ? 'Yes' : 'No'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-white">Custom RSVP Text</label>
-                      <div className="text-sm text-gray-400">
-                        {event.use_custom_rsvp_text ? 'Enabled' : 'Disabled'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Bottom row actions */}
-              <div className="flex gap-2 mt-8 justify-between" data-name="event-details-actions">
-                {/* Event owner buttons */}
-                {isEventOwner() && (
-                  <>
-                    {/* Left side - Grouped buttons */}
-                    <div className="flex gap-4">
-                      <Button
-                        size="sm"
-                        className="text-white hover:scale-105 transition-all duration-200 z-10 relative h-10 px-4 flex items-center"
-                        style={{
-                          backgroundColor: event.host.is_premium && event.host.brand_primary_color 
-                            ? event.host.brand_primary_color 
-                            : '#FF00FF',
-                          borderColor: event.host.is_premium && event.host.brand_primary_color 
-                            ? event.host.brand_primary_color 
-                            : '#FF00FF'
-                        }}
-                        onMouseEnter={(e) => {
-                          const primaryColor = event.host.is_premium && event.host.brand_primary_color 
-                            ? event.host.brand_primary_color 
-                            : '#FF00FF';
-                          e.currentTarget.style.backgroundColor = primaryColor + '90';
-                        }}
-                        onMouseLeave={(e) => {
-                          const primaryColor = event.host.is_premium && event.host.brand_primary_color 
-                            ? event.host.brand_primary_color 
-                            : '#FF00FF';
-                          e.currentTarget.style.backgroundColor = primaryColor;
-                        }}
-                        onClick={handleViewResponses}
-                        data-name="event-details-view-responses-btn"
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        View Responses
-                      </Button>
-
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={handleViewAsGuest}
-                        className="text-gray-300 border-gray-600 hover:border-gray-400 hover:text-white h-10 px-4 flex items-center"
-                        data-name="event-details-view-as-guest-btn"
-                      >
-                        <UserCheck className="h-4 w-4 mr-1" />
-                        View as Guest
-                      </Button>
-                    </div>
-                  </>
-                )}
-                {/* Share icon-only button */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleShare}
-                  className="text-gray-300 hover:text-white p-2 h-10 w-10 flex items-center justify-center"
-                  style={{
-                    '--hover-bg': event?.host?.brand_primary_color || '#3b82f6'
-                  } as React.CSSProperties}
-                  onMouseEnter={(e) => {
-                    const primaryColor = event?.host?.brand_primary_color || '#3b82f6';
-                    e.currentTarget.style.backgroundColor = primaryColor + '20';
-                    e.currentTarget.style.color = primaryColor;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = '#d1d5db'; // text-gray-300
-                  }}
-                  data-name="event-details-share-btn"
-                >
-                  <Share2 className="h-5 w-5" />
-                </Button>
-              </div>
-            </Card>
-
-            {/* RSVP Modal */}
-            <Dialog open={showRSVPModal} onOpenChange={setShowRSVPModal}>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-2 p-0" style={{ borderColor: event?.host?.brand_primary_color || '#3b82f6' }}>
-                <DialogHeader className="sr-only">
-                  <DialogTitle>RSVP Form</DialogTitle>
-                </DialogHeader>
-                {isGuestView && event && selectedResponseType && (
-                  <GuestResponseForm
-                    eventSlug={event.slug}
-                    eventTitle={event.title}
-                    eventDate={event.date}
-                    eventStartTime={event.start_time}
-                    eventLocation={event.location}
-                    maxGuestsPerRsvp={event.max_guests_per_rsvp}
-                    customRSVPText={{
-                      yup: event.use_custom_rsvp_text && event.host.custom_yup_text ? event.host.custom_yup_text : 'Yes',
-                      nope: event.use_custom_rsvp_text && event.host.custom_nope_text ? event.host.custom_nope_text : 'No',
-                      maybe: event.use_custom_rsvp_text && event.host.custom_maybe_text ? event.host.custom_maybe_text : 'Maybe'
-                    }}
-                    brandColors={{
-                      primary: event.host.brand_primary_color || '#3b82f6',
-                      secondary: event.host.brand_secondary_color || '#f1f5f9',
-                      tertiary: event.host.brand_tertiary_color || '#1e293b'
-                    }}
-                    initialData={{
-                      responseType: selectedResponseType
-                    }}
-                    showOnlyResponseSelection={false}
-                    onResponseSubmitted={() => {
-                      setShowRSVPModal(false);
-                    }}
-                    className="border-0 shadow-none"
-                  />
-                )}
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-      )}
-      {/* Footer */}
-      <div data-name="event-details-footer" className="w-full bg-[#171717] h-16 mt-0 flex-shrink-0" />
-
-      {/* Floating Guest View Indicator */}
-      {isGuestView && (
-        <div className="fixed bottom-6 right-6 z-[200]">
-          <div className="bg-black border border-blue-500/50 rounded-lg shadow-lg px-4 py-3 flex items-center gap-2 backdrop-blur-sm">
-            <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
-            <span className="text-blue-300 text-sm font-medium">Guest View Mode</span>
-          </div>
-        </div>
-      )}
-    </PageLayout>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
   );
 
-  // Wrap with EventBrandingProvider for guest view
-  if (isGuestView && hostBranding) {
-    return (
-      <EventBrandingProvider hostBranding={hostBranding} enabled={true}>
-        {content}
-      </EventBrandingProvider>
-    );
-  }
-
-  return content;
-} 
+  // For now, keep branding simple: just return the main content
+  return mainContent;
+}
